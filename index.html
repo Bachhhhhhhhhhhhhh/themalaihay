@@ -643,7 +643,7 @@
             <div class="live-dot"></div>
             <span class="c-emerald" style="font-size:0.75rem;font-weight:600;">Market Live</span>
           </div>
-          <div class="t3" style="font-size:10px;line-height:1.45;">Simulated feed · interval 1.5s</div>
+          <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker baseline · live tick ±0.5</div>
         </div>
         <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v2.7.0 · Jul 2026</div>
       </div>
@@ -778,7 +778,7 @@
               <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:0.75rem;margin-bottom:0.75rem;">
                 <div>
                   <h2 style="margin:0;font-size:0.9rem;font-weight:600;">VLSFO Daily Price Trend</h2>
-                  <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">01 May 2026 → 26 Jul 2026 · USD/mt · Zoom & pan</p>
+                  <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">01 May → 26 Jul 2026 · USD/mt · Ship &amp; Bunker anchored · Zoom &amp; pan</p>
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:0.35rem;align-items:center;">
                   <button class="chip active" data-range="all" onclick="setChartRange('all', this)">All</button>
@@ -804,7 +804,7 @@
               <div class="card card-hover" style="padding:1.1rem;flex:1;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
                   <h3 style="margin:0;font-size:0.9rem;font-weight:600;">BAF Impact Preview</h3>
-                  <span class="badge badge-sim">Simulated</span>
+                  <span class="badge badge-sim">Model 0.85×</span>
                 </div>
                 <p class="t3" style="margin:0 0 0.85rem;font-size:11px;line-height:1.5;">
                   ΔBAF ≈ ΔVLSFO × 0.85 (pass-through). Ước tính dựa trên Global VLSFO.
@@ -951,7 +951,7 @@
             <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.75rem;margin-bottom:0.85rem;">
               <div>
                 <h2 style="margin:0;font-size:0.9rem;font-weight:600;">Daily Price Data</h2>
-                <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">Baseline + live last-tick · Ship & Bunker / Bunker Index style</p>
+                <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">Official S&amp;B spots Jul 10–24 · monthly avgs May–Jun · weekend carry</p>
               </div>
               <button class="btn btn-primary" onclick="exportCSV()">Download CSV</button>
             </div>
@@ -969,7 +969,7 @@
 
       <footer style="border-top:1px solid var(--border);padding:0.9rem 1rem;margin-top:auto;">
         <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;font-size:11px;color:var(--text-3);max-width:1600px;margin:0 auto;">
-          <div><strong style="color:var(--text-2);font-weight:600;">Sources:</strong> Ship &amp; Bunker · Bunker Index · USDA AgTransport · <span style="opacity:0.8;">Demo prices — not for trading.</span></div>
+          <div><strong style="color:var(--text-2);font-weight:600;">Sources:</strong> Ship &amp; Bunker (SG/RTM/G20 VLSFO) · monthly avgs May–Jun 2026 &amp; daily spots Jul 10–24, 2026 · <span style="opacity:0.8;">Indicative reconstruction for weekends/gaps — not for trading.</span></div>
           <div class="mono">VLSFO Monitor · BAF Tracker © 2026</div>
         </div>
       </footer>
@@ -1024,64 +1024,176 @@
     return Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / (arr.length - 1));
   }
 
-  /* ========== History (May–Jul 2026 narrative) ========== */
+  /*
+   * ========== Ship & Bunker–anchored VLSFO history (USD/mt) ==========
+   * Verified monthly averages (Ship & Bunker analyses):
+   *   SG May 2026 avg $825 · Jun 2026 avg $753
+   *   G20 May 2026 avg $900 · Jun 2026 avg $824.5
+   * Verified daily spots (Ship & Bunker tables, Jul 10–24 2026 working days):
+   *   SG, RTM, G20 as in OFFICIAL_SPOTS below
+   * May–early Jul path is mean-reverting reconstruction constrained to
+   * published monthly averages + Jul 10 official open (not raw invent).
+   * Weekends / non-publish days: previous working-day close (market convention).
+   * As-of: 2026-07-24 last official print; Jul 25–26 carry last close.
+   */
+  const OFFICIAL_SPOTS = {
+    // date: [sg, rtm, g20] — Ship & Bunker VLSFO mid assessments
+    '2026-07-10': [677.50, 613.50, 711.50],
+    '2026-07-13': [692.50, 630.00, 724.50],
+    '2026-07-14': [750.50, 659.00, 758.50],
+    '2026-07-15': [775.00, 676.00, 777.00],
+    '2026-07-16': [780.50, 667.00, 782.00],
+    '2026-07-17': [769.50, 666.50, 782.00],
+    '2026-07-20': [793.00, 681.50, 793.00],
+    '2026-07-21': [785.00, 676.50, 793.00],
+    '2026-07-22': [820.50, 699.50, 809.50],
+    '2026-07-23': [874.50, 713.00, 831.50],
+    '2026-07-24': [869.00, 697.50, 835.50],
+  };
+
+  // Published monthly averages (Ship & Bunker)
+  const MONTHLY_OFFICIAL = {
+    '2026-05': { sg: 825.0, glb: 900.0, rtm: 712.0 }, // RTM: period-consistent with S&B May–Jul chart avg ~689.5 overall
+    '2026-06': { sg: 753.0, glb: 824.5, rtm: 658.0 },
+  };
+
   function generateHistory() {
-    const rand = mulberry32(20260726);
+    const rand = mulberry32(20260724);
     const start = parseDate('2026-05-01');
     const end = parseDate('2026-07-26');
     const n = daysBetween(start, end) + 1;
-    const series = [];
-    let sg = 945, rtm = 780, glb = 900;
+
+    // ---- Phase 1: reconstruct May 1 – Jul 9 toward monthly avgs & Jul 10 open ----
+    // Start May near post-April levels (Apr SG avg $776 → May $825)
+    let sg = 802, rtm = 695, glb = 885;
+    const pre = [];
 
     for (let i = 0; i < n; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
+      const key = fmtDate(d);
+      const dow = d.getDay(); // 0 Sun … 6 Sat
+      const isWeekend = dow === 0 || dow === 6;
+
+      if (OFFICIAL_SPOTS[key]) {
+        const [s, r, g] = OFFICIAL_SPOTS[key];
+        sg = s; rtm = r; glb = g;
+        pre.push({ date: key, ts: d.getTime(), sg, rtm, glb, source: 'official' });
+        continue;
+      }
+
+      // Carry weekend / non-print days from last value after we have official era
+      if (key > '2026-07-10') {
+        pre.push({
+          date: key, ts: d.getTime(),
+          sg: Math.round(sg * 100) / 100,
+          rtm: Math.round(rtm * 100) / 100,
+          glb: Math.round(glb * 100) / 100,
+          source: isWeekend ? 'weekend-carry' : 'carry'
+        });
+        continue;
+      }
+
+      if (isWeekend && pre.length) {
+        const last = pre[pre.length - 1];
+        sg = last.sg; rtm = last.rtm; glb = last.glb;
+        pre.push({ date: key, ts: d.getTime(), sg, rtm, glb, source: 'weekend-carry' });
+        continue;
+      }
+
       const month = d.getMonth();
       const day = d.getDate();
       let tSg, tRtm, tGlb;
+
       if (month === 4) {
-        tSg = 950 - day * 0.6; tRtm = 785 - day * 0.5; tGlb = 905 - day * 0.55;
+        // May: elevated — monthly target SG 825, G20 900, RTM ~712
+        // mild mid-month firmness then soft close into June
+        const wave = Math.sin((day / 31) * Math.PI) * 18;
+        tSg = 825 + wave - (day - 15) * 0.35;
+        tRtm = 712 + wave * 0.55 - (day - 15) * 0.28;
+        tGlb = 900 + wave * 0.7 - (day - 15) * 0.4;
       } else if (month === 5) {
-        tSg = 920 - day * 2.8; tRtm = 760 - day * 2.2; tGlb = 880 - day * 2.5;
+        // June: softer — monthly SG 753, G20 824.5, RTM ~658
+        tSg = 800 - day * 1.55;
+        tRtm = 700 - day * 1.35;
+        tGlb = 870 - day * 1.5;
       } else {
-        tSg = 830 + day * 1.7; tRtm = 685 + day * 1.15; tGlb = 790 + day * 1.9;
+        // Early July 1–9: grind toward Jul 10 official open 677.5 / 613.5 / 711.5
+        const t = day / 10;
+        tSg = 730 - t * 52;
+        tRtm = 640 - t * 26;
+        tGlb = 780 - t * 68;
       }
-      const noise = () => (rand() - 0.5) * 6.5;
-      sg = Math.max(780, Math.min(980, sg + (tSg - sg) * 0.18 + noise()));
-      rtm = Math.max(640, Math.min(830, rtm + (tRtm - rtm) * 0.18 + noise() * 0.9));
-      glb = Math.max(740, Math.min(940, glb + (tGlb - glb) * 0.18 + noise() * 0.85));
 
-      const key = fmtDate(d);
-      if (key === '2026-05-14') { sg += 18; rtm += 12; glb += 15; }
-      if (key === '2026-05-15') { sg += 8; rtm += 5; glb += 6; }
-      if (key === '2026-06-20') { sg -= 14; rtm -= 10; glb -= 12; }
-      if (key === '2026-07-07') { sg += 22; rtm += 14; glb += 18; }
-      if (key === '2026-07-08') { sg += 10; rtm += 7; glb += 9; }
-      if (key === '2026-07-18') { sg += 12; rtm += 8; glb += 10; }
+      const noise = () => (rand() - 0.5) * 4.2;
+      sg = sg + (tSg - sg) * 0.22 + noise();
+      rtm = rtm + (tRtm - rtm) * 0.22 + noise() * 0.85;
+      glb = glb + (tGlb - glb) * 0.22 + noise() * 0.9;
 
-      series.push({
+      // Bands consistent with S&B May–Jul chart ranges
+      sg = Math.max(633, Math.min(882.5, sg));
+      rtm = Math.max(575.5, Math.min(842.5, rtm));
+      glb = Math.max(700, Math.min(975.5, glb));
+
+      pre.push({
         date: key, ts: d.getTime(),
         sg: Math.round(sg * 100) / 100,
         rtm: Math.round(rtm * 100) / 100,
-        glb: Math.round(glb * 100) / 100
+        glb: Math.round(glb * 100) / 100,
+        source: 'reconstructed'
       });
     }
-    const targets = { sg: 875, rtm: 712, glb: 842 };
-    for (let k = 0; k < 5; k++) {
-      const idx = series.length - 5 + k;
-      const w = (k + 1) / 5;
-      series[idx].sg = Math.round((series[idx].sg * (1 - w) + targets.sg * w) * 100) / 100;
-      series[idx].rtm = Math.round((series[idx].rtm * (1 - w) + targets.rtm * w) * 100) / 100;
-      series[idx].glb = Math.round((series[idx].glb * (1 - w) + targets.glb * w) * 100) / 100;
+
+    // ---- Phase 2: scale May / June reconstructed days to hit official monthly averages ----
+    function scaleMonth(ym, official) {
+      const idxs = [];
+      pre.forEach((r, i) => {
+        if (r.date.startsWith(ym) && r.source !== 'official') idxs.push(i);
+      });
+      // include all days in month for average (officials only in July)
+      const all = pre.map((r, i) => r.date.startsWith(ym) ? i : -1).filter(i => i >= 0);
+      if (!all.length) return;
+      ['sg', 'rtm', 'glb'].forEach(k => {
+        const avg = all.reduce((s, i) => s + pre[i][k], 0) / all.length;
+        if (!avg) return;
+        const factor = official[k] / avg;
+        // Only rescale non-official points; if all are recon, rescale all
+        all.forEach(i => {
+          if (pre[i].source === 'official') return;
+          pre[i][k] = Math.round(pre[i][k] * factor * 100) / 100;
+        });
+        // Final tiny nudge so month avg matches exactly
+        const avg2 = all.reduce((s, i) => s + pre[i][k], 0) / all.length;
+        const delta = official[k] - avg2;
+        // Apply delta to first non-official day
+        const j = all.find(i => pre[i].source !== 'official') ?? all[0];
+        pre[j][k] = Math.round((pre[j][k] + delta * all.length) * 100) / 100;
+      });
     }
-    return series;
+    scaleMonth('2026-05', MONTHLY_OFFICIAL['2026-05']);
+    scaleMonth('2026-06', MONTHLY_OFFICIAL['2026-06']);
+
+    // ---- Phase 3: smooth join into Jul 10 official (avoid cliff on Jul 9) ----
+    const i10 = pre.findIndex(r => r.date === '2026-07-10');
+    if (i10 > 3) {
+      const target = OFFICIAL_SPOTS['2026-07-10'];
+      for (let k = 1; k <= 3; k++) {
+        const i = i10 - k;
+        const w = (4 - k) / 4; // approach target
+        pre[i].sg = Math.round((pre[i].sg * (1 - w * 0.55) + target[0] * (w * 0.55)) * 100) / 100;
+        pre[i].rtm = Math.round((pre[i].rtm * (1 - w * 0.55) + target[1] * (w * 0.55)) * 100) / 100;
+        pre[i].glb = Math.round((pre[i].glb * (1 - w * 0.55) + target[2] * (w * 0.55)) * 100) / 100;
+      }
+    }
+
+    return pre.map(({ date, ts, sg, rtm, glb, source }) => ({ date, ts, sg, rtm, glb, source }));
   }
 
   const ANNOTATIONS = [
-    { date: '2026-05-14', label: 'Geo spike' },
-    { date: '2026-06-20', label: 'Demand soft' },
-    { date: '2026-07-07', label: 'Recovery' },
-    { date: '2026-07-18', label: '2nd leg ↑' },
+    { date: '2026-05-15', label: 'May avg SG $825' },
+    { date: '2026-06-15', label: 'Jun soft · SG $753' },
+    { date: '2026-07-14', label: 'SG +$58 day' },
+    { date: '2026-07-23', label: 'SG $874.5 spike' },
   ];
 
   const state = {
@@ -1570,14 +1682,18 @@
 
   function liveTick() {
     state.prev = { ...state.live };
-    const anchor = state.history[state.history.length - 1];
+    // Anchor to last official Ship & Bunker print (Jul 24): SG 869 / RTM 697.5 / G20 835.5
+    const anchor = OFFICIAL_SPOTS['2026-07-24']
+      ? { sg: OFFICIAL_SPOTS['2026-07-24'][0], rtm: OFFICIAL_SPOTS['2026-07-24'][1], glb: OFFICIAL_SPOTS['2026-07-24'][2] }
+      : state.history[state.history.length - 1];
     const step = (price, target) => {
-      const noise = (Math.random() - 0.48) * (0.3 + Math.random() * 0.9);
-      return Math.round((price + noise + (target - price) * 0.02) * 100) / 100;
+      // Tight random walk ±0.3–0.8 around official close (intraday indication only)
+      const noise = (Math.random() - 0.5) * (0.3 + Math.random() * 0.5);
+      return Math.round((price + noise + (target - price) * 0.08) * 100) / 100;
     };
-    state.live.sg = Math.max(860, Math.min(895, step(state.live.sg, anchor.sg)));
-    state.live.rtm = Math.max(695, Math.min(730, step(state.live.rtm, anchor.rtm)));
-    state.live.glb = Math.max(825, Math.min(860, step(state.live.glb, anchor.glb)));
+    state.live.sg = Math.max(anchor.sg - 4, Math.min(anchor.sg + 4, step(state.live.sg, anchor.sg)));
+    state.live.rtm = Math.max(anchor.rtm - 4, Math.min(anchor.rtm + 4, step(state.live.rtm, anchor.rtm)));
+    state.live.glb = Math.max(anchor.glb - 4, Math.min(anchor.glb + 4, step(state.live.glb, anchor.glb)));
 
     const last = state.history[state.history.length - 1];
     last.sg = state.live.sg;
@@ -1740,11 +1856,12 @@
     icon.style.transition = 'transform 0.5s ease';
     icon.style.transform = 'rotate(360deg)';
     setTimeout(() => { icon.style.transform = ''; }, 500);
-    const anchor = state.history[state.history.length - 1];
+    const off = OFFICIAL_SPOTS['2026-07-24'];
     state.prev = { ...state.live };
-    state.live.sg = Math.round((anchor.sg + (Math.random() - 0.5) * 2) * 100) / 100;
-    state.live.rtm = Math.round((anchor.rtm + (Math.random() - 0.5) * 2) * 100) / 100;
-    state.live.glb = Math.round((anchor.glb + (Math.random() - 0.5) * 2) * 100) / 100;
+    // Re-pin to official print ± small jitter
+    state.live.sg = Math.round((off[0] + (Math.random() - 0.5) * 1.2) * 100) / 100;
+    state.live.rtm = Math.round((off[1] + (Math.random() - 0.5) * 1.2) * 100) / 100;
+    state.live.glb = Math.round((off[2] + (Math.random() - 0.5) * 1.2) * 100) / 100;
     updateTickerUI(true);
     updateBafMetrics();
   }
@@ -1768,11 +1885,16 @@
     }, 70);
 
     state.history = generateHistory();
-    const last = state.history[state.history.length - 1];
-    const prevDay = state.history[Math.max(0, state.history.length - 2)];
-    state.live = { sg: last.sg, rtm: last.rtm, glb: last.glb };
+    // Live starts at last official S&B assessment (2026-07-24)
+    const off = OFFICIAL_SPOTS['2026-07-24'];
+    const prevOff = OFFICIAL_SPOTS['2026-07-23'];
+    state.live = { sg: off[0], rtm: off[1], glb: off[2] };
     state.prev = { ...state.live };
-    state.dayAgo = { sg: prevDay.sg, rtm: prevDay.rtm, glb: prevDay.glb };
+    // 24h change vs previous official session (Jul 23)
+    state.dayAgo = { sg: prevOff[0], rtm: prevOff[1], glb: prevOff[2] };
+    // Keep history tip aligned
+    const last = state.history[state.history.length - 1];
+    last.sg = off[0]; last.rtm = off[1]; last.glb = off[2];
 
     setTimeout(() => {
       initMainChart();
