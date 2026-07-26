@@ -166,9 +166,106 @@
       flex: 1;
       margin-left: var(--sidebar-w);
       min-width: 0;
+      width: calc(100% - var(--sidebar-w));
+      max-width: 100%;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .page-body {
+      flex: 1;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      padding: 1rem 1.25rem 1.5rem;
+      box-sizing: border-box;
+    }
+    .page-body > .section {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+    /* Overview layout — stable, no center-shift */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+      width: 100%;
+      align-items: start;
+    }
+    .overview-side {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-width: 0;
+    }
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+      width: 100%;
+      align-items: start;
+    }
+    .kpi-card {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .kpi-card .mono {
+      font-size: clamp(1.05rem, 2.2vw, 1.45rem);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .overview-chart-card {
+      min-width: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+    .overview-chart-card .chart-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-bottom: 0.75rem;
+    }
+    .overview-chart-card .chart-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    @media (min-width: 640px) {
+      .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1100px) {
+      .overview-grid {
+        grid-template-columns: minmax(0, 1fr) 300px;
+      }
+      .bottom-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+    }
+    @media (min-width: 1400px) {
+      .overview-grid {
+        grid-template-columns: minmax(0, 1fr) 340px;
+      }
+    }
+    @media (max-width: 1023px) {
+      .main {
+        width: 100%;
+      }
     }
     .overlay {
       display: none;
@@ -338,7 +435,9 @@
       display: flex;
       gap: 10px;
       overflow-x: auto;
-      padding: 10px 16px 12px;
+      padding: 10px 1.25rem 12px;
+      width: 100%;
+      box-sizing: border-box;
       scrollbar-width: thin;
       scrollbar-color: rgba(148,163,184,0.25) transparent;
     }
@@ -669,9 +768,7 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.22); border-radius: 4px; }
 
-    @media (min-width: 1024px) {
-      .ticker-row { padding-left: 24px; padding-right: 24px; }
-    }
+
   </style>
 </head>
 <body>
@@ -764,8 +861,8 @@
 
     <!-- Main -->
     <div class="main">
-      <header class="glass-bar" style="position:sticky;top:0;z-index:30;border-bottom:1px solid var(--border);">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.75rem 1rem;">
+      <header class="glass-bar" style="position:sticky;top:0;z-index:30;border-bottom:1px solid var(--border);width:100%;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.75rem 1.25rem;width:100%;box-sizing:border-box;">
           <div style="display:flex;align-items:center;gap:0.65rem;min-width:0;">
             <button class="btn btn-icon" id="menu-btn" onclick="toggleSidebar(true)" aria-label="Menu" style="display:none;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -860,40 +957,40 @@
         </div>
       </header>
 
-      <main style="flex:1;padding:1rem;width:100%;max-width:1600px;margin:0 auto;box-sizing:border-box;">
+      <main class="page-body">
         <!-- OVERVIEW -->
         <section id="section-overview" class="section active">
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem;margin-bottom:1rem;" class="kpi-grid">
-            <div class="card card-hover" style="padding:1rem;">
+          <div class="kpi-grid">
+            <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">SG Spot (Live)</div>
-              <div id="kpi-sg" class="mono c-cyan" style="font-size:1.5rem;font-weight:700;">—</div>
+              <div id="kpi-sg" class="mono c-cyan" style="font-weight:700;">—</div>
               <div id="kpi-sg-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">—</div>
             </div>
-            <div class="card card-hover" style="padding:1rem;">
+            <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">RTM Spot (Live)</div>
-              <div id="kpi-rtm" class="mono c-emerald" style="font-size:1.5rem;font-weight:700;">—</div>
+              <div id="kpi-rtm" class="mono c-emerald" style="font-weight:700;">—</div>
               <div id="kpi-rtm-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">—</div>
             </div>
-            <div class="card card-hover" style="padding:1rem;">
+            <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">Global Avg</div>
-              <div id="kpi-glb" class="mono c-blue" style="font-size:1.5rem;font-weight:700;">—</div>
+              <div id="kpi-glb" class="mono c-blue" style="font-weight:700;">—</div>
               <div id="kpi-glb-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">—</div>
             </div>
-            <div class="card card-hover" style="padding:1rem;">
+            <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">Est. BAF Δ (MoM)</div>
-              <div id="kpi-baf" class="mono c-emerald" style="font-size:1.5rem;font-weight:700;">—</div>
+              <div id="kpi-baf" class="mono c-emerald" style="font-weight:700;">—</div>
               <div id="kpi-baf-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">vs previous month</div>
             </div>
           </div>
 
-          <div class="overview-grid" style="display:grid;gap:1rem;margin-bottom:1rem;">
-            <div class="card" style="padding:1rem 1.1rem;min-width:0;">
-              <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:0.75rem;margin-bottom:0.75rem;">
-                <div>
+          <div class="overview-grid">
+            <div class="card overview-chart-card" style="padding:1rem 1.1rem;">
+              <div class="chart-toolbar">
+                <div style="min-width:0;">
                   <h2 style="margin:0;font-size:0.9rem;font-weight:600;">VLSFO Daily Price Trend</h2>
-                  <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">01 May → 26 Jul 2026 · USD/mt · Ship &amp; Bunker anchored · Zoom &amp; pan</p>
+                  <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">01 May → 26 Jul 2026 · USD/mt · Ship &amp; Bunker · Zoom &amp; pan</p>
                 </div>
-                <div style="display:flex;flex-wrap:wrap;gap:0.35rem;align-items:center;">
+                <div class="chart-actions">
                   <button class="chip active" data-range="all" onclick="setChartRange('all', this)">All</button>
                   <button class="chip" data-range="may" onclick="setChartRange('may', this)">May</button>
                   <button class="chip" data-range="jun" onclick="setChartRange('jun', this)">Jun</button>
@@ -909,13 +1006,13 @@
               </div>
               <div class="chart-box main" id="main-chart-wrap">
                 <div id="main-chart-skeleton" class="skeleton"></div>
-                <div id="main-chart" style="display:none;height:100%;"></div>
+                <div id="main-chart" style="display:none;height:100%;width:100%;"></div>
               </div>
             </div>
 
-            <div style="display:flex;flex-direction:column;gap:1rem;min-width:0;">
-              <div class="card card-hover" style="padding:1.1rem;flex:1;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+            <div class="overview-side">
+              <div class="card card-hover" style="padding:1.1rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
                   <h3 style="margin:0;font-size:0.9rem;font-weight:600;">BAF Impact Preview</h3>
                   <span class="badge badge-sim">Model 0.85×</span>
                 </div>
@@ -936,12 +1033,12 @@
                 <h3 style="margin:0 0 0.25rem;font-size:0.9rem;font-weight:600;">Current vs Previous Quarter</h3>
                 <p class="t3" style="margin:0 0 0.5rem;font-size:11px;">Q2 2026 (May–Jun) vs Jul MTD</p>
                 <div class="chart-box quarter" id="quarter-chart"></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:0.5rem;">
-                  <div class="bg-soft" style="border-radius:10px;padding:0.55rem 0.65rem;">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0.5rem;margin-top:0.5rem;">
+                  <div class="bg-soft" style="border-radius:10px;padding:0.55rem 0.65rem;min-width:0;">
                     <div class="t3" style="font-size:10px;">Q2 Avg</div>
                     <div id="q2-avg" class="mono t1" style="font-size:0.85rem;font-weight:700;">—</div>
                   </div>
-                  <div class="bg-soft" style="border-radius:10px;padding:0.55rem 0.65rem;">
+                  <div class="bg-soft" style="border-radius:10px;padding:0.55rem 0.65rem;min-width:0;">
                     <div class="t3" style="font-size:10px;">Jul MTD</div>
                     <div id="q3-avg" class="mono c-cyan" style="font-size:0.85rem;font-weight:700;">—</div>
                   </div>
@@ -950,13 +1047,13 @@
             </div>
           </div>
 
-          <div class="bottom-grid" style="display:grid;gap:1rem;">
-            <div class="card" style="padding:1.1rem;min-width:0;">
+          <div class="bottom-grid">
+            <div class="card" style="padding:1.1rem;min-width:0;overflow:hidden;">
               <h3 style="margin:0;font-size:0.9rem;font-weight:600;">Monthly Average Comparison</h3>
               <p class="t3" style="margin:0.2rem 0 0.75rem;font-size:11px;">May · June · July 2026</p>
               <div class="chart-box bar" id="monthly-bar-chart"></div>
             </div>
-            <div class="card" style="padding:1.1rem;min-width:0;">
+            <div class="card" style="padding:1.1rem;min-width:0;overflow:hidden;">
               <h3 style="margin:0;font-size:0.9rem;font-weight:600;">Monthly Stats</h3>
               <p class="t3" style="margin:0.2rem 0 0.75rem;font-size:11px;">Average · High · Low · MoM %</p>
               <div class="table-wrap" style="max-height:320px;">
@@ -1328,23 +1425,18 @@
         </section>
       </main>
 
-      <footer style="border-top:1px solid var(--border);padding:0.9rem 1rem;margin-top:auto;">
-        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;font-size:11px;color:var(--text-3);max-width:1600px;margin:0 auto;">
-          <div><strong style="color:var(--text-2);font-weight:600;">Sources:</strong> Ship &amp; Bunker (SG/RTM/G20 VLSFO) · monthly avgs May–Jun 2026 &amp; daily spots Jul 10–24, 2026 · <span style="opacity:0.8;">Indicative reconstruction for weekends/gaps — not for trading.</span></div>
-          <div class="mono">VLSFO Monitor · BAF Tracker © 2026</div>
+      <footer style="border-top:1px solid var(--border);padding:0.9rem 1.25rem;margin-top:auto;width:100%;box-sizing:border-box;">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;font-size:11px;color:var(--text-3);width:100%;">
+          <div style="min-width:0;flex:1;"><strong style="color:var(--text-2);font-weight:600;">Sources:</strong> Ship &amp; Bunker (SG/RTM/G20 VLSFO) · monthly avgs May–Jun 2026 &amp; daily spots Jul 10–24, 2026 · <span style="opacity:0.8;">Indicative reconstruction for weekends/gaps — not for trading.</span></div>
+          <div class="mono" style="flex-shrink:0;">VLSFO Monitor · BAF Tracker © 2026</div>
         </div>
       </footer>
     </div>
   </div>
 
   <style>
-    @media (min-width: 640px) {
-      .kpi-grid { grid-template-columns: repeat(4, 1fr) !important; }
-    }
     @media (min-width: 1200px) {
-      .overview-grid { grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.9fr) !important; }
-      .bottom-grid { grid-template-columns: 1fr 1fr !important; }
-      .models-2col { grid-template-columns: 1fr 1fr !important; }
+      .models-2col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
     }
     @media (min-width: 768px) {
       #clock-box { display: flex !important; }
@@ -1356,7 +1448,16 @@
     @media (max-width: 480px) {
       #header-sub { display: none; }
       #refresh-text { display: none; }
-      main { padding: 0.75rem !important; }
+      .page-body { padding: 0.75rem !important; }
+    }
+    /* Keep ApexCharts inside cards */
+    .overview-chart-card .apexcharts-canvas,
+    .bottom-grid .apexcharts-canvas {
+      margin: 0 auto !important;
+    }
+    .ticker-row {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
     }
   </style>
 
@@ -2024,7 +2125,6 @@
     const kpiBaf = document.getElementById('kpi-baf');
     kpiBaf.textContent = (teu >= 0 ? '+' : '') + '$' + Math.abs(teu).toFixed(2) + '/TEU';
     kpiBaf.className = 'mono ' + (teu >= 0 ? 'c-up' : 'c-down');
-    kpiBaf.style.fontSize = '1.5rem';
     kpiBaf.style.fontWeight = '700';
     document.getElementById('kpi-baf-sub').textContent = 'Est. Δ BAF vs Jun · pass-through 0.85';
 
