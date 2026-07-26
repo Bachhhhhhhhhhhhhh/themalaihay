@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VLSFO Monitor • BAF Tracker</title>
+  <meta name="description" content="Professional VLSFO price dashboard for Bunker Adjustment Factor analysis" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            ocean: {
+              950: '#020617',
+              900: '#0a1628',
+              850: '#0c1a2e',
+              800: '#0f2744',
+              700: '#163556',
+              600: '#1e4a6e',
+            },
+            cyan: {
+              glow: '#22d3ee',
+              soft: '#67e8f9',
+            },
+            emerald: {
+              glow: '#34d399',
+            }
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 20px rgba(34, 211, 238, 0.15), 0 0 40px rgba(34, 211, 238, 0.05)',
+            'glow-emerald': '0 0 20px rgba(52, 211, 153, 0.15)',
+            'glow-red': '0 0 16px rgba(248, 113, 113, 0.2)',
+            'glass': '0 8px 32px rgba(0, 0, 0, 0.35)',
+          },
+          animation: {
+            'pulse-live': 'pulse-live 2s ease-in-out infinite',
+            'ticker-flash': 'ticker-flash 0.4s ease-out',
+            'fade-up': 'fade-up 0.5s ease-out forwards',
+            'shimmer': 'shimmer 1.8s infinite linear',
+          },
+          keyframes: {
+            'pulse-live': {
+              '0%, 100%': { opacity: '1', boxShadow: '0 0 0 0 rgba(52, 211, 153, 0.5)' },
+              '50%': { opacity: '0.85', boxShadow: '0 0 0 6px rgba(52, 211, 153, 0)' },
+            },
+            'ticker-flash': {
+              '0%': { backgroundColor: 'rgba(34, 211, 238, 0.2)' },
+              '100%': { backgroundColor: 'transparent' },
+            },
+            'fade-up': {
+              '0%': { opacity: '0', transform: 'translateY(12px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            'shimmer': {
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1"></script>
+  <style>
+    :root {
+      --bg-primary: #020617;
+      --bg-secondary: #0a1628;
+      --bg-card: rgba(15, 39, 68, 0.45);
+      --border-glass: rgba(148, 163, 184, 0.12);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #22d3ee;
+      --accent-2: #34d399;
+      --up: #34d399;
+      --down: #f87171;
+      --sidebar-w: 260px;
+    }
+    html.light {
+      --bg-primary: #f0f7ff;
+      --bg-secondary: #e8f1fb;
+      --bg-card: rgba(255, 255, 255, 0.72);
+      --border-glass: rgba(15, 39, 68, 0.1);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(34, 211, 238, 0.12), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 0%, rgba(52, 211, 153, 0.08), transparent 45%),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(59, 130, 246, 0.06), transparent 50%),
+        var(--bg-primary);
+      background-attachment: fixed;
+    }
+    html.light body {
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(6, 182, 212, 0.12), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 0%, rgba(16, 185, 129, 0.08), transparent 45%),
+        var(--bg-primary);
+    }
+    .glass {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      border: 1px solid var(--border-glass);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    html.light .glass {
+      box-shadow: 0 4px 24px rgba(15, 39, 68, 0.08);
+    }
+    .glass-strong {
+      background: rgba(10, 22, 40, 0.75);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    html.light .glass-strong {
+      background: rgba(255, 255, 255, 0.88);
+    }
+    .sidebar {
+      width: var(--sidebar-w);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
+    }
+    .main-wrap {
+      margin-left: var(--sidebar-w);
+      transition: margin-left 0.3s ease;
+    }
+    @media (max-width: 1023px) {
+      .sidebar {
+        position: fixed;
+        z-index: 50;
+        height: 100vh;
+        transform: translateX(-100%);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main-wrap { margin-left: 0; }
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 40;
+        backdrop-filter: blur(2px);
+      }
+      .sidebar-overlay.show { display: block; }
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.9rem;
+      border-radius: 0.65rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .nav-item:hover {
+      color: var(--text-primary);
+      background: rgba(34, 211, 238, 0.06);
+      border-color: rgba(34, 211, 238, 0.1);
+    }
+    .nav-item.active {
+      color: #67e8f9;
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.14), rgba(52, 211, 153, 0.08));
+      border-color: rgba(34, 211, 238, 0.22);
+      box-shadow: 0 0 20px rgba(34, 211, 238, 0.08);
+    }
+    html.light .nav-item.active {
+      color: #0891b2;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(16, 185, 129, 0.08));
+    }
+    .price-up { color: var(--up) !important; }
+    .price-down { color: var(--down) !important; }
+    .flash-up { animation: flash-green 0.45s ease-out; }
+    .flash-down { animation: flash-red 0.45s ease-out; }
+    @keyframes flash-green {
+      0% { background: rgba(52, 211, 153, 0.18); }
+      100% { background: transparent; }
+    }
+    @keyframes flash-red {
+      0% { background: rgba(248, 113, 113, 0.18); }
+      100% { background: transparent; }
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5);
+      animation: pulse-live 2s ease-in-out infinite;
+    }
+    @keyframes pulse-live {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); }
+      50% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+    }
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(148, 163, 184, 0.06) 25%,
+        rgba(148, 163, 184, 0.14) 50%,
+        rgba(148, 163, 184, 0.06) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.8s infinite linear;
+      border-radius: 0.5rem;
+    }
+    .section { display: none; animation: fade-up 0.45s ease-out; }
+    .section.active { display: block; }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border: 1px solid var(--border-glass);
+      background: rgba(34, 211, 238, 0.06);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: rgba(34, 211, 238, 0.14);
+      border-color: rgba(34, 211, 238, 0.3);
+      box-shadow: 0 0 16px rgba(34, 211, 238, 0.12);
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(52, 211, 153, 0.18));
+      border-color: rgba(34, 211, 238, 0.35);
+      color: #a5f3fc;
+    }
+    html.light .btn-primary { color: #0e7490; }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.35), rgba(52, 211, 153, 0.25));
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.8125rem;
+    }
+    table.data-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border-glass);
+    }
+    table.data-table td {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border-glass);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+    }
+    table.data-table tr:last-child td { border-bottom: none; }
+    table.data-table tbody tr {
+      transition: background 0.15s ease;
+    }
+    table.data-table tbody tr:hover {
+      background: rgba(34, 211, 238, 0.05);
+    }
+    .range-input {
+      accent-color: #22d3ee;
+      width: 100%;
+    }
+    input[type="date"] {
+      background: rgba(15, 39, 68, 0.5);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.8rem;
+      font-family: 'Inter', sans-serif;
+    }
+    html.light input[type="date"] {
+      background: rgba(255, 255, 255, 0.9);
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.7);
+      cursor: pointer;
+    }
+    .apexcharts-tooltip {
+      border-radius: 10px !important;
+      backdrop-filter: blur(12px);
+    }
+    .scroll-thin::-webkit-scrollbar { width: 5px; height: 5px; }
+    .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+    .scroll-thin::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.2);
+      border-radius: 4px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .badge-up {
+      background: rgba(52, 211, 153, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.25);
+    }
+    .badge-down {
+      background: rgba(248, 113, 113, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.25);
+    }
+    .badge-neutral {
+      background: rgba(148, 163, 184, 0.12);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .card-hover {
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 24px rgba(34, 211, 238, 0.08);
+      border-color: rgba(34, 211, 238, 0.25);
+    }
+    .logo-mark {
+      background: linear-gradient(135deg, #22d3ee, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .month-chip {
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-glass);
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-secondary);
+    }
+    .month-chip:hover, .month-chip.active {
+      background: rgba(34, 211, 238, 0.12);
+      border-color: rgba(34, 211, 238, 0.35);
+      color: #67e8f9;
+    }
+    html.light .month-chip.active { color: #0891b2; }
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #020617;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loader-ring {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(34, 211, 238, 0.15);
+      border-top-color: #22d3ee;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .stagger-1 { animation-delay: 0.05s; }
+    .stagger-2 { animation-delay: 0.1s; }
+    .stagger-3 { animation-delay: 0.15s; }
+    .stagger-4 { animation-delay: 0.2s; }
+  </style>
+</head>
+<body class="overflow-x-hidden">
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loader-ring mb-5"></div>
+    <div class="text-lg font-semibold logo-mark tracking-wide">VLSFO Monitor</div>
+    <div class="text-sm text-slate-500 mt-2 mono">Initializing BAF Tracker…</div>
+    <div class="mt-6 w-48 h-1 rounded-full overflow-hidden bg-slate-800">
+      <div id="load-bar" class="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full" style="width:0%;transition:width 0.3s"></div>
+    </div>
+  </div>
+
+  <!-- Mobile overlay -->
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar fixed top-0 left-0 h-screen glass-strong flex flex-col z-50 border-r border-white/5">
+    <div class="p-5 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-cyan-400/20 to-emerald-400/20 border border-cyan-400/30 shadow-glow-cyan">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#logoGrad)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="24" y2="24">
+                <stop stop-color="#22d3ee"/><stop offset="1" stop-color="#34d399"/>
+              </linearGradient>
+            </defs>
+            <path d="M3 17h18"/><path d="M5 17V11l4-3 3 2 4-4 3 2v9"/>
+            <circle cx="12" cy="7" r="1.5" fill="#22d3ee" stroke="none"/>
+          </svg>
+        </div>
+        <div>
+          <div class="text-sm font-bold tracking-tight logo-mark">VLSFO Monitor</div>
+          <div class="text-[10px] text-slate-500 uppercase tracking-widest font-medium">BAF Tracker</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto scroll-thin">
+      <div class="px-3 py-2 text-[10px] uppercase tracking-widest text-slate-600 font-semibold">Navigation</div>
+      <a class="nav-item active" data-section="overview" onclick="navigateTo('overview', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Overview
+      </a>
+      <a class="nav-item" data-section="charts" onclick="navigateTo('charts', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+        Price Charts
+      </a>
+      <a class="nav-item" data-section="monthly" onclick="navigateTo('monthly', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20V8"/></svg>
+        Monthly Compare
+      </a>
+      <a class="nav-item" data-section="baf" onclick="navigateTo('baf', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        BAF Impact
+      </a>
+      <a class="nav-item" data-section="data" onclick="navigateTo('data', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Data Table
+      </a>
+
+      <div class="px-3 py-2 mt-4 text-[10px] uppercase tracking-widest text-slate-600 font-semibold">Tools</div>
+      <button class="nav-item w-full text-left" onclick="exportCSV()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+        Export CSV
+      </button>
+      <button class="nav-item w-full text-left" onclick="exportChartPNG()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        Export Chart PNG
+      </button>
+      <button class="nav-item w-full text-left" id="theme-toggle" onclick="toggleTheme()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" id="theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <span id="theme-label">Light Mode</span>
+      </button>
+    </nav>
+
+    <div class="p-4 border-t border-white/5">
+      <div class="glass rounded-xl p-3">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="live-dot"></div>
+          <span class="text-xs font-semibold text-emerald-400">Market Live</span>
+        </div>
+        <div class="text-[10px] text-slate-500 leading-relaxed">
+          Simulated real-time feed<br/>
+          Update interval: 1.5s
+        </div>
+      </div>
+      <div class="mt-3 text-[10px] text-slate-600 text-center mono">v2.6.0 · Jul 2026</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-wrap min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="sticky top-0 z-30 glass-strong border-b border-white/5">
+      <div class="flex items-center justify-between px-4 lg:px-6 py-3 gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <button class="lg:hidden btn p-2" onclick="toggleSidebar()" aria-label="Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="min-w-0">
+            <h1 class="text-base lg:text-lg font-bold tracking-tight truncate">
+              <span class="logo-mark">VLSFO Monitor</span>
+              <span class="text-slate-500 font-normal hidden sm:inline"> • BAF Tracker</span>
+            </h1>
+            <p class="text-[11px] text-slate-500 truncate">Very Low Sulfur Fuel Oil 0.5% · Shipping BAF Analytics</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 lg:gap-4 shrink-0">
+          <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg glass text-xs">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span id="clock" class="mono text-slate-300">--:--:--</span>
+            <span class="text-slate-600">|</span>
+            <span id="clock-date" class="text-slate-500">—</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25">
+            <div class="live-dot"></div>
+            <span class="text-xs font-semibold text-emerald-400 tracking-wide">LIVE</span>
+          </div>
+          <button class="btn btn-primary" onclick="forceRefresh()" title="Force Refresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="refresh-icon"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Ticker -->
+      <div class="border-t border-white/5 px-4 lg:px-6 py-2.5 overflow-x-auto scroll-thin">
+        <div class="flex items-stretch gap-3 min-w-max">
+          <!-- Singapore -->
+          <div id="ticker-sg" class="flex items-center gap-4 px-4 py-2 rounded-xl glass card-hover min-w-[220px] transition-colors">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Singapore</span>
+                <span class="badge badge-neutral text-[9px]">VLSFO</span>
+              </div>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span id="price-sg" class="mono text-xl font-bold text-cyan-300">—</span>
+                <span class="text-[10px] text-slate-500">USD/mt</span>
+              </div>
+            </div>
+            <div class="text-right ml-auto">
+              <div id="chg-sg" class="mono text-sm font-semibold">—</div>
+              <div class="text-[10px] text-slate-500">24h</div>
+            </div>
+          </div>
+          <!-- Rotterdam -->
+          <div id="ticker-rtm" class="flex items-center gap-4 px-4 py-2 rounded-xl glass card-hover min-w-[220px] transition-colors">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Rotterdam</span>
+                <span class="badge badge-neutral text-[9px]">VLSFO</span>
+              </div>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span id="price-rtm" class="mono text-xl font-bold text-emerald-300">—</span>
+                <span class="text-[10px] text-slate-500">USD/mt</span>
+              </div>
+            </div>
+            <div class="text-right ml-auto">
+              <div id="chg-rtm" class="mono text-sm font-semibold">—</div>
+              <div class="text-[10px] text-slate-500">24h</div>
+            </div>
+          </div>
+          <!-- Global -->
+          <div id="ticker-glb" class="flex items-center gap-4 px-4 py-2 rounded-xl glass card-hover min-w-[240px] transition-colors">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Global 20 Ports</span>
+                <span class="badge badge-neutral text-[9px]">AVG</span>
+              </div>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span id="price-glb" class="mono text-xl font-bold text-blue-300">—</span>
+                <span class="text-[10px] text-slate-500">USD/mt</span>
+              </div>
+            </div>
+            <div class="text-right ml-auto">
+              <div id="chg-glb" class="mono text-sm font-semibold">—</div>
+              <div class="text-[10px] text-slate-500">24h</div>
+            </div>
+          </div>
+          <!-- Spread -->
+          <div class="flex items-center gap-4 px-4 py-2 rounded-xl glass min-w-[180px]">
+            <div>
+              <div class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">SG–RTM Spread</div>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span id="spread-sg-rtm" class="mono text-lg font-bold text-amber-300">—</span>
+                <span class="text-[10px] text-slate-500">USD</span>
+              </div>
+            </div>
+          </div>
+          <!-- Last update -->
+          <div class="flex items-center px-3 text-xs text-slate-500">
+            <span>Last updated: <span id="last-updated" class="mono text-slate-400">just now</span></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="flex-1 p-4 lg:p-6 space-y-5">
+
+      <!-- ========== OVERVIEW ========== -->
+      <section id="section-overview" class="section active">
+        <!-- KPI row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-5">
+          <div class="glass rounded-2xl p-4 card-hover">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">SG Spot (Live)</div>
+            <div id="kpi-sg" class="mono text-2xl font-bold text-cyan-300">—</div>
+            <div id="kpi-sg-sub" class="text-xs mt-1 text-slate-500">—</div>
+          </div>
+          <div class="glass rounded-2xl p-4 card-hover">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">RTM Spot (Live)</div>
+            <div id="kpi-rtm" class="mono text-2xl font-bold text-emerald-300">—</div>
+            <div id="kpi-rtm-sub" class="text-xs mt-1 text-slate-500">—</div>
+          </div>
+          <div class="glass rounded-2xl p-4 card-hover">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">Global Avg</div>
+            <div id="kpi-glb" class="mono text-2xl font-bold text-blue-300">—</div>
+            <div id="kpi-glb-sub" class="text-xs mt-1 text-slate-500">—</div>
+          </div>
+          <div class="glass rounded-2xl p-4 card-hover border-emerald-500/20">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">Est. BAF Δ (MoM)</div>
+            <div id="kpi-baf" class="mono text-2xl font-bold text-emerald-300">—</div>
+            <div id="kpi-baf-sub" class="text-xs mt-1 text-slate-500">vs previous month</div>
+          </div>
+        </div>
+
+        <!-- Main chart + side cards -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-5">
+          <!-- Chart ~60%+ -->
+          <div class="xl:col-span-8 glass rounded-2xl p-4 lg:p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 class="text-sm font-semibold tracking-tight">VLSFO Daily Price Trend</h2>
+                <p class="text-[11px] text-slate-500 mt-0.5">01 May 2026 → 26 Jul 2026 · USD/mt · Zoom & pan enabled</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button class="month-chip active" data-range="all" onclick="setChartRange('all', this)">All</button>
+                <button class="month-chip" data-range="may" onclick="setChartRange('may', this)">May</button>
+                <button class="month-chip" data-range="jun" onclick="setChartRange('jun', this)">Jun</button>
+                <button class="month-chip" data-range="jul" onclick="setChartRange('jul', this)">Jul</button>
+                <button class="btn" onclick="exportChartPNG()" title="Export PNG">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                  PNG
+                </button>
+              </div>
+            </div>
+            <!-- Date range -->
+            <div class="flex flex-wrap items-center gap-3 mb-3 text-xs">
+              <label class="text-slate-500">From</label>
+              <input type="date" id="date-from" value="2026-05-01" min="2026-05-01" max="2026-07-26" onchange="applyDateFilter()" />
+              <label class="text-slate-500">To</label>
+              <input type="date" id="date-to" value="2026-07-26" min="2026-05-01" max="2026-07-26" onchange="applyDateFilter()" />
+              <span class="text-slate-600 hidden sm:inline">· Drag on chart to brush range</span>
+            </div>
+            <div id="main-chart-skeleton" class="h-[380px] lg:h-[420px] skeleton"></div>
+            <div id="main-chart" class="hidden" style="min-height:380px"></div>
+          </div>
+
+          <!-- Side panels -->
+          <div class="xl:col-span-4 flex flex-col gap-4">
+            <!-- BAF Impact Preview -->
+            <div class="glass rounded-2xl p-5 card-hover flex-1">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold">BAF Impact Preview</h3>
+                <span class="badge badge-up">Simulated</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mb-4 leading-relaxed">
+                Ước tính BAF dựa trên biến động Global VLSFO. Công thức đơn giản: ΔBAF ≈ ΔVLSFO × 0.85 (pass-through factor).
+              </p>
+              <div class="space-y-3">
+                <div class="flex justify-between items-center py-2 border-b border-white/5">
+                  <span class="text-xs text-slate-400">Base (Jun avg)</span>
+                  <span id="baf-base" class="mono text-sm font-semibold">—</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-white/5">
+                  <span class="text-xs text-slate-400">Current (Jul MTD)</span>
+                  <span id="baf-curr" class="mono text-sm font-semibold">—</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-white/5">
+                  <span class="text-xs text-slate-400">Δ VLSFO</span>
+                  <span id="baf-delta-fuel" class="mono text-sm font-semibold">—</span>
+                </div>
+                <div class="flex justify-between items-center py-2">
+                  <span class="text-xs text-slate-400">Est. BAF Impact</span>
+                  <span id="baf-impact" class="mono text-lg font-bold text-emerald-300">—</span>
+                </div>
+              </div>
+              <div class="mt-4 p-3 rounded-xl bg-gradient-to-br from-cyan-500/10 to-emerald-500/10 border border-cyan-500/15">
+                <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Signal</div>
+                <div id="baf-signal" class="text-sm font-semibold text-cyan-300">—</div>
+              </div>
+            </div>
+
+            <!-- Current vs Previous Quarter -->
+            <div class="glass rounded-2xl p-5 card-hover">
+              <h3 class="text-sm font-semibold mb-3">Current vs Previous Quarter</h3>
+              <p class="text-[11px] text-slate-500 mb-4">Q2 2026 (May–Jun) vs Jul MTD (early Q3)</p>
+              <div id="quarter-chart" style="height:160px"></div>
+              <div class="grid grid-cols-2 gap-3 mt-3">
+                <div class="rounded-lg bg-white/5 p-2.5">
+                  <div class="text-[10px] text-slate-500">Q2 Avg</div>
+                  <div id="q2-avg" class="mono text-sm font-bold text-slate-300">—</div>
+                </div>
+                <div class="rounded-lg bg-white/5 p-2.5">
+                  <div class="text-[10px] text-slate-500">Jul MTD</div>
+                  <div id="q3-avg" class="mono text-sm font-bold text-cyan-300">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly mini comparison on overview -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 mt-5">
+          <div class="glass rounded-2xl p-5">
+            <h3 class="text-sm font-semibold mb-1">Monthly Average Comparison</h3>
+            <p class="text-[11px] text-slate-500 mb-4">May · June · July 2026 · Global / SG / RTM</p>
+            <div id="monthly-bar-chart" style="min-height:280px"></div>
+          </div>
+          <div class="glass rounded-2xl p-5 overflow-x-auto">
+            <h3 class="text-sm font-semibold mb-1">Monthly Stats Table</h3>
+            <p class="text-[11px] text-slate-500 mb-4">Average · High · Low · MoM %</p>
+            <table class="data-table" id="monthly-stats-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Port</th>
+                  <th>Avg</th>
+                  <th>High</th>
+                  <th>Low</th>
+                  <th>MoM %</th>
+                </tr>
+              </thead>
+              <tbody id="monthly-stats-body">
+                <tr><td colspan="6" class="text-center text-slate-500 py-6">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== CHARTS ========== -->
+      <section id="section-charts" class="section">
+        <div class="glass rounded-2xl p-5 mb-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 class="text-sm font-semibold">Full Price History — Interactive</h2>
+              <p class="text-[11px] text-slate-500">Brush · Zoom · Pan · Series toggle</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-primary" onclick="exportChartPNG()">Export PNG</button>
+              <button class="btn" onclick="exportCSV()">Export CSV</button>
+            </div>
+          </div>
+          <div id="full-chart" style="min-height:480px"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-[11px] text-slate-500 uppercase tracking-wider mb-2">Volatility (SG, 30d)</div>
+            <div id="vol-sg" class="mono text-2xl font-bold text-cyan-300">—</div>
+            <div class="text-xs text-slate-500 mt-1">std. dev. USD/mt</div>
+          </div>
+          <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-[11px] text-slate-500 uppercase tracking-wider mb-2">Volatility (RTM, 30d)</div>
+            <div id="vol-rtm" class="mono text-2xl font-bold text-emerald-300">—</div>
+            <div class="text-xs text-slate-500 mt-1">std. dev. USD/mt</div>
+          </div>
+          <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-[11px] text-slate-500 uppercase tracking-wider mb-2">Max Drawdown (Global)</div>
+            <div id="drawdown" class="mono text-2xl font-bold text-amber-300">—</div>
+            <div class="text-xs text-slate-500 mt-1">from May peak</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== MONTHLY ========== -->
+      <section id="section-monthly" class="section">
+        <div class="glass rounded-2xl p-5 mb-5">
+          <h2 class="text-sm font-semibold mb-1">Monthly Bar Comparison</h2>
+          <p class="text-[11px] text-slate-500 mb-4">Average VLSFO prices by hub · May–Jul 2026</p>
+          <div id="monthly-bar-chart-full" style="min-height:360px"></div>
+        </div>
+        <div class="glass rounded-2xl p-5 overflow-x-auto">
+          <h2 class="text-sm font-semibold mb-4">Detailed Monthly Metrics</h2>
+          <table class="data-table" id="monthly-full-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Port</th>
+                <th>Average</th>
+                <th>High</th>
+                <th>Low</th>
+                <th>Range</th>
+                <th>MoM Δ</th>
+                <th>MoM %</th>
+              </tr>
+            </thead>
+            <tbody id="monthly-full-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========== BAF ========== -->
+      <section id="section-baf" class="section">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+          <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">BAF Index (simulated)</div>
+            <div id="baf-index" class="mono text-3xl font-bold logo-mark">—</div>
+            <div class="text-xs text-slate-500 mt-2">Base 100 = Jan 2026 reference</div>
+          </div>
+          <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Recommended BAF Action</div>
+            <div id="baf-action" class="text-xl font-bold text-cyan-300">—</div>
+            <div id="baf-action-sub" class="text-xs text-slate-500 mt-2">—</div>
+          </div>
+          <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Pass-through Factor</div>
+            <div class="mono text-3xl font-bold text-emerald-300">0.85×</div>
+            <div class="text-xs text-slate-500 mt-2">Industry-typical for liner BAF</div>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-5 mb-5">
+          <h2 class="text-sm font-semibold mb-1">BAF vs VLSFO Correlation</h2>
+          <p class="text-[11px] text-slate-500 mb-4">Estimated BAF component tracks Global VLSFO with 0.85 pass-through</p>
+          <div id="baf-chart" style="min-height:360px"></div>
+        </div>
+        <div class="glass rounded-2xl p-5">
+          <h3 class="text-sm font-semibold mb-3">BAF Formula (illustrative)</h3>
+          <div class="mono text-xs lg:text-sm p-4 rounded-xl bg-black/30 border border-white/5 text-cyan-200/90 leading-relaxed overflow-x-auto">
+            BAF_t = BAF_base + (VLSFO_global_t − VLSFO_ref) × PassThrough × (ConsumptionFactor / TEU)<br/><br/>
+            ΔBAF_USD/TEU ≈ ΔVLSFO_USD/mt × 0.85 × 0.012  <span class="text-slate-500">// simplified unit factor</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3">* Mô phỏng cho mục đích phân tích. Công thức BAF thực tế của từng hãng tàu (Maersk, MSC, CMA CGM…) khác nhau và không công bố đầy đủ.</p>
+        </div>
+      </section>
+
+      <!-- ========== DATA TABLE ========== -->
+      <section id="section-data" class="section">
+        <div class="glass rounded-2xl p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 class="text-sm font-semibold">Daily Price Data</h2>
+              <p class="text-[11px] text-slate-500">Hardcoded baseline + live last-tick overlay · Source: Ship & Bunker / Bunker Index style</p>
+            </div>
+            <button class="btn btn-primary" onclick="exportCSV()">Download CSV</button>
+          </div>
+          <div class="overflow-x-auto max-h-[560px] scroll-thin overflow-y-auto">
+            <table class="data-table">
+              <thead class="sticky top-0 bg-ocean-900/95 backdrop-blur z-10">
+                <tr>
+                  <th>Date</th>
+                  <th>Singapore</th>
+                  <th>Rotterdam</th>
+                  <th>Global 20</th>
+                  <th>SG–RTM</th>
+                </tr>
+              </thead>
+              <tbody id="daily-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 px-4 lg:px-6 py-4 mt-auto">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-slate-500">
+        <div>
+          <span class="font-medium text-slate-400">Data sources:</span>
+          Ship &amp; Bunker · Bunker Index · USDA AgTransport
+          <span class="text-slate-600"> · Prices simulated for demo; not for commercial trading.</span>
+        </div>
+        <div class="mono text-slate-600">
+          VLSFO Monitor • BAF Tracker © 2026
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+  /* =========================================================
+     VLSFO Monitor • BAF Tracker — Core Engine
+     ========================================================= */
+
+  // ---------- Seeded PRNG for reproducible history ----------
+  function mulberry32(a) {
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function daysBetween(a, b) {
+    const ms = 24 * 60 * 60 * 1000;
+    return Math.round((b - a) / ms);
+  }
+
+  function fmtDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function parseDate(s) {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function fmtPrice(n) {
+    return n.toFixed(2);
+  }
+
+  function fmtPct(n) {
+    const sign = n >= 0 ? '+' : '';
+    return sign + n.toFixed(2) + '%';
+  }
+
+  // ---------- Generate realistic daily series May 1 – Jul 26 2026 ----------
+  // Narrative: May elevated → June decline → July strong recovery (geopolitics)
+  // SG ~870-880 Jul, RTM ~700-720, Global ~830-850
+  function generateHistory() {
+    const rand = mulberry32(20260726);
+    const start = parseDate('2026-05-01');
+    const end = parseDate('2026-07-26');
+    const n = daysBetween(start, end) + 1;
+    const series = [];
+
+    // Anchors (approx levels over period)
+    // May: SG ~920-960, RTM ~760-800, GLB ~880-920 (high)
+    // Jun: SG ~820-860, RTM ~680-720, GLB ~780-820 (soft)
+    // Jul: SG ~860-880, RTM ~700-720, GLB ~830-850 (recovery)
+
+    let sg = 945, rtm = 780, glb = 900;
+
+    for (let i = 0; i < n; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const month = d.getMonth(); // 4=May, 5=Jun, 6=Jul
+      const dayOfMonth = d.getDate();
+      const t = i / (n - 1);
+
+      // Drift targets
+      let targetSg, targetRtm, targetGlb;
+      if (month === 4) {
+        // May: elevated, slight drift down late month
+        targetSg = 950 - dayOfMonth * 0.6;
+        targetRtm = 785 - dayOfMonth * 0.5;
+        targetGlb = 905 - dayOfMonth * 0.55;
+      } else if (month === 5) {
+        // June: clear decline
+        targetSg = 920 - dayOfMonth * 2.8;
+        targetRtm = 760 - dayOfMonth * 2.2;
+        targetGlb = 880 - dayOfMonth * 2.5;
+      } else {
+        // July: recovery
+        targetSg = 830 + dayOfMonth * 1.7;
+        targetRtm = 685 + dayOfMonth * 1.15;
+        targetGlb = 790 + dayOfMonth * 1.9;
+      }
+
+      // Mean-reverting random walk toward target
+      const noise = () => (rand() - 0.5) * 6.5;
+      sg = sg + (targetSg - sg) * 0.18 + noise();
+      rtm = rtm + (targetRtm - rtm) * 0.18 + noise() * 0.9;
+      glb = glb + (targetGlb - glb) * 0.18 + noise() * 0.85;
+
+      // Clamp to sensible bands
+      sg = Math.max(780, Math.min(980, sg));
+      rtm = Math.max(640, Math.min(830, rtm));
+      glb = Math.max(740, Math.min(940, glb));
+
+      // Geopolitical spikes (annotations)
+      // Mid-May tension spike
+      if (fmtDate(d) === '2026-05-14') { sg += 18; rtm += 12; glb += 15; }
+      if (fmtDate(d) === '2026-05-15') { sg += 8; rtm += 5; glb += 6; }
+      // Late June relief
+      if (fmtDate(d) === '2026-06-20') { sg -= 14; rtm -= 10; glb -= 12; }
+      // Early July recovery surge
+      if (fmtDate(d) === '2026-07-07') { sg += 22; rtm += 14; glb += 18; }
+      if (fmtDate(d) === '2026-07-08') { sg += 10; rtm += 7; glb += 9; }
+      // Mid-July second leg up
+      if (fmtDate(d) === '2026-07-18') { sg += 12; rtm += 8; glb += 10; }
+
+      series.push({
+        date: fmtDate(d),
+        ts: d.getTime(),
+        sg: Math.round(sg * 100) / 100,
+        rtm: Math.round(rtm * 100) / 100,
+        glb: Math.round(glb * 100) / 100,
+      });
+    }
+
+    // Force end-of-series into requested Jul bands
+    const last = series[series.length - 1];
+    // Soft blend last 5 days toward targets
+    const targets = { sg: 875, rtm: 712, glb: 842 };
+    for (let k = 0; k < 5; k++) {
+      const idx = series.length - 5 + k;
+      if (idx < 0) continue;
+      const w = (k + 1) / 5;
+      series[idx].sg = Math.round((series[idx].sg * (1 - w) + targets.sg * w) * 100) / 100;
+      series[idx].rtm = Math.round((series[idx].rtm * (1 - w) + targets.rtm * w) * 100) / 100;
+      series[idx].glb = Math.round((series[idx].glb * (1 - w) + targets.glb * w) * 100) / 100;
+    }
+
+    return series;
+  }
+
+  // ---------- State ----------
+  const state = {
+    history: [],
+    live: { sg: 0, rtm: 0, glb: 0 },
+    prev: { sg: 0, rtm: 0, glb: 0 },
+    dayAgo: { sg: 0, rtm: 0, glb: 0 },
+    lastUpdate: Date.now(),
+    charts: {},
+    theme: 'dark',
+    range: 'all',
+    dateFrom: '2026-05-01',
+    dateTo: '2026-07-26',
+    intervalId: null,
+    secondsAgoId: null,
+  };
+
+  // Annotations for strong moves
+  const ANNOTATIONS = [
+    { date: '2026-05-14', label: 'Geopolitical spike', y: 970 },
+    { date: '2026-06-20', label: 'Demand soft / relief', y: 820 },
+    { date: '2026-07-07', label: 'Strong recovery leg', y: 860 },
+    { date: '2026-07-18', label: 'Second leg higher', y: 880 },
+  ];
+
+  // ---------- Stats helpers ----------
+  function monthlyStats(history) {
+    const months = { '2026-05': [], '2026-06': [], '2026-07': [] };
+    history.forEach(r => {
+      const key = r.date.slice(0, 7);
+      if (months[key]) months[key].push(r);
+    });
+    const ports = ['sg', 'rtm', 'glb'];
+    const labels = { sg: 'Singapore', rtm: 'Rotterdam', glb: 'Global 20' };
+    const result = [];
+    const keys = Object.keys(months);
+    keys.forEach((key, mi) => {
+      const rows = months[key];
+      if (!rows.length) return;
+      ports.forEach(p => {
+        const vals = rows.map(r => r[p]);
+        const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const high = Math.max(...vals);
+        const low = Math.min(...vals);
+        let momPct = null, momDelta = null;
+        if (mi > 0) {
+          const prevRows = months[keys[mi - 1]];
+          if (prevRows && prevRows.length) {
+            const prevAvg = prevRows.map(r => r[p]).reduce((a, b) => a + b, 0) / prevRows.length;
+            momDelta = avg - prevAvg;
+            momPct = (momDelta / prevAvg) * 100;
+          }
+        }
+        result.push({
+          month: key,
+          monthLabel: { '2026-05': 'May 2026', '2026-06': 'Jun 2026', '2026-07': 'Jul 2026' }[key],
+          port: p,
+          portLabel: labels[p],
+          avg, high, low,
+          range: high - low,
+          momPct, momDelta
+        });
+      });
+    });
+    return result;
+  }
+
+  function filterHistory(from, to) {
+    return state.history.filter(r => r.date >= from && r.date <= to);
+  }
+
+  function stdDev(arr) {
+    if (arr.length < 2) return 0;
+    const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+    const v = arr.reduce((a, b) => a + (b - m) ** 2, 0) / (arr.length - 1);
+    return Math.sqrt(v);
+  }
+
+  // ---------- Chart theme ----------
+  function chartTheme() {
+    const dark = state.theme === 'dark';
+    return {
+      mode: dark ? 'dark' : 'light',
+      foreColor: dark ? '#94a3b8' : '#64748b',
+      background: 'transparent',
+    };
+  }
+
+  function gridColor() {
+    return state.theme === 'dark' ? 'rgba(148,163,184,0.08)' : 'rgba(15,39,68,0.08)';
+  }
+
+  // ---------- Build main chart options ----------
+  function buildMainSeries(data) {
+    return [
+      { name: 'Singapore VLSFO', data: data.map(r => ({ x: r.ts, y: r.sg })) },
+      { name: 'Rotterdam VLSFO', data: data.map(r => ({ x: r.ts, y: r.rtm })) },
+      { name: 'Global 20 Ports Avg', data: data.map(r => ({ x: r.ts, y: r.glb })) },
+    ];
+  }
+
+  function annotationPoints(data) {
+    return ANNOTATIONS
+      .filter(a => data.some(r => r.date === a.date))
+      .map(a => {
+        const row = data.find(r => r.date === a.date);
+        return {
+          x: row.ts,
+          y: row.sg,
+          marker: {
+            size: 6,
+            fillColor: '#fbbf24',
+            strokeColor: '#0a1628',
+            strokeWidth: 2,
+          },
+          label: {
+            borderColor: '#fbbf24',
+            offsetY: 0,
+            style: {
+              color: '#0f172a',
+              background: '#fbbf24',
+              fontSize: '10px',
+              fontWeight: 600,
+              fontFamily: 'Inter, sans-serif',
+              padding: { left: 6, right: 6, top: 3, bottom: 3 },
+            },
+            text: a.label,
+          }
+        };
+      });
+  }
+
+  function mainChartOptions(data) {
+    return {
+      series: buildMainSeries(data),
+      chart: {
+        type: 'area',
+        height: 400,
+        fontFamily: 'Inter, sans-serif',
+        background: 'transparent',
+        toolbar: {
+          show: true,
+          tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true },
+          export: { csv: { filename: 'vlsfo-prices' }, png: { filename: 'vlsfo-chart' } }
+        },
+        animations: { enabled: true, easing: 'easeinout', speed: 450 },
+        zoom: { enabled: true, type: 'x', autoScaleYaxis: true },
+        selection: { enabled: true },
+        events: {}
+      },
+      theme: chartTheme(),
+      colors: ['#22d3ee', '#34d399', '#60a5fa'],
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth', width: [2.5, 2.5, 2], dashArray: [0, 0, 4] },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.35,
+          opacityTo: 0.02,
+          stops: [0, 90, 100]
+        }
+      },
+      markers: { size: 0, hover: { size: 5 } },
+      xaxis: {
+        type: 'datetime',
+        labels: {
+          datetimeUTC: false,
+          style: { fontFamily: 'Inter, sans-serif', fontSize: '11px' }
+        },
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        tooltip: { enabled: false }
+      },
+      yaxis: {
+        labels: {
+          formatter: v => v.toFixed(0),
+          style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }
+        },
+        title: {
+          text: 'USD / mt',
+          style: { fontSize: '11px', color: '#64748b', fontWeight: 500 }
+        }
+      },
+      grid: {
+        borderColor: gridColor(),
+        strokeDashArray: 3,
+        xaxis: { lines: { show: false } },
+        padding: { left: 8, right: 12 }
+      },
+      legend: {
+        position: 'top',
+        horizontalAlign: 'right',
+        fontSize: '12px',
+        fontFamily: 'Inter, sans-serif',
+        markers: { width: 10, height: 10, radius: 10 },
+        itemMargin: { horizontal: 12 }
+      },
+      tooltip: {
+        theme: state.theme === 'dark' ? 'dark' : 'light',
+        shared: true,
+        intersect: false,
+        x: { format: 'dd MMM yyyy' },
+        y: { formatter: v => (v != null ? '$' + v.toFixed(2) + '/mt' : '—') },
+        style: { fontSize: '12px', fontFamily: 'Inter, sans-serif' }
+      },
+      annotations: {
+        points: annotationPoints(data),
+        xaxis: [
+          {
+            x: parseDate('2026-05-01').getTime(),
+            x2: parseDate('2026-05-31').getTime(),
+            fillColor: 'rgba(34, 211, 238, 0.04)',
+            label: { text: 'MAY', style: { color: '#22d3ee', background: 'transparent', fontSize: '10px', fontWeight: 700 } }
+          },
+          {
+            x: parseDate('2026-06-01').getTime(),
+            x2: parseDate('2026-06-30').getTime(),
+            fillColor: 'rgba(248, 113, 113, 0.04)',
+            label: { text: 'JUN', style: { color: '#f87171', background: 'transparent', fontSize: '10px', fontWeight: 700 } }
+          },
+          {
+            x: parseDate('2026-07-01').getTime(),
+            x2: parseDate('2026-07-26').getTime(),
+            fillColor: 'rgba(52, 211, 153, 0.05)',
+            label: { text: 'JUL ↑', style: { color: '#34d399', background: 'transparent', fontSize: '10px', fontWeight: 700 } }
+          }
+        ]
+      }
+    };
+  }
+
+  // ---------- Init charts ----------
+  function initMainChart() {
+    const data = filterHistory(state.dateFrom, state.dateTo);
+    const el = document.querySelector('#main-chart');
+    el.classList.remove('hidden');
+    document.querySelector('#main-chart-skeleton').classList.add('hidden');
+
+    if (state.charts.main) {
+      state.charts.main.updateOptions(mainChartOptions(data), true, true);
+    } else {
+      state.charts.main = new ApexCharts(el, mainChartOptions(data));
+      state.charts.main.render();
+    }
+  }
+
+  function initFullChart() {
+    const data = state.history;
+    const opts = mainChartOptions(data);
+    opts.chart.height = 480;
+    const el = document.querySelector('#full-chart');
+    if (state.charts.full) {
+      state.charts.full.updateOptions(opts, true, true);
+    } else {
+      state.charts.full = new ApexCharts(el, opts);
+      state.charts.full.render();
+    }
+  }
+
+  function monthlyBarOptions(height = 280) {
+    const stats = monthlyStats(state.history);
+    const months = ['May 2026', 'Jun 2026', 'Jul 2026'];
+    const get = (m, p) => {
+      const row = stats.find(s => s.monthLabel === m && s.port === p);
+      return row ? Math.round(row.avg * 10) / 10 : 0;
+    };
+    return {
+      series: [
+        { name: 'Singapore', data: months.map(m => get(m, 'sg')) },
+        { name: 'Rotterdam', data: months.map(m => get(m, 'rtm')) },
+        { name: 'Global 20', data: months.map(m => get(m, 'glb')) },
+      ],
+      chart: {
+        type: 'bar',
+        height,
+        fontFamily: 'Inter, sans-serif',
+        background: 'transparent',
+        toolbar: { show: false },
+        animations: { enabled: true, speed: 500 }
+      },
+      theme: chartTheme(),
+      colors: ['#22d3ee', '#34d399', '#60a5fa'],
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: '55%',
+          borderRadius: 6,
+          borderRadiusApplication: 'end',
+          dataLabels: { position: 'top' }
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: v => Math.round(v),
+        offsetY: -18,
+        style: { fontSize: '10px', colors: [state.theme === 'dark' ? '#94a3b8' : '#64748b'], fontFamily: 'JetBrains Mono, monospace', fontWeight: 500 }
+      },
+      xaxis: {
+        categories: months,
+        labels: { style: { fontSize: '12px', fontFamily: 'Inter, sans-serif' } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        labels: {
+          formatter: v => v.toFixed(0),
+          style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }
+        }
+      },
+      grid: { borderColor: gridColor(), strokeDashArray: 3 },
+      legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px' },
+      tooltip: {
+        theme: state.theme === 'dark' ? 'dark' : 'light',
+        y: { formatter: v => '$' + v.toFixed(2) + '/mt' }
+      }
+    };
+  }
+
+  function initMonthlyBars() {
+    const o1 = monthlyBarOptions(280);
+    const el1 = document.querySelector('#monthly-bar-chart');
+    if (state.charts.monthlyBar) {
+      state.charts.monthlyBar.updateOptions(o1, true, true);
+    } else {
+      state.charts.monthlyBar = new ApexCharts(el1, o1);
+      state.charts.monthlyBar.render();
+    }
+    const o2 = monthlyBarOptions(360);
+    const el2 = document.querySelector('#monthly-bar-chart-full');
+    if (state.charts.monthlyBarFull) {
+      state.charts.monthlyBarFull.updateOptions(o2, true, true);
+    } else {
+      state.charts.monthlyBarFull = new ApexCharts(el2, o2);
+      state.charts.monthlyBarFull.render();
+    }
+  }
+
+  function initQuarterChart() {
+    const mayJun = state.history.filter(r => r.date >= '2026-05-01' && r.date <= '2026-06-30');
+    const jul = state.history.filter(r => r.date >= '2026-07-01');
+    const avg = (arr, k) => arr.reduce((s, r) => s + r[k], 0) / (arr.length || 1);
+    const q2 = { sg: avg(mayJun, 'sg'), rtm: avg(mayJun, 'rtm'), glb: avg(mayJun, 'glb') };
+    const q3 = { sg: avg(jul, 'sg'), rtm: avg(jul, 'rtm'), glb: avg(jul, 'glb') };
+
+    document.getElementById('q2-avg').textContent = '$' + fmtPrice(q2.glb);
+    document.getElementById('q3-avg').textContent = '$' + fmtPrice(q3.glb);
+
+    const opts = {
+      series: [
+        { name: 'Q2 (May–Jun)', data: [Math.round(q2.sg), Math.round(q2.rtm), Math.round(q2.glb)] },
+        { name: 'Jul MTD', data: [Math.round(q3.sg), Math.round(q3.rtm), Math.round(q3.glb)] },
+      ],
+      chart: {
+        type: 'bar',
+        height: 160,
+        fontFamily: 'Inter, sans-serif',
+        background: 'transparent',
+        toolbar: { show: false },
+        sparkline: { enabled: false }
+      },
+      theme: chartTheme(),
+      colors: ['#64748b', '#22d3ee'],
+      plotOptions: {
+        bar: { horizontal: false, columnWidth: '60%', borderRadius: 4 }
+      },
+      dataLabels: { enabled: false },
+      xaxis: {
+        categories: ['SG', 'RTM', 'Global'],
+        labels: { style: { fontSize: '11px' } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: { show: false },
+      grid: { show: false },
+      legend: { show: false },
+      tooltip: {
+        theme: state.theme === 'dark' ? 'dark' : 'light',
+        y: { formatter: v => '$' + v + '/mt' }
+      }
+    };
+    const el = document.querySelector('#quarter-chart');
+    if (state.charts.quarter) {
+      state.charts.quarter.updateOptions(opts, true, true);
+    } else {
+      state.charts.quarter = new ApexCharts(el, opts);
+      state.charts.quarter.render();
+    }
+  }
+
+  function initBafChart() {
+    // Estimated BAF component from global VLSFO
+    const ref = 800; // reference
+    const data = state.history.map(r => ({
+      x: r.ts,
+      fuel: r.glb,
+      baf: ref + (r.glb - ref) * 0.85
+    }));
+    const opts = {
+      series: [
+        { name: 'Global VLSFO', type: 'area', data: data.map(d => ({ x: d.x, y: d.fuel })) },
+        { name: 'Est. BAF Component', type: 'line', data: data.map(d => ({ x: d.x, y: d.baf })) },
+      ],
+      chart: {
+        height: 360,
+        type: 'line',
+        fontFamily: 'Inter, sans-serif',
+        background: 'transparent',
+        toolbar: { show: true, tools: { download: true, zoom: true, pan: true, reset: true } },
+        animations: { enabled: true, speed: 450 }
+      },
+      theme: chartTheme(),
+      colors: ['#60a5fa', '#fbbf24'],
+      stroke: { width: [2, 2.5], curve: 'smooth', dashArray: [0, 0] },
+      fill: {
+        type: ['gradient', 'solid'],
+        gradient: { opacityFrom: 0.3, opacityTo: 0.02 }
+      },
+      xaxis: {
+        type: 'datetime',
+        labels: { datetimeUTC: false, style: { fontSize: '11px' } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        labels: {
+          formatter: v => v.toFixed(0),
+          style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }
+        }
+      },
+      grid: { borderColor: gridColor(), strokeDashArray: 3 },
+      legend: { position: 'top', horizontalAlign: 'right' },
+      tooltip: {
+        theme: state.theme === 'dark' ? 'dark' : 'light',
+        shared: true,
+        x: { format: 'dd MMM yyyy' },
+        y: { formatter: v => '$' + v.toFixed(2) }
+      }
+    };
+    const el = document.querySelector('#baf-chart');
+    if (state.charts.baf) {
+      state.charts.baf.updateOptions(opts, true, true);
+    } else {
+      state.charts.baf = new ApexCharts(el, opts);
+      state.charts.baf.render();
+    }
+  }
+
+  // ---------- Tables ----------
+  function renderMonthlyTables() {
+    const stats = monthlyStats(state.history);
+    const rowHtml = (s) => {
+      const mom = s.momPct == null
+        ? '<span class="text-slate-600">—</span>'
+        : `<span class="${s.momPct >= 0 ? 'price-up' : 'price-down'}">${fmtPct(s.momPct)}</span>`;
+      return `<tr>
+        <td class="!font-sans text-slate-400">${s.monthLabel}</td>
+        <td class="!font-sans">${s.portLabel}</td>
+        <td>${fmtPrice(s.avg)}</td>
+        <td>${fmtPrice(s.high)}</td>
+        <td>${fmtPrice(s.low)}</td>
+        <td>${mom}</td>
+      </tr>`;
+    };
+    document.getElementById('monthly-stats-body').innerHTML = stats.map(rowHtml).join('');
+
+    const fullHtml = (s) => {
+      const momD = s.momDelta == null
+        ? '—'
+        : `<span class="${s.momDelta >= 0 ? 'price-up' : 'price-down'}">${s.momDelta >= 0 ? '+' : ''}${fmtPrice(s.momDelta)}</span>`;
+      const momP = s.momPct == null
+        ? '—'
+        : `<span class="${s.momPct >= 0 ? 'price-up' : 'price-down'}">${fmtPct(s.momPct)}</span>`;
+      return `<tr>
+        <td class="!font-sans text-slate-400">${s.monthLabel}</td>
+        <td class="!font-sans">${s.portLabel}</td>
+        <td>${fmtPrice(s.avg)}</td>
+        <td>${fmtPrice(s.high)}</td>
+        <td>${fmtPrice(s.low)}</td>
+        <td>${fmtPrice(s.range)}</td>
+        <td>${momD}</td>
+        <td>${momP}</td>
+      </tr>`;
+    };
+    document.getElementById('monthly-full-body').innerHTML = stats.map(fullHtml).join('');
+  }
+
+  function renderDailyTable() {
+    const rows = [...state.history].reverse();
+    document.getElementById('daily-table-body').innerHTML = rows.map(r => {
+      const spread = r.sg - r.rtm;
+      return `<tr>
+        <td class="!font-sans text-slate-400">${r.date}</td>
+        <td class="text-cyan-300">${fmtPrice(r.sg)}</td>
+        <td class="text-emerald-300">${fmtPrice(r.rtm)}</td>
+        <td class="text-blue-300">${fmtPrice(r.glb)}</td>
+        <td class="text-amber-300">${fmtPrice(spread)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---------- BAF metrics ----------
+  function updateBafMetrics() {
+    const stats = monthlyStats(state.history);
+    const junGlb = stats.find(s => s.month === '2026-06' && s.port === 'glb');
+    const julGlb = stats.find(s => s.month === '2026-07' && s.port === 'glb');
+    if (!junGlb || !julGlb) return;
+
+    const base = junGlb.avg;
+    const curr = julGlb.avg;
+    const deltaFuel = curr - base;
+    const impact = deltaFuel * 0.85;
+    // Simplified USD/TEU factor
+    const teuImpact = impact * 0.012;
+
+    document.getElementById('baf-base').textContent = '$' + fmtPrice(base) + '/mt';
+    document.getElementById('baf-curr').textContent = '$' + fmtPrice(curr) + '/mt';
+    const dEl = document.getElementById('baf-delta-fuel');
+    dEl.textContent = (deltaFuel >= 0 ? '+' : '') + fmtPrice(deltaFuel) + ' USD';
+    dEl.className = 'mono text-sm font-semibold ' + (deltaFuel >= 0 ? 'price-up' : 'price-down');
+
+    const iEl = document.getElementById('baf-impact');
+    iEl.textContent = (impact >= 0 ? '+' : '') + fmtPrice(impact) + ' USD/mt';
+    iEl.className = 'mono text-lg font-bold ' + (impact >= 0 ? 'text-emerald-300 price-up' : 'text-red-400 price-down');
+
+    const signal = document.getElementById('baf-signal');
+    if (impact > 15) {
+      signal.textContent = '↑ Consider BAF increase — fuel recovery strong';
+      signal.className = 'text-sm font-semibold text-emerald-300';
+    } else if (impact < -15) {
+      signal.textContent = '↓ Room to ease BAF — fuel softened';
+      signal.className = 'text-sm font-semibold text-red-300';
+    } else {
+      signal.textContent = '→ Hold BAF — modest fuel move';
+      signal.className = 'text-sm font-semibold text-cyan-300';
+    }
+
+    document.getElementById('kpi-baf').textContent = (teuImpact >= 0 ? '+' : '') + '$' + Math.abs(teuImpact).toFixed(2) + '/TEU';
+    document.getElementById('kpi-baf').className = 'mono text-2xl font-bold ' + (teuImpact >= 0 ? 'text-emerald-300' : 'text-red-400');
+    document.getElementById('kpi-baf-sub').textContent = 'Est. Δ BAF vs Jun · pass-through 0.85';
+
+    // BAF section
+    const bafIndex = 100 + (state.live.glb - 800) / 8;
+    document.getElementById('baf-index').textContent = bafIndex.toFixed(1);
+    const act = document.getElementById('baf-action');
+    const actSub = document.getElementById('baf-action-sub');
+    if (impact > 15) {
+      act.textContent = 'RAISE BAF';
+      act.className = 'text-xl font-bold text-emerald-300';
+      actSub.textContent = `Suggest +$${fmtPrice(Math.abs(teuImpact))}/TEU vs prior month baseline`;
+    } else if (impact < -15) {
+      act.textContent = 'REDUCE BAF';
+      act.className = 'text-xl font-bold text-red-300';
+      actSub.textContent = `Suggest −$${fmtPrice(Math.abs(teuImpact))}/TEU vs prior month baseline`;
+    } else {
+      act.textContent = 'HOLD BAF';
+      act.className = 'text-xl font-bold text-cyan-300';
+      actSub.textContent = 'Within neutral band — no structural change';
+    }
+  }
+
+  // ---------- Live ticker ----------
+  function setPriceEl(id, val, prev) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = fmtPrice(val);
+    const parent = el.closest('[id^="ticker-"]') || el.parentElement;
+    if (val > prev) {
+      el.classList.remove('price-down');
+      el.classList.add('price-up');
+      if (parent && parent.id) {
+        parent.classList.remove('flash-down');
+        parent.classList.add('flash-up');
+        setTimeout(() => parent.classList.remove('flash-up'), 450);
+      }
+    } else if (val < prev) {
+      el.classList.remove('price-up');
+      el.classList.add('price-down');
+      if (parent && parent.id) {
+        parent.classList.remove('flash-up');
+        parent.classList.add('flash-down');
+        setTimeout(() => parent.classList.remove('flash-down'), 450);
+      }
+    }
+  }
+
+  function setChg(id, live, dayAgo) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const pct = ((live - dayAgo) / dayAgo) * 100;
+    const abs = live - dayAgo;
+    el.textContent = `${abs >= 0 ? '▲' : '▼'} ${fmtPct(pct)}`;
+    el.className = 'mono text-sm font-semibold ' + (pct >= 0 ? 'price-up' : 'price-down');
+  }
+
+  function updateTickerUI() {
+    const { live, prev, dayAgo } = state;
+    setPriceEl('price-sg', live.sg, prev.sg);
+    setPriceEl('price-rtm', live.rtm, prev.rtm);
+    setPriceEl('price-glb', live.glb, prev.glb);
+
+    // KPIs without flash parent
+    document.getElementById('kpi-sg').textContent = '$' + fmtPrice(live.sg);
+    document.getElementById('kpi-rtm').textContent = '$' + fmtPrice(live.rtm);
+    document.getElementById('kpi-glb').textContent = '$' + fmtPrice(live.glb);
+
+    setChg('chg-sg', live.sg, dayAgo.sg);
+    setChg('chg-rtm', live.rtm, dayAgo.rtm);
+    setChg('chg-glb', live.glb, dayAgo.glb);
+
+    const pctSg = ((live.sg - dayAgo.sg) / dayAgo.sg) * 100;
+    const pctRtm = ((live.rtm - dayAgo.rtm) / dayAgo.rtm) * 100;
+    const pctGlb = ((live.glb - dayAgo.glb) / dayAgo.glb) * 100;
+    document.getElementById('kpi-sg-sub').innerHTML = `<span class="${pctSg >= 0 ? 'price-up' : 'price-down'}">${fmtPct(pctSg)}</span> 24h`;
+    document.getElementById('kpi-rtm-sub').innerHTML = `<span class="${pctRtm >= 0 ? 'price-up' : 'price-down'}">${fmtPct(pctRtm)}</span> 24h`;
+    document.getElementById('kpi-glb-sub').innerHTML = `<span class="${pctGlb >= 0 ? 'price-up' : 'price-down'}">${fmtPct(pctGlb)}</span> 24h`;
+
+    document.getElementById('spread-sg-rtm').textContent = fmtPrice(live.sg - live.rtm);
+    state.lastUpdate = Date.now();
+  }
+
+  function liveTick() {
+    state.prev = { ...state.live };
+    // Random walk ±0.3–1.2 USD/mt, mild mean reversion to history end
+    const anchor = state.history[state.history.length - 1];
+    const step = (price, target) => {
+      const noise = (Math.random() - 0.48) * (0.3 + Math.random() * 0.9);
+      const pull = (target - price) * 0.02;
+      return Math.round((price + noise + pull) * 100) / 100;
+    };
+    state.live.sg = step(state.live.sg, anchor.sg);
+    state.live.rtm = step(state.live.rtm, anchor.rtm);
+    state.live.glb = step(state.live.glb, anchor.glb);
+
+    // Keep within soft bands around Jul levels
+    state.live.sg = Math.max(860, Math.min(895, state.live.sg));
+    state.live.rtm = Math.max(695, Math.min(730, state.live.rtm));
+    state.live.glb = Math.max(825, Math.min(860, state.live.glb));
+
+    // Overlay last history point for charts (live tip)
+    const last = state.history[state.history.length - 1];
+    last.sg = state.live.sg;
+    last.rtm = state.live.rtm;
+    last.glb = state.live.glb;
+
+    updateTickerUI();
+    updateBafMetrics();
+
+    // Lightweight chart tip update every ~5 ticks via append would be heavy;
+    // update main chart series last point periodically
+    if (state.charts.main && Math.random() < 0.35) {
+      try {
+        const data = filterHistory(state.dateFrom, state.dateTo);
+        state.charts.main.updateSeries(buildMainSeries(data), false);
+      } catch (e) { /* ignore */ }
+    }
+  }
+
+  function updateLastUpdatedLabel() {
+    const sec = Math.floor((Date.now() - state.lastUpdate) / 1000);
+    const el = document.getElementById('last-updated');
+    if (sec < 1) el.textContent = 'just now';
+    else if (sec === 1) el.textContent = '1 second ago';
+    else el.textContent = sec + ' seconds ago';
+  }
+
+  // ---------- Volatility cards ----------
+  function updateVolCards() {
+    const last30 = state.history.slice(-30);
+    document.getElementById('vol-sg').textContent = fmtPrice(stdDev(last30.map(r => r.sg)));
+    document.getElementById('vol-rtm').textContent = fmtPrice(stdDev(last30.map(r => r.rtm)));
+    const glbs = state.history.map(r => r.glb);
+    const peak = Math.max(...glbs);
+    const troughAfter = Math.min(...glbs.slice(glbs.indexOf(peak)));
+    const dd = ((troughAfter - peak) / peak) * 100;
+    document.getElementById('drawdown').textContent = fmtPct(dd);
+  }
+
+  // ---------- Navigation ----------
+  function navigateTo(section, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + section).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+    // close mobile sidebar
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+
+    // Lazy render heavier charts
+    if (section === 'charts') {
+      initFullChart();
+      updateVolCards();
+    }
+    if (section === 'monthly') {
+      initMonthlyBars();
+      renderMonthlyTables();
+    }
+    if (section === 'baf') {
+      initBafChart();
+      updateBafMetrics();
+    }
+    if (section === 'data') {
+      renderDailyTable();
+    }
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('show');
+  }
+
+  // ---------- Theme ----------
+  function toggleTheme() {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.classList.toggle('dark', state.theme === 'dark');
+    document.documentElement.classList.toggle('light', state.theme === 'light');
+    document.getElementById('theme-label').textContent = state.theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    // re-render charts with new theme
+    initMainChart();
+    initMonthlyBars();
+    initQuarterChart();
+    if (state.charts.full) initFullChart();
+    if (state.charts.baf) initBafChart();
+  }
+
+  // ---------- Range filters ----------
+  function setChartRange(range, el) {
+    state.range = range;
+    document.querySelectorAll('.month-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (range === 'all') {
+      state.dateFrom = '2026-05-01';
+      state.dateTo = '2026-07-26';
+    } else if (range === 'may') {
+      state.dateFrom = '2026-05-01';
+      state.dateTo = '2026-05-31';
+    } else if (range === 'jun') {
+      state.dateFrom = '2026-06-01';
+      state.dateTo = '2026-06-30';
+    } else if (range === 'jul') {
+      state.dateFrom = '2026-07-01';
+      state.dateTo = '2026-07-26';
+    }
+    document.getElementById('date-from').value = state.dateFrom;
+    document.getElementById('date-to').value = state.dateTo;
+    initMainChart();
+  }
+
+  function applyDateFilter() {
+    state.dateFrom = document.getElementById('date-from').value;
+    state.dateTo = document.getElementById('date-to').value;
+    if (state.dateFrom > state.dateTo) {
+      [state.dateFrom, state.dateTo] = [state.dateTo, state.dateFrom];
+      document.getElementById('date-from').value = state.dateFrom;
+      document.getElementById('date-to').value = state.dateTo;
+    }
+    document.querySelectorAll('.month-chip').forEach(c => c.classList.remove('active'));
+    initMainChart();
+  }
+
+  // ---------- Export ----------
+  function exportCSV() {
+    const header = 'Date,Singapore_VLSFO_USD_mt,Rotterdam_VLSFO_USD_mt,Global20_Avg_USD_mt,Spread_SG_RTM\n';
+    const body = state.history.map(r =>
+      `${r.date},${fmtPrice(r.sg)},${fmtPrice(r.rtm)},${fmtPrice(r.glb)},${fmtPrice(r.sg - r.rtm)}`
+    ).join('\n');
+    const blob = new Blob([header + body], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vlsfo_prices_${state.dateFrom}_${state.dateTo}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportChartPNG() {
+    if (state.charts.main) {
+      state.charts.main.dataURI().then(({ imgURI }) => {
+        const a = document.createElement('a');
+        a.href = imgURI;
+        a.download = 'vlsfo_chart_' + fmtDate(new Date()) + '.png';
+        a.click();
+      });
+    }
+  }
+
+  // ---------- Force refresh ----------
+  function forceRefresh() {
+    const icon = document.getElementById('refresh-icon');
+    icon.style.transition = 'transform 0.5s ease';
+    icon.style.transform = 'rotate(360deg)';
+    setTimeout(() => { icon.style.transform = ''; }, 500);
+    // Reseed mild jitter on live prices around anchors
+    const anchor = state.history[state.history.length - 1];
+    state.prev = { ...state.live };
+    state.live.sg = Math.round((anchor.sg + (Math.random() - 0.5) * 2) * 100) / 100;
+    state.live.rtm = Math.round((anchor.rtm + (Math.random() - 0.5) * 2) * 100) / 100;
+    state.live.glb = Math.round((anchor.glb + (Math.random() - 0.5) * 2) * 100) / 100;
+    updateTickerUI();
+    updateBafMetrics();
+    initMainChart();
+  }
+
+  // ---------- Clock ----------
+  function tickClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB', { hour12: false });
+    document.getElementById('clock-date').textContent = now.toLocaleDateString('en-GB', {
+      weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
+    });
+  }
+
+  // ---------- Boot ----------
+  function boot() {
+    const bar = document.getElementById('load-bar');
+    let p = 0;
+    const loadInterval = setInterval(() => {
+      p += 12 + Math.random() * 18;
+      if (p >= 100) p = 100;
+      bar.style.width = p + '%';
+      if (p >= 100) clearInterval(loadInterval);
+    }, 80);
+
+    state.history = generateHistory();
+    const last = state.history[state.history.length - 1];
+    const prevDay = state.history[Math.max(0, state.history.length - 2)];
+    state.live = { sg: last.sg, rtm: last.rtm, glb: last.glb };
+    state.prev = { ...state.live };
+    state.dayAgo = { sg: prevDay.sg, rtm: prevDay.rtm, glb: prevDay.glb };
+
+    setTimeout(() => {
+      initMainChart();
+      initMonthlyBars();
+      initQuarterChart();
+      renderMonthlyTables();
+      updateTickerUI();
+      updateBafMetrics();
+      updateVolCards();
+
+      document.getElementById('loading-screen').classList.add('hidden');
+
+      // Live feed
+      state.intervalId = setInterval(liveTick, 1500);
+      state.secondsAgoId = setInterval(updateLastUpdatedLabel, 1000);
+      setInterval(tickClock, 1000);
+      tickClock();
+    }, 900);
+  }
+
+  // Expose for inline handlers
+  window.navigateTo = navigateTo;
+  window.toggleSidebar = toggleSidebar;
+  window.toggleTheme = toggleTheme;
+  window.setChartRange = setChartRange;
+  window.applyDateFilter = applyDateFilter;
+  window.exportCSV = exportCSV;
+  window.exportChartPNG = exportChartPNG;
+  window.forceRefresh = forceRefresh;
+
+  document.addEventListener('DOMContentLoaded', boot);
+  </script>
+</body>
+</html>
