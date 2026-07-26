@@ -120,10 +120,13 @@
       box-shadow: var(--shadow);
     }
     .glass-bar {
-      background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+      background: rgba(10, 21, 36, 0.92);
       backdrop-filter: blur(20px) saturate(150%);
       -webkit-backdrop-filter: blur(20px) saturate(150%);
       border-color: var(--border);
+    }
+    html.light .glass-bar {
+      background: rgba(255, 255, 255, 0.94);
     }
 
     .logo-mark {
@@ -151,10 +154,13 @@
       display: flex;
       flex-direction: column;
       border-right: 1px solid var(--border);
-      background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+      background: rgba(10, 21, 36, 0.96);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    html.light .sidebar {
+      background: rgba(255, 255, 255, 0.97);
     }
     .main {
       flex: 1;
@@ -392,6 +398,36 @@
       width: 100%;
       position: relative;
       overflow: hidden;
+      min-width: 0;
+    }
+    .chart-box .apexcharts-canvas,
+    .chart-box > div {
+      max-width: 100% !important;
+    }
+    .chart-error {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--text-3);
+      padding: 1rem;
+      text-align: center;
+    }
+    select#model-series {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.8rem;
+      font-family: Inter, sans-serif;
+      max-width: 100%;
+    }
+    select#model-series option {
+      background: var(--bg-elevated);
+      color: var(--text);
     }
     .chart-box.main { height: 400px; }
     .chart-box.full { height: 460px; }
@@ -1488,12 +1524,21 @@
           if (pre[i].source === 'official') return;
           pre[i][k] = Math.round(pre[i][k] * factor * 100) / 100;
         });
-        // Final tiny nudge so month avg matches exactly
+        // Distribute residual so month avg matches exactly (no single-day spike)
         const avg2 = all.reduce((s, i) => s + pre[i][k], 0) / all.length;
         const delta = official[k] - avg2;
-        // Apply delta to first non-official day
-        const j = all.find(i => pre[i].source !== 'official') ?? all[0];
-        pre[j][k] = Math.round((pre[j][k] + delta * all.length) * 100) / 100;
+        if (Math.abs(delta) > 1e-9) {
+          const editable = all.filter(i => pre[i].source !== 'official');
+          const targets = editable.length ? editable : all;
+          // Need sum increase of delta*all.length, spread across targets
+          const share = (delta * all.length) / targets.length;
+          targets.forEach(i => {
+            pre[i][k] = Math.round((pre[i][k] + share) * 100) / 100;
+          });
+          const avg3 = all.reduce((s, i) => s + pre[i][k], 0) / all.length;
+          const j = targets[targets.length - 1];
+          pre[j][k] = Math.round((pre[j][k] + (official[k] - avg3) * all.length) * 100) / 100;
+        }
       });
     }
     scaleMonth('2026-05', MONTHLY_OFFICIAL['2026-05']);
@@ -1691,20 +1736,81 @@
     }
   }
 
-  function renderOrUpdate(key, el, options) {
+  function sanitizeSeries(series) {
+    if (!Array.isArray(series)) return [];
+    return series.map((s) => {
+      const data = Array.isArray(s.data)
+        ? s.data.filter((pt) => {
+            if (pt == null) return false;
+            if (typeof pt === 'number') return isFinite(pt);
+            if (typeof pt === 'object') {
+              const y = pt.y;
+              return y != null && isFinite(y) && (pt.x == null || isFinite(pt.x) || typeof pt.x === 'string');
+            }
+            return true;
+          })
+        : [];
+      return { ...s, data };
+    });
+  }
+
+  function renderOrUpdate(key, el, options, forceRecreate) {
     if (!el) return;
-    // When container was hidden, force width/height via fixed parent
-    if (state.charts[key]) {
-      try {
-        state.charts[key].updateOptions(options, true, true, true);
-        return;
-      } catch (e) {
+    try {
+      const opts = { ...options };
+      if (opts.series) opts.series = sanitizeSeries(opts.series);
+      // Prefer full recreate for reliability (Apex updateOptions often breaks mixed charts)
+      const shouldRecreate = forceRecreate !== false || !state.charts[key];
+      if (!shouldRecreate && state.charts[key]) {
+        try {
+          state.charts[key].updateOptions(opts, true, false, true);
+          return;
+        } catch (e) {
+          destroyChart(key);
+        }
+      } else {
         destroyChart(key);
       }
+      // Clear any leftover Apex DOM
+      el.innerHTML = '';
+      // Ensure measurable size
+      const h = opts.chart && opts.chart.height
+        ? opts.chart.height
+        : (el.clientHeight || el.parentElement && el.parentElement.clientHeight || 300);
+      opts.chart = {
+        ...(opts.chart || {}),
+        height: h,
+        width: '100%',
+        parentHeightOffset: 0,
+        redrawOnParentResize: true,
+        redrawOnWindowResize: true,
+      };
+      if (typeof ApexCharts === 'undefined') {
+        el.innerHTML = '<div class="chart-error">Chart library failed to load. Check network / CDN.</div>';
+        return;
+      }
+      state.charts[key] = new ApexCharts(el, opts);
+      const p = state.charts[key].render();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function () {
+          el.innerHTML = '<div class="chart-error">Chart render failed</div>';
+          state.charts[key] = null;
+        });
+      }
+    } catch (err) {
+      console.error('Chart error [' + key + ']', err);
+      try {
+        el.innerHTML = '<div class="chart-error">Chart error: ' + (err && err.message ? err.message : 'unknown') + '</div>';
+      } catch (e2) {}
+      state.charts[key] = null;
     }
-    el.innerHTML = '';
-    state.charts[key] = new ApexCharts(el, options);
-    state.charts[key].render();
+  }
+
+  function safeModel(label, fn) {
+    try { fn(); }
+    catch (err) {
+      console.error('Model failed: ' + label, err);
+    }
   }
 
   function initMainChart() {
@@ -2030,13 +2136,15 @@
     updateTickerUI(true);
     updateBafMetrics();
 
-    // Gentle chart tip update every ~4 ticks (avoid thrash)
+    // Gentle chart tip update every ~6 ticks (avoid thrash / Apex errors)
     state.tickCount++;
-    if (state.charts.main && state.tickCount % 4 === 0) {
+    if (state.charts.main && state.tickCount % 6 === 0) {
       try {
         const data = filterHistory(state.dateFrom, state.dateTo);
-        state.charts.main.updateSeries(buildSeries(data), false);
-      } catch (e) {}
+        if (state.charts.main && typeof state.charts.main.updateSeries === 'function') {
+          state.charts.main.updateSeries(buildSeries(data), false);
+        }
+      } catch (e) { /* ignore live tip errors */ }
     }
   }
 
@@ -2261,372 +2369,438 @@
     return out;
   }
 
+  function baseChartOpts(height, type) {
+    return {
+      chart: {
+        height: height || 300,
+        width: '100%',
+        type: type || 'line',
+        background: 'transparent',
+        foreColor: chartFore(),
+        toolbar: { show: false },
+        animations: { enabled: false },
+        parentHeightOffset: 0,
+        zoom: { enabled: false },
+        selection: { enabled: false },
+      },
+      dataLabels: { enabled: false },
+      grid: { borderColor: gridColor(), strokeDashArray: 3, padding: { left: 4, right: 8 } },
+      legend: { position: 'top', fontSize: '11px', labels: { colors: chartFore() } },
+      tooltip: { theme: tooltipTheme(), shared: true },
+    };
+  }
+
   function refreshModels() {
-    if (!state.history.length) return;
+    if (!state.history || !state.history.length) return;
+    const section = document.getElementById('section-models');
+    if (section && !section.classList.contains('active')) {
+      // still allow recompute if user forces, but skip if hidden to avoid 0-width
+    }
     state.modelSeries = seriesKey();
     const key = state.modelSeries;
     const px = priceArr(key);
     const ts = tsArr();
+    if (!px.length) return;
     const rets = returns(px);
     const last = px[px.length - 1];
     const lastTs = ts[ts.length - 1];
-    const window = px.slice(-60);
+    const windowPx = px.slice(-60);
     const signals = [];
+    const histSlice = Math.max(0, px.length - 90);
+    const hFc = (document.getElementById('chart-forecast') || {}).clientHeight || 340;
 
     // --- EMA + OLS forecast ---
-    const e12 = ema(px, 12), e26 = ema(px, 26);
-    const fit = ols(window);
-    const h = 14;
-    const fTs = futureTs(lastTs, h);
-    const baseIdx = window.length - 1;
-    const olsPath = fTs.map((_, i) => fit.a + fit.b * (baseIdx + 1 + i));
-    // shift so path starts near last price
-    const shift = last - (fit.a + fit.b * baseIdx);
-    const olsAdj = olsPath.map(v => v + shift);
-    const band1 = fit.residSd, band2 = fit.residSd * 2;
-    const histSlice = Math.max(0, px.length - 90);
-    renderOrUpdate('fc', document.getElementById('chart-forecast'), {
-      series: [
-        { name: 'Spot', type: 'line', data: xy(ts.slice(histSlice), px.slice(histSlice)) },
-        { name: 'EMA12', type: 'line', data: xy(ts.slice(histSlice), e12.slice(histSlice)) },
-        { name: 'EMA26', type: 'line', data: xy(ts.slice(histSlice), e26.slice(histSlice)) },
-        { name: 'OLS +1σ', type: 'line', data: fTs.map((x, i) => ({ x, y: olsAdj[i] + band1 })) },
-        { name: 'OLS forecast', type: 'line', data: fTs.map((x, i) => ({ x, y: olsAdj[i] })) },
-        { name: 'OLS −1σ', type: 'line', data: fTs.map((x, i) => ({ x, y: olsAdj[i] - band1 })) },
-      ],
-      chart: { height: document.getElementById('chart-forecast').clientHeight || 340, width: '100%', type: 'line', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true },
-      colors: ['#e2e8f0', '#22d3ee', '#64748b', 'rgba(52,211,153,0.35)', '#34d399', 'rgba(52,211,153,0.35)'],
-      stroke: { width: [2.2, 1.6, 1.6, 1, 2.4, 1], curve: 'smooth', dashArray: [0, 0, 4, 4, 0, 4] },
-      dataLabels: { enabled: false },
-      xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { labels: { formatter: v => Math.round(v), style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { position: 'top', fontSize: '11px', labels: { colors: chartFore() } },
-      tooltip: { theme: tooltipTheme(), shared: true, x: { format: 'dd MMM' }, y: { formatter: v => v != null ? '$' + Number(v).toFixed(2) : '—' } }
+    safeModel('forecast', function () {
+      const e12 = ema(px, 12), e26 = ema(px, 26);
+      const fit = ols(windowPx);
+      const fTs = futureTs(lastTs, 14);
+      const baseIdx = windowPx.length - 1;
+      const shift = last - (fit.a + fit.b * baseIdx);
+      const olsAdj = fTs.map((_, i) => fit.a + fit.b * (baseIdx + 1 + i) + shift);
+      const band1 = fit.residSd || 1;
+      const base = baseChartOpts(hFc, 'line');
+      renderOrUpdate('fc', document.getElementById('chart-forecast'), Object.assign({}, base, {
+        series: [
+          { name: 'Spot', data: xy(ts.slice(histSlice), px.slice(histSlice)) },
+          { name: 'EMA12', data: xy(ts.slice(histSlice), e12.slice(histSlice)) },
+          { name: 'EMA26', data: xy(ts.slice(histSlice), e26.slice(histSlice)) },
+          { name: 'OLS forecast', data: fTs.map((x, i) => ({ x, y: olsAdj[i] })) },
+          { name: 'OLS +1σ', data: fTs.map((x, i) => ({ x, y: olsAdj[i] + band1 })) },
+          { name: 'OLS −1σ', data: fTs.map((x, i) => ({ x, y: olsAdj[i] - band1 })) },
+        ],
+        colors: ['#e2e8f0', '#22d3ee', '#64748b', '#34d399', 'rgba(52,211,153,0.4)', 'rgba(52,211,153,0.4)'],
+        stroke: { width: [2.2, 1.6, 1.6, 2.4, 1, 1], curve: 'smooth', dashArray: [0, 0, 4, 0, 4, 4] },
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { formatter: function (v) { return Math.round(v); }, style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } }, forceNiceScale: true },
+        tooltip: { theme: tooltipTheme(), shared: true, x: { format: 'dd MMM' }, y: { formatter: function (v) { return v != null ? '$' + Number(v).toFixed(2) : '—'; } } },
+      }), true);
+      const ols7 = olsAdj[6];
+      const el7 = document.getElementById('fc-ols7');
+      if (el7) {
+        el7.textContent = '$' + fmtPrice(ols7);
+        el7.className = 'mono ' + (ols7 >= last ? 'c-up' : 'c-down');
+        el7.style.fontSize = '0.9rem';
+        el7.style.fontWeight = '700';
+      }
+      const e12l = e12[e12.length - 1], e26l = e26[e26.length - 1];
+      const emaBull = e12l != null && e26l != null && e12l > e26l;
+      const elE = document.getElementById('fc-ema');
+      if (elE) {
+        elE.textContent = emaBull ? 'BULL cross' : 'BEAR cross';
+        elE.className = 'mono ' + (emaBull ? 'c-up' : 'c-down');
+        elE.style.fontSize = '0.9rem';
+        elE.style.fontWeight = '700';
+      }
+      const elR = document.getElementById('fc-r2');
+      if (elR) elR.textContent = fit.r2.toFixed(3);
+      signals.push({ id: 'OLS', name: 'OLS Trend', vote: fit.b > 0 ? 1 : -1, detail: 'slope ' + fit.b.toFixed(3) + '/d' });
+      signals.push({ id: 'EMA', name: 'EMA Cross', vote: emaBull ? 1 : -1, detail: emaBull ? '12>26' : '12<26' });
     });
-    const ols7 = olsAdj[6];
-    document.getElementById('fc-ols7').textContent = '$' + fmtPrice(ols7);
-    document.getElementById('fc-ols7').className = 'mono ' + (ols7 >= last ? 'c-up' : 'c-down');
-    document.getElementById('fc-ols7').style.fontSize = '0.9rem';
-    document.getElementById('fc-ols7').style.fontWeight = '700';
-    const e12l = e12[e12.length - 1], e26l = e26[e26.length - 1];
-    const emaBull = e12l != null && e26l != null && e12l > e26l;
-    document.getElementById('fc-ema').textContent = emaBull ? 'BULL cross' : 'BEAR cross';
-    document.getElementById('fc-ema').className = 'mono ' + (emaBull ? 'c-up' : 'c-down');
-    document.getElementById('fc-ema').style.fontSize = '0.9rem';
-    document.getElementById('fc-ema').style.fontWeight = '700';
-    document.getElementById('fc-r2').textContent = fit.r2.toFixed(3);
-    signals.push({ id: 'OLS', name: 'OLS Trend', vote: fit.b > 0 ? 1 : -1, detail: 'slope ' + fit.b.toFixed(3) + '/d' });
-    signals.push({ id: 'EMA', name: 'EMA Cross', vote: emaBull ? 1 : -1, detail: emaBull ? '12>26' : '12<26' });
 
     // --- Holt ---
-    const ht = holt(px, 0.35, 0.15, 10);
-    const hTs = futureTs(lastTs, 10);
-    renderOrUpdate('holt', document.getElementById('chart-holt'), {
-      series: [
-        { name: 'Spot', data: xy(ts.slice(histSlice), px.slice(histSlice)) },
-        { name: 'Holt fitted', data: xy(ts.slice(histSlice), ht.fitted.slice(histSlice)) },
-        { name: 'Forecast', data: hTs.map((x, i) => ({ x, y: ht.forecast[i] })) },
-      ],
-      chart: { height: document.getElementById('chart-holt').clientHeight || 340, width: '100%', type: 'line', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true },
-      colors: ['#94a3b8', '#22d3ee', '#fbbf24'],
-      stroke: { width: [2, 1.8, 2.4], curve: 'smooth', dashArray: [0, 0, 5] },
-      dataLabels: { enabled: false },
-      xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { labels: { formatter: v => Math.round(v), style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { position: 'top', fontSize: '11px', labels: { colors: chartFore() } },
-      tooltip: { theme: tooltipTheme(), shared: true, x: { format: 'dd MMM' }, y: { formatter: v => v != null ? '$' + Number(v).toFixed(2) : '—' } }
+    safeModel('holt', function () {
+      const ht = holt(px, 0.35, 0.15, 10);
+      const hTs = futureTs(lastTs, 10);
+      const hH = (document.getElementById('chart-holt') || {}).clientHeight || 340;
+      const base = baseChartOpts(hH, 'line');
+      renderOrUpdate('holt', document.getElementById('chart-holt'), Object.assign({}, base, {
+        series: [
+          { name: 'Spot', data: xy(ts.slice(histSlice), px.slice(histSlice)) },
+          { name: 'Holt fitted', data: xy(ts.slice(histSlice), ht.fitted.slice(histSlice)) },
+          { name: 'Forecast', data: hTs.map(function (x, i) { return { x: x, y: ht.forecast[i] }; }) },
+        ],
+        colors: ['#94a3b8', '#22d3ee', '#fbbf24'],
+        stroke: { width: [2, 1.8, 2.4], curve: 'smooth', dashArray: [0, 0, 5] },
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { formatter: function (v) { return Math.round(v); }, style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } }, forceNiceScale: true },
+        tooltip: { theme: tooltipTheme(), shared: true, x: { format: 'dd MMM' }, y: { formatter: function (v) { return v != null ? '$' + Number(v).toFixed(2) : '—'; } } },
+      }), true);
+      const set = function (id, val, cls) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = val;
+        if (cls) el.className = cls;
+      };
+      set('holt-L', fmtPrice(ht.L));
+      set('holt-B', (ht.B >= 0 ? '+' : '') + ht.B.toFixed(3) + '/d', 'mono ' + (ht.B >= 0 ? 'c-up' : 'c-down'));
+      set('holt-f7', '$' + fmtPrice(ht.forecast[6]), 'mono c-cyan');
+      signals.push({ id: 'HOLT', name: 'Holt DES', vote: ht.B > 0 ? 1 : -1, detail: 'B=' + ht.B.toFixed(3) });
     });
-    document.getElementById('holt-L').textContent = fmtPrice(ht.L);
-    document.getElementById('holt-B').textContent = (ht.B >= 0 ? '+' : '') + ht.B.toFixed(3) + '/d';
-    document.getElementById('holt-B').className = 'mono ' + (ht.B >= 0 ? 'c-up' : 'c-down');
-    document.getElementById('holt-f7').textContent = '$' + fmtPrice(ht.forecast[6]);
-    signals.push({ id: 'HOLT', name: 'Holt DES', vote: ht.B > 0 ? 1 : -1, detail: 'B=' + ht.B.toFixed(3) });
 
     // --- Volatility ---
-    const ewma = ewmaVol(rets, 0.94);
-    const rv20 = rets.map((_, i) => {
-      if (i < 20) return null;
-      return stdDev(rets.slice(i - 19, i + 1));
+    safeModel('vol', function () {
+      const ewma = ewmaVol(rets, 0.94);
+      const rv20 = rets.map(function (_, i) {
+        if (i < 20) return null;
+        return stdDev(rets.slice(i - 19, i + 1));
+      });
+      const hV = (document.getElementById('chart-vol') || {}).clientHeight || 300;
+      const base = baseChartOpts(hV, 'area');
+      renderOrUpdate('volm', document.getElementById('chart-vol'), Object.assign({}, base, {
+        series: [
+          { name: 'EWMA σ', data: xy(ts.slice(histSlice), ewma.slice(histSlice).map(function (v) { return v == null ? null : v * last; })) },
+          { name: 'RV20 σ', data: xy(ts.slice(histSlice), rv20.slice(histSlice).map(function (v) { return v == null ? null : v * last; })) },
+        ],
+        colors: ['#fbbf24', '#60a5fa'],
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.25, opacityTo: 0.02 } },
+        stroke: { width: [2, 1.6], curve: 'smooth' },
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { formatter: function (v) { return Number(v).toFixed(1); }, style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } }, forceNiceScale: true },
+        tooltip: { theme: tooltipTheme(), shared: true, y: { formatter: function (v) { return v != null ? Number(v).toFixed(2) + ' USD σ' : '—'; } } },
+      }), true);
+      const ewmaL = ewma[ewma.length - 1] || 0;
+      const rvL = rv20[rv20.length - 1] || 0;
+      const el1 = document.getElementById('vol-ewma');
+      const el2 = document.getElementById('vol-rv');
+      const el3 = document.getElementById('vol-ann');
+      if (el1) el1.textContent = (ewmaL * last).toFixed(2);
+      if (el2) el2.textContent = (rvL * last).toFixed(2);
+      if (el3) el3.textContent = (ewmaL * Math.sqrt(252) * 100).toFixed(1) + '%';
+      const volRising = ewma.filter(function (v) { return v != null; }).slice(-5);
+      const volUp = volRising.length >= 2 && volRising[volRising.length - 1] > volRising[0];
+      signals.push({ id: 'VOL', name: 'EWMA Vol', vote: volUp ? -1 : 1, detail: volUp ? 'vol rising' : 'vol calming' });
     });
-    renderOrUpdate('volm', document.getElementById('chart-vol'), {
-      series: [
-        { name: 'EWMA σ', data: xy(ts.slice(histSlice), ewma.slice(histSlice).map(v => v == null ? null : v * last)) },
-        { name: 'RV20 σ', data: xy(ts.slice(histSlice), rv20.slice(histSlice).map(v => v == null ? null : v * last)) },
-      ],
-      chart: { height: document.getElementById('chart-vol').clientHeight || 300, width: '100%', type: 'area', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true },
-      colors: ['#fbbf24', '#60a5fa'],
-      fill: { type: 'gradient', gradient: { opacityFrom: 0.25, opacityTo: 0.02 } },
-      stroke: { width: [2, 1.6], curve: 'smooth' },
-      dataLabels: { enabled: false },
-      xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { labels: { formatter: v => v.toFixed(1), style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } }, title: { text: 'USD/mt σ', style: { fontSize: '10px', color: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { position: 'top', fontSize: '11px', labels: { colors: chartFore() } },
-      tooltip: { theme: tooltipTheme(), shared: true, y: { formatter: v => v != null ? v.toFixed(2) + ' USD σ' : '—' } }
-    });
-    const ewmaL = ewma[ewma.length - 1] || 0;
-    const rvL = rv20[rv20.length - 1] || 0;
-    document.getElementById('vol-ewma').textContent = (ewmaL * last).toFixed(2);
-    document.getElementById('vol-rv').textContent = (rvL * last).toFixed(2);
-    document.getElementById('vol-ann').textContent = (ewmaL * Math.sqrt(252) * 100).toFixed(1) + '%';
-    const volRising = ewma.filter(v => v != null).slice(-5);
-    const volUp = volRising.length >= 2 && volRising[volRising.length - 1] > volRising[0];
-    signals.push({ id: 'VOL', name: 'EWMA Vol', vote: volUp ? -1 : 1, detail: volUp ? 'vol rising' : 'vol calming' });
 
     // --- Bollinger ---
-    const bb = bollinger(px, 20, 2);
-    renderOrUpdate('bb', document.getElementById('chart-bb'), {
-      series: [
-        { name: 'Upper', data: xy(ts.slice(histSlice), bb.upper.slice(histSlice)) },
-        { name: 'Mid SMA20', data: xy(ts.slice(histSlice), bb.mid.slice(histSlice)) },
-        { name: 'Lower', data: xy(ts.slice(histSlice), bb.lower.slice(histSlice)) },
-        { name: 'Spot', data: xy(ts.slice(histSlice), px.slice(histSlice)) },
-      ],
-      chart: { height: document.getElementById('chart-bb').clientHeight || 300, width: '100%', type: 'line', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true },
-      colors: ['rgba(34,211,238,0.45)', '#64748b', 'rgba(248,113,113,0.45)', '#e2e8f0'],
-      stroke: { width: [1.2, 1.4, 1.2, 2.2], curve: 'smooth', dashArray: [4, 0, 4, 0] },
-      dataLabels: { enabled: false },
-      xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { labels: { formatter: v => Math.round(v), style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { position: 'top', fontSize: '11px', labels: { colors: chartFore() } },
-      tooltip: { theme: tooltipTheme(), shared: true, y: { formatter: v => v != null ? '$' + Number(v).toFixed(2) : '—' } }
+    safeModel('bb', function () {
+      const bb = bollinger(px, 20, 2);
+      const hB = (document.getElementById('chart-bb') || {}).clientHeight || 300;
+      const base = baseChartOpts(hB, 'line');
+      renderOrUpdate('bb', document.getElementById('chart-bb'), Object.assign({}, base, {
+        series: [
+          { name: 'Upper', data: xy(ts.slice(histSlice), bb.upper.slice(histSlice)) },
+          { name: 'Mid SMA20', data: xy(ts.slice(histSlice), bb.mid.slice(histSlice)) },
+          { name: 'Lower', data: xy(ts.slice(histSlice), bb.lower.slice(histSlice)) },
+          { name: 'Spot', data: xy(ts.slice(histSlice), px.slice(histSlice)) },
+        ],
+        colors: ['rgba(34,211,238,0.55)', '#64748b', 'rgba(248,113,113,0.55)', '#e2e8f0'],
+        stroke: { width: [1.2, 1.4, 1.2, 2.2], curve: 'smooth', dashArray: [4, 0, 4, 0] },
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { formatter: function (v) { return Math.round(v); }, style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } }, forceNiceScale: true },
+        tooltip: { theme: tooltipTheme(), shared: true, y: { formatter: function (v) { return v != null ? '$' + Number(v).toFixed(2) : '—'; } } },
+      }), true);
+      const i = px.length - 1;
+      const pctB = (bb.upper[i] != null && bb.lower[i] != null && bb.upper[i] !== bb.lower[i])
+        ? (px[i] - bb.lower[i]) / (bb.upper[i] - bb.lower[i]) : 0.5;
+      const bw = bb.mid[i] ? (bb.upper[i] - bb.lower[i]) / bb.mid[i] : 0;
+      const elP = document.getElementById('bb-pctb');
+      const elW = document.getElementById('bb-bw');
+      const elS = document.getElementById('bb-sig');
+      if (elP) elP.textContent = pctB.toFixed(2);
+      if (elW) elW.textContent = (bw * 100).toFixed(1) + '%';
+      let bbSig = 'NEUTRAL', bbVote = 0;
+      if (pctB > 0.95) { bbSig = 'OVERBOUGHT'; bbVote = -1; }
+      else if (pctB < 0.05) { bbSig = 'OVERSOLD'; bbVote = 1; }
+      else if (bw < 0.04) { bbSig = 'SQUEEZE'; bbVote = 0; }
+      if (elS) {
+        elS.textContent = bbSig;
+        elS.className = 'mono ' + (bbVote > 0 ? 'c-up' : bbVote < 0 ? 'c-down' : 't1');
+        elS.style.fontWeight = '700';
+      }
+      signals.push({ id: 'BB', name: 'Bollinger', vote: bbVote, detail: '%B=' + pctB.toFixed(2) });
     });
-    const i = px.length - 1;
-    const pctB = (bb.upper[i] != null && bb.lower[i] != null && bb.upper[i] !== bb.lower[i])
-      ? (px[i] - bb.lower[i]) / (bb.upper[i] - bb.lower[i]) : 0.5;
-    const bw = bb.mid[i] ? (bb.upper[i] - bb.lower[i]) / bb.mid[i] : 0;
-    document.getElementById('bb-pctb').textContent = pctB.toFixed(2);
-    document.getElementById('bb-bw').textContent = (bw * 100).toFixed(1) + '%';
-    let bbSig = 'NEUTRAL', bbVote = 0;
-    if (pctB > 0.95) { bbSig = 'OVERBOUGHT'; bbVote = -1; }
-    else if (pctB < 0.05) { bbSig = 'OVERSOLD'; bbVote = 1; }
-    else if (bw < 0.04) { bbSig = 'SQUEEZE'; bbVote = 0; }
-    document.getElementById('bb-sig').textContent = bbSig;
-    document.getElementById('bb-sig').className = 'mono ' + (bbVote > 0 ? 'c-up' : bbVote < 0 ? 'c-down' : 't1');
-    document.getElementById('bb-sig').style.fontWeight = '700';
-    signals.push({ id: 'BB', name: 'Bollinger', vote: bbVote, detail: '%B=' + pctB.toFixed(2) });
 
     // --- RSI + MACD ---
-    const rsiArr = rsi(px, 14);
-    const mc = macd(px);
-    renderOrUpdate('rsi', document.getElementById('chart-rsi'), {
-      series: [{ name: 'RSI-14', data: xy(ts.slice(histSlice), rsiArr.slice(histSlice)) }],
-      chart: { height: document.getElementById('chart-rsi').clientHeight || 220, width: '100%', type: 'line', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true },
-      colors: ['#a78bfa'],
-      stroke: { width: 2, curve: 'smooth' },
-      dataLabels: { enabled: false },
-      annotations: {
-        yaxis: [
-          { y: 70, borderColor: '#f87171', strokeDashArray: 4, label: { text: '70', style: { color: '#f87171', background: 'transparent', fontSize: '10px' } } },
-          { y: 30, borderColor: '#34d399', strokeDashArray: 4, label: { text: '30', style: { color: '#34d399', background: 'transparent', fontSize: '10px' } } },
-        ]
-      },
-      xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { min: 0, max: 100, labels: { style: { fontSize: '10px', colors: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { show: false },
-      tooltip: { theme: tooltipTheme(), y: { formatter: v => v != null ? v.toFixed(1) : '—' } }
+    safeModel('rsi-macd', function () {
+      const rsiArr = rsi(px, 14);
+      const mc = macd(px);
+      const hR = (document.getElementById('chart-rsi') || {}).clientHeight || 220;
+      const hM = (document.getElementById('chart-macd') || {}).clientHeight || 220;
+      renderOrUpdate('rsi', document.getElementById('chart-rsi'), Object.assign({}, baseChartOpts(hR, 'line'), {
+        series: [{ name: 'RSI-14', data: xy(ts.slice(histSlice), rsiArr.slice(histSlice)) }],
+        colors: ['#a78bfa'],
+        stroke: { width: 2, curve: 'smooth' },
+        annotations: {
+          yaxis: [
+            { y: 70, borderColor: '#f87171', strokeDashArray: 4 },
+            { y: 30, borderColor: '#34d399', strokeDashArray: 4 },
+          ]
+        },
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { min: 0, max: 100, tickAmount: 5, labels: { style: { fontSize: '10px', colors: chartFore() } } },
+        legend: { show: false },
+        tooltip: { theme: tooltipTheme(), y: { formatter: function (v) { return v != null ? Number(v).toFixed(1) : '—'; } } },
+      }), true);
+      // MACD as pure lines (avoid mixed bar issues in Apex CDN)
+      renderOrUpdate('macd', document.getElementById('chart-macd'), Object.assign({}, baseChartOpts(hM, 'line'), {
+        series: [
+          { name: 'MACD', data: xy(ts.slice(histSlice), mc.line.slice(histSlice)) },
+          { name: 'Signal', data: xy(ts.slice(histSlice), mc.signal.slice(histSlice)) },
+          { name: 'Hist', data: xy(ts.slice(histSlice), mc.hist.slice(histSlice)) },
+        ],
+        colors: ['#22d3ee', '#fbbf24', '#94a3b8'],
+        stroke: { width: [2, 1.6, 1.2], curve: 'smooth', dashArray: [0, 0, 3] },
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { formatter: function (v) { return Number(v).toFixed(1); }, style: { fontSize: '10px', colors: chartFore() } }, forceNiceScale: true },
+        tooltip: { theme: tooltipTheme(), shared: true },
+      }), true);
+      const rsiL = rsiArr[rsiArr.length - 1];
+      const histL = mc.hist[mc.hist.length - 1];
+      const elR = document.getElementById('rsi-val');
+      const elH = document.getElementById('macd-hist');
+      if (elR) {
+        elR.textContent = rsiL != null ? rsiL.toFixed(1) : '—';
+        elR.className = 'mono ' + (rsiL > 70 ? 'c-down' : rsiL < 30 ? 'c-up' : 't1');
+        elR.style.fontWeight = '700';
+      }
+      if (elH) {
+        elH.textContent = histL != null ? histL.toFixed(2) : '—';
+        elH.className = 'mono ' + (histL >= 0 ? 'c-up' : 'c-down');
+        elH.style.fontWeight = '700';
+      }
+      let rsiVote = 0;
+      if (rsiL > 70) rsiVote = -1; else if (rsiL < 30) rsiVote = 1;
+      signals.push({ id: 'RSI', name: 'RSI-14', vote: rsiVote, detail: 'RSI=' + (rsiL != null ? rsiL.toFixed(1) : '—') });
+      signals.push({ id: 'MACD', name: 'MACD', vote: (histL == null ? 0 : (histL >= 0 ? 1 : -1)), detail: 'hist=' + (histL != null ? histL.toFixed(2) : '—') });
     });
-    renderOrUpdate('macd', document.getElementById('chart-macd'), {
-      series: [
-        { name: 'MACD', type: 'line', data: xy(ts.slice(histSlice), mc.line.slice(histSlice)) },
-        { name: 'Signal', type: 'line', data: xy(ts.slice(histSlice), mc.signal.slice(histSlice)) },
-        { name: 'Hist', type: 'bar', data: xy(ts.slice(histSlice), mc.hist.slice(histSlice)) },
-      ],
-      chart: { height: document.getElementById('chart-macd').clientHeight || 220, width: '100%', type: 'line', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true, stacked: false },
-      colors: ['#22d3ee', '#fbbf24', '#64748b'],
-      stroke: { width: [2, 1.6, 0], curve: 'smooth' },
-      plotOptions: { bar: { columnWidth: '60%' } },
-      dataLabels: { enabled: false },
-      xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { labels: { formatter: v => v.toFixed(1), style: { fontSize: '10px', colors: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { position: 'top', fontSize: '11px', labels: { colors: chartFore() } },
-      tooltip: { theme: tooltipTheme(), shared: true }
-    });
-    const rsiL = rsiArr[rsiArr.length - 1];
-    const histL = mc.hist[mc.hist.length - 1];
-    document.getElementById('rsi-val').textContent = rsiL != null ? rsiL.toFixed(1) : '—';
-    document.getElementById('rsi-val').className = 'mono ' + (rsiL > 70 ? 'c-down' : rsiL < 30 ? 'c-up' : 't1');
-    document.getElementById('rsi-val').style.fontWeight = '700';
-    document.getElementById('macd-hist').textContent = histL != null ? histL.toFixed(2) : '—';
-    document.getElementById('macd-hist').className = 'mono ' + (histL >= 0 ? 'c-up' : 'c-down');
-    document.getElementById('macd-hist').style.fontWeight = '700';
-    let rsiVote = 0;
-    if (rsiL > 70) rsiVote = -1; else if (rsiL < 30) rsiVote = 1;
-    signals.push({ id: 'RSI', name: 'RSI-14', vote: rsiVote, detail: 'RSI=' + (rsiL != null ? rsiL.toFixed(1) : '—') });
-    signals.push({ id: 'MACD', name: 'MACD', vote: histL >= 0 ? 1 : -1, detail: 'hist=' + (histL != null ? histL.toFixed(2) : '—') });
 
     // --- Z-score ---
-    const mid20 = sma(px, 20);
-    const zArr = px.map((p, i) => {
-      if (mid20[i] == null || i < 19) return null;
-      const sd = stdDev(px.slice(i - 19, i + 1));
-      return sd ? (p - mid20[i]) / sd : 0;
+    safeModel('zscore', function () {
+      const mid20 = sma(px, 20);
+      const zArr = px.map(function (p, i) {
+        if (mid20[i] == null || i < 19) return null;
+        const sd = stdDev(px.slice(i - 19, i + 1));
+        return sd ? (p - mid20[i]) / sd : 0;
+      });
+      const hZ = (document.getElementById('chart-zscore') || {}).clientHeight || 300;
+      renderOrUpdate('z', document.getElementById('chart-zscore'), Object.assign({}, baseChartOpts(hZ, 'area'), {
+        series: [{ name: 'Z-score', data: xy(ts.slice(histSlice), zArr.slice(histSlice)) }],
+        colors: ['#22d3ee'],
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0.02 } },
+        stroke: { width: 2, curve: 'smooth' },
+        annotations: {
+          yaxis: [
+            { y: 2, borderColor: '#f87171', strokeDashArray: 3 },
+            { y: -2, borderColor: '#34d399', strokeDashArray: 3 },
+            { y: 0, borderColor: gridColor() },
+          ]
+        },
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { formatter: function (v) { return Number(v).toFixed(1); }, style: { fontSize: '10px', colors: chartFore() } } },
+        legend: { show: false },
+        tooltip: { theme: tooltipTheme(), y: { formatter: function (v) { return v != null ? Number(v).toFixed(2) + 'σ' : '—'; } } },
+      }), true);
+      const zL = zArr[zArr.length - 1] || 0;
+      const elZ = document.getElementById('z-val');
+      const elR = document.getElementById('z-regime');
+      if (elZ) {
+        elZ.textContent = zL.toFixed(2) + 'σ';
+        elZ.className = 'mono ' + (Math.abs(zL) > 2 ? 'c-amber' : 't1');
+        elZ.style.fontWeight = '700';
+      }
+      let zReg = 'FAIR VALUE', zVote = 0;
+      if (zL > 2) { zReg = 'RICH → fade'; zVote = -1; }
+      else if (zL < -2) { zReg = 'CHEAP → bid'; zVote = 1; }
+      else if (Math.abs(zL) < 0.5) { zReg = 'NEAR MEAN'; zVote = 0; }
+      if (elR) elR.textContent = zReg;
+      signals.push({ id: 'Z', name: 'Z-Score MR', vote: zVote, detail: 'z=' + zL.toFixed(2) });
     });
-    renderOrUpdate('z', document.getElementById('chart-zscore'), {
-      series: [{ name: 'Z-score', data: xy(ts.slice(histSlice), zArr.slice(histSlice)) }],
-      chart: { height: document.getElementById('chart-zscore').clientHeight || 300, width: '100%', type: 'area', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true },
-      colors: ['#22d3ee'],
-      fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0.02 } },
-      stroke: { width: 2, curve: 'smooth' },
-      dataLabels: { enabled: false },
-      annotations: {
-        yaxis: [
-          { y: 2, borderColor: '#f87171', strokeDashArray: 3 },
-          { y: -2, borderColor: '#34d399', strokeDashArray: 3 },
-          { y: 0, borderColor: gridColor() },
-        ]
-      },
-      xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { labels: { formatter: v => v.toFixed(1), style: { fontSize: '10px', colors: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { show: false },
-      tooltip: { theme: tooltipTheme(), y: { formatter: v => v != null ? v.toFixed(2) + 'σ' : '—' } }
-    });
-    const zL = zArr[zArr.length - 1] || 0;
-    document.getElementById('z-val').textContent = zL.toFixed(2) + 'σ';
-    document.getElementById('z-val').className = 'mono ' + (Math.abs(zL) > 2 ? 'c-amber' : 't1');
-    document.getElementById('z-val').style.fontWeight = '700';
-    let zReg = 'FAIR VALUE', zVote = 0;
-    if (zL > 2) { zReg = 'RICH → fade'; zVote = -1; }
-    else if (zL < -2) { zReg = 'CHEAP → bid'; zVote = 1; }
-    else if (Math.abs(zL) < 0.5) { zReg = 'NEAR MEAN'; zVote = 0; }
-    document.getElementById('z-regime').textContent = zReg;
-    signals.push({ id: 'Z', name: 'Z-Score MR', vote: zVote, detail: 'z=' + zL.toFixed(2) });
 
     // --- Correlation ---
-    const rSg = returns(priceArr('sg')).slice(-60);
-    const rRtm = returns(priceArr('rtm')).slice(-60);
-    const rGlb = returns(priceArr('glb')).slice(-60);
-    const labels = ['SG', 'RTM', 'G20'];
-    const mat = [
-      [1, pearson(rSg, rRtm), pearson(rSg, rGlb)],
-      [pearson(rRtm, rSg), 1, pearson(rRtm, rGlb)],
-      [pearson(rGlb, rSg), pearson(rGlb, rRtm), 1],
-    ];
-    const corrEl = document.getElementById('corr-matrix');
-    let html = '<div></div>';
-    labels.forEach(l => { html += '<div class="t3" style="text-align:center;font-size:11px;font-weight:600;">' + l + '</div>'; });
-    mat.forEach((row, i) => {
-      html += '<div class="t2" style="font-size:11px;font-weight:600;">' + labels[i] + '</div>';
-      row.forEach(v => {
-        const t = (v + 1) / 2;
-        const bg = 'rgba(34,211,238,' + (0.08 + t * 0.35).toFixed(2) + ')';
-        html += '<div class="corr-cell" style="background:' + bg + '">' + v.toFixed(2) + '</div>';
-      });
+    safeModel('corr', function () {
+      const rSg = returns(priceArr('sg')).slice(-60);
+      const rRtm = returns(priceArr('rtm')).slice(-60);
+      const rGlb = returns(priceArr('glb')).slice(-60);
+      const labels = ['SG', 'RTM', 'G20'];
+      const mat = [
+        [1, pearson(rSg, rRtm), pearson(rSg, rGlb)],
+        [pearson(rRtm, rSg), 1, pearson(rRtm, rGlb)],
+        [pearson(rGlb, rSg), pearson(rGlb, rRtm), 1],
+      ];
+      const corrEl = document.getElementById('corr-matrix');
+      if (corrEl) {
+        let html = '<div></div>';
+        labels.forEach(function (l) { html += '<div class="t3" style="text-align:center;font-size:11px;font-weight:600;">' + l + '</div>'; });
+        mat.forEach(function (row, i) {
+          html += '<div class="t2" style="font-size:11px;font-weight:600;">' + labels[i] + '</div>';
+          row.forEach(function (v) {
+            const t = (v + 1) / 2;
+            const bg = 'rgba(34,211,238,' + (0.08 + t * 0.35).toFixed(2) + ')';
+            html += '<div class="corr-cell" style="background:' + bg + '">' + v.toFixed(2) + '</div>';
+          });
+        });
+        corrEl.innerHTML = html;
+      }
+      const b1 = document.getElementById('beta-sg');
+      const b2 = document.getElementById('beta-rtm');
+      if (b1) b1.textContent = betaOLS(rSg, rGlb).toFixed(3);
+      if (b2) b2.textContent = betaOLS(rRtm, rGlb).toFixed(3);
     });
-    corrEl.innerHTML = html;
-    document.getElementById('beta-sg').textContent = betaOLS(rSg, rGlb).toFixed(3);
-    document.getElementById('beta-rtm').textContent = betaOLS(rRtm, rGlb).toFixed(3);
 
     // --- Spread AR(1) ---
-    const spread = state.history.map(r => r.sg - r.rtm);
-    const ar = ar1(spread);
-    renderOrUpdate('spread', document.getElementById('chart-spread'), {
-      series: [
-        { name: 'SG−RTM', data: xy(ts, spread) },
-        { name: 'SMA20', data: xy(ts, sma(spread, 20)) },
-      ],
-      chart: { height: document.getElementById('chart-spread').clientHeight || 300, width: '100%', type: 'area', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true },
-      colors: ['#fbbf24', '#64748b'],
-      fill: { type: ['gradient', 'solid'], gradient: { opacityFrom: 0.25, opacityTo: 0.02 } },
-      stroke: { width: [2.2, 1.5], curve: 'smooth', dashArray: [0, 4] },
-      dataLabels: { enabled: false },
-      xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { labels: { formatter: v => Math.round(v), style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { position: 'top', fontSize: '11px', labels: { colors: chartFore() } },
-      tooltip: { theme: tooltipTheme(), shared: true, y: { formatter: v => v != null ? '$' + Number(v).toFixed(2) : '—' } }
+    safeModel('spread', function () {
+      const spread = state.history.map(function (r) { return r.sg - r.rtm; });
+      const ar = ar1(spread);
+      const hS = (document.getElementById('chart-spread') || {}).clientHeight || 300;
+      renderOrUpdate('spread', document.getElementById('chart-spread'), Object.assign({}, baseChartOpts(hS, 'area'), {
+        series: [
+          { name: 'SG−RTM', data: xy(ts, spread) },
+          { name: 'SMA20', data: xy(ts, sma(spread, 20)) },
+        ],
+        colors: ['#fbbf24', '#64748b'],
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.25, opacityTo: 0.02 } },
+        stroke: { width: [2.2, 1.5], curve: 'smooth', dashArray: [0, 4] },
+        xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { fontSize: '10px', colors: chartFore() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { formatter: function (v) { return Math.round(v); }, style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', colors: chartFore() } }, forceNiceScale: true },
+        tooltip: { theme: tooltipTheme(), shared: true, y: { formatter: function (v) { return v != null ? '$' + Number(v).toFixed(2) : '—'; } } },
+      }), true);
+      const spNow = spread[spread.length - 1];
+      const el1 = document.getElementById('sp-now');
+      const el2 = document.getElementById('sp-phi');
+      const el3 = document.getElementById('sp-hl');
+      if (el1) el1.textContent = '$' + fmtPrice(spNow);
+      if (el2) el2.textContent = ar.phi.toFixed(3);
+      if (el3) el3.textContent = ar.halfLife != null && isFinite(ar.halfLife) ? ar.halfLife.toFixed(1) : 'n/a';
     });
-    const spNow = spread[spread.length - 1];
-    document.getElementById('sp-now').textContent = '$' + fmtPrice(spNow);
-    document.getElementById('sp-phi').textContent = ar.phi.toFixed(3);
-    document.getElementById('sp-hl').textContent = ar.halfLife != null ? ar.halfLife.toFixed(1) : 'n/a';
 
     // --- Monte Carlo ---
-    const g20 = priceArr('glb');
-    const gRets = returns(g20).slice(1);
-    const mu = gRets.reduce((a, b) => a + b, 0) / gRets.length;
-    const sig = stdDev(gRets);
-    const S0 = g20[g20.length - 1];
-    const mcRes = monteCarloGBM(S0, mu, sig, 30, 5000, 20260724);
-    const terms = mcRes.terminals.slice().sort((a, b) => a - b);
-    const dBAF = terms.map(t => (t - S0) * 0.85 * 0.012);
-    const dSorted = dBAF.slice().sort((a, b) => a - b);
-    const p50 = percentile(dSorted, 0.5);
-    const p90 = percentile(dSorted, 0.9);
-    const var95 = percentile(dSorted, 0.95);
-    const cvarCut = dSorted.filter(v => v >= var95);
-    const cvar = cvarCut.reduce((a, b) => a + b, 0) / (cvarCut.length || 1);
-    // Histogram of terminal prices
-    const bins = 28;
-    const minT = terms[0], maxT = terms[terms.length - 1];
-    const bwH = (maxT - minT) / bins || 1;
-    const counts = new Array(bins).fill(0);
-    terms.forEach(t => {
-      let b = Math.floor((t - minT) / bwH);
-      if (b >= bins) b = bins - 1;
-      counts[b]++;
+    safeModel('montecarlo', function () {
+      const g20 = priceArr('glb');
+      const gRets = returns(g20).slice(1).filter(isFinite);
+      const mu = gRets.reduce(function (a, b) { return a + b; }, 0) / (gRets.length || 1);
+      const sig = stdDev(gRets) || 0.01;
+      const S0 = g20[g20.length - 1];
+      const mcRes = monteCarloGBM(S0, mu, sig, 30, 3000, 20260724);
+      const terms = mcRes.terminals.slice().sort(function (a, b) { return a - b; });
+      const dBAF = terms.map(function (t) { return (t - S0) * 0.85 * 0.012; });
+      const dSorted = dBAF.slice().sort(function (a, b) { return a - b; });
+      const p50 = percentile(dSorted, 0.5);
+      const p90 = percentile(dSorted, 0.9);
+      const var95 = percentile(dSorted, 0.95);
+      const cvarCut = dSorted.filter(function (v) { return v >= var95; });
+      const cvar = cvarCut.length ? cvarCut.reduce(function (a, b) { return a + b; }, 0) / cvarCut.length : var95;
+      const bins = 24;
+      const minT = terms[0], maxT = terms[terms.length - 1];
+      const bwH = (maxT - minT) / bins || 1;
+      const counts = new Array(bins).fill(0);
+      terms.forEach(function (t) {
+        let b = Math.floor((t - minT) / bwH);
+        if (b >= bins) b = bins - 1;
+        if (b < 0) b = 0;
+        counts[b]++;
+      });
+      const cats = counts.map(function (_, i) { return String(Math.round(minT + (i + 0.5) * bwH)); });
+      const hMc = (document.getElementById('chart-mc') || {}).clientHeight || 340;
+      renderOrUpdate('mc', document.getElementById('chart-mc'), Object.assign({}, baseChartOpts(hMc, 'bar'), {
+        series: [{ name: 'Terminal density', data: counts }],
+        colors: ['#22d3ee'],
+        plotOptions: { bar: { columnWidth: '90%', borderRadius: 2 } },
+        xaxis: {
+          categories: cats,
+          labels: { rotate: -45, rotateAlways: true, hideOverlappingLabels: true, style: { fontSize: '9px', colors: chartFore(), fontFamily: 'JetBrains Mono, monospace' } },
+          axisBorder: { show: false },
+          axisTicks: { show: false },
+          title: { text: 'G20 VLSFO in 30d (USD/mt) · now $' + Math.round(S0), style: { fontSize: '10px', color: chartFore() } },
+        },
+        yaxis: { labels: { style: { fontSize: '10px', colors: chartFore() } }, title: { text: 'Paths', style: { fontSize: '10px', color: chartFore() } } },
+        legend: { show: false },
+        tooltip: { theme: tooltipTheme(), y: { formatter: function (v) { return v + ' paths'; } } },
+      }), true);
+      function set(id, t) { const el = document.getElementById(id); if (el) el.textContent = t; }
+      set('mc-p50', (p50 >= 0 ? '+' : '') + '$' + Math.abs(p50).toFixed(3));
+      set('mc-p90', (p90 >= 0 ? '+' : '') + '$' + Math.abs(p90).toFixed(3));
+      set('mc-var', (var95 >= 0 ? '+' : '') + '$' + Math.abs(var95).toFixed(3));
+      set('mc-cvar', (cvar >= 0 ? '+' : '') + '$' + Math.abs(cvar).toFixed(3));
+      set('mc-base', '$' + fmtPrice(S0));
+      set('mc-mu', (mu * 100).toFixed(3) + '%/d');
+      set('mc-sigma', (sig * 100).toFixed(3) + '%/d');
+      const bull = terms.filter(function (t) { return t > S0 * 1.03; }).length / terms.length;
+      const bear = terms.filter(function (t) { return t < S0 * 0.97; }).length / terms.length;
+      const baseP = Math.max(0, 1 - bull - bear);
+      set('mc-bull', (bull * 100).toFixed(1) + '%');
+      set('mc-bear', (bear * 100).toFixed(1) + '%');
+      set('mc-base-p', (baseP * 100).toFixed(1) + '%');
+      const b1 = document.getElementById('mc-bull-bar');
+      const b2 = document.getElementById('mc-bear-bar');
+      const b3 = document.getElementById('mc-base-bar');
+      if (b1) b1.style.width = (bull * 100).toFixed(1) + '%';
+      if (b2) b2.style.width = (bear * 100).toFixed(1) + '%';
+      if (b3) b3.style.width = (baseP * 100).toFixed(1) + '%';
+      signals.push({ id: 'MC', name: 'MC BAF drift', vote: p50 > 0 ? 1 : -1, detail: 'P50 ΔBAF ' + (p50 >= 0 ? '+' : '') + p50.toFixed(3) });
     });
-    const cats = counts.map((_, i) => Math.round(minT + (i + 0.5) * bwH));
-    renderOrUpdate('mc', document.getElementById('chart-mc'), {
-      series: [{ name: 'Terminal density', data: counts }],
-      chart: { height: document.getElementById('chart-mc').clientHeight || 340, width: '100%', type: 'bar', background: 'transparent', foreColor: chartFore(), toolbar: { show: false }, animations: { enabled: false }, parentHeightOffset: 0, redrawOnParentResize: true },
-      colors: ['#22d3ee'],
-      plotOptions: { bar: { columnWidth: '92%', borderRadius: 2 } },
-      dataLabels: { enabled: false },
-      xaxis: {
-        categories: cats,
-        labels: { rotate: -45, style: { fontSize: '9px', colors: chartFore(), fontFamily: 'JetBrains Mono, monospace' }, formatter: v => Math.round(v) },
-        axisBorder: { show: false }, axisTicks: { show: false },
-        title: { text: 'G20 VLSFO in 30d (USD/mt)', style: { fontSize: '10px', color: chartFore() } }
-      },
-      yaxis: { labels: { style: { fontSize: '10px', colors: chartFore() } }, title: { text: 'Paths', style: { fontSize: '10px', color: chartFore() } } },
-      grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { show: false },
-      tooltip: { theme: tooltipTheme(), y: { formatter: v => v + ' paths' }, x: { formatter: v => '$' + v + '/mt' } },
-      annotations: {
-        xaxis: [{ x: Math.round(S0), borderColor: '#fbbf24', label: { text: 'Now', style: { color: '#0f172a', background: '#fbbf24', fontSize: '10px' } } }]
-      }
-    });
-    document.getElementById('mc-p50').textContent = (p50 >= 0 ? '+' : '') + '$' + Math.abs(p50).toFixed(3);
-    document.getElementById('mc-p90').textContent = (p90 >= 0 ? '+' : '') + '$' + Math.abs(p90).toFixed(3);
-    document.getElementById('mc-var').textContent = (var95 >= 0 ? '+' : '') + '$' + Math.abs(var95).toFixed(3);
-    document.getElementById('mc-cvar').textContent = (cvar >= 0 ? '+' : '') + '$' + Math.abs(cvar).toFixed(3);
-    document.getElementById('mc-base').textContent = '$' + fmtPrice(S0);
-    document.getElementById('mc-mu').textContent = (mu * 100).toFixed(3) + '%/d';
-    document.getElementById('mc-sigma').textContent = (sig * 100).toFixed(3) + '%/d';
-    const bull = terms.filter(t => t > S0 * 1.03).length / terms.length;
-    const bear = terms.filter(t => t < S0 * 0.97).length / terms.length;
-    const baseP = 1 - bull - bear;
-    document.getElementById('mc-bull').textContent = (bull * 100).toFixed(1) + '%';
-    document.getElementById('mc-bear').textContent = (bear * 100).toFixed(1) + '%';
-    document.getElementById('mc-base-p').textContent = (baseP * 100).toFixed(1) + '%';
-    document.getElementById('mc-bull-bar').style.width = (bull * 100).toFixed(1) + '%';
-    document.getElementById('mc-bear-bar').style.width = (bear * 100).toFixed(1) + '%';
-    document.getElementById('mc-base-bar').style.width = (baseP * 100).toFixed(1) + '%';
-    signals.push({ id: 'MC', name: 'MC BAF drift', vote: p50 > 0 ? 1 : -1, detail: 'P50 ΔBAF ' + (p50 >= 0 ? '+' : '') + p50.toFixed(3) });
 
     // --- Ensemble board ---
-    const score = signals.reduce((s, x) => s + x.vote, 0);
-    const badge = document.getElementById('ensemble-badge');
-    if (score >= 3) { badge.textContent = 'CONSENSUS BULL · +' + score; badge.className = 'signal-pill buy'; }
-    else if (score <= -3) { badge.textContent = 'CONSENSUS BEAR · ' + score; badge.className = 'signal-pill sell'; }
-    else { badge.textContent = 'MIXED / HOLD · ' + (score >= 0 ? '+' : '') + score; badge.className = 'signal-pill hold'; }
-
-    document.getElementById('ensemble-cards').innerHTML = signals.map(s => {
-      const cls = s.vote > 0 ? 'buy' : s.vote < 0 ? 'sell' : 'hold';
-      const lab = s.vote > 0 ? 'BULL' : s.vote < 0 ? 'BEAR' : 'NEUTRAL';
-      return '<div class="card" style="padding:0.75rem;box-shadow:none;">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">' +
-        '<span style="font-size:0.8rem;font-weight:600;">' + s.name + '</span>' +
-        '<span class="signal-pill ' + cls + '">' + lab + '</span></div>' +
-        '<div class="mono t3" style="font-size:11px;">' + s.detail + '</div></div>';
-    }).join('');
+    safeModel('ensemble', function () {
+      const score = signals.reduce(function (s, x) { return s + x.vote; }, 0);
+      const badge = document.getElementById('ensemble-badge');
+      if (badge) {
+        if (score >= 3) { badge.textContent = 'CONSENSUS BULL · +' + score; badge.className = 'signal-pill buy'; }
+        else if (score <= -3) { badge.textContent = 'CONSENSUS BEAR · ' + score; badge.className = 'signal-pill sell'; }
+        else { badge.textContent = 'MIXED / HOLD · ' + (score >= 0 ? '+' : '') + score; badge.className = 'signal-pill hold'; }
+      }
+      const board = document.getElementById('ensemble-cards');
+      if (board) {
+        board.innerHTML = signals.map(function (s) {
+          const cls = s.vote > 0 ? 'buy' : s.vote < 0 ? 'sell' : 'hold';
+          const lab = s.vote > 0 ? 'BULL' : s.vote < 0 ? 'BEAR' : 'NEUTRAL';
+          return '<div class="card" style="padding:0.75rem;box-shadow:none;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">' +
+            '<span style="font-size:0.8rem;font-weight:600;">' + s.name + '</span>' +
+            '<span class="signal-pill ' + cls + '">' + lab + '</span></div>' +
+            '<div class="mono t3" style="font-size:11px;">' + s.detail + '</div></div>';
+        }).join('');
+      }
+    });
 
     state.rendered.models = true;
   }
@@ -2660,7 +2834,12 @@
           initBafChart();
           updateBafMetrics();
         }
-        if (section === 'models') refreshModels();
+        if (section === 'models') {
+          // Double frame so layout height is non-zero before Apex measures
+          requestAnimationFrame(function () {
+            setTimeout(function () { refreshModels(); }, 40);
+          });
+        }
         if (section === 'data') renderDailyTable();
       }, 30);
     });
@@ -2802,15 +2981,20 @@
     last.sg = off[0]; last.rtm = off[1]; last.glb = off[2];
 
     setTimeout(() => {
-      initMainChart();
-      initMonthlyBars();
-      initQuarterChart();
-      renderMonthlyTables();
-      updateTickerUI(false);
-      updateBafMetrics();
-      updateVolCards();
+      try {
+        initMainChart();
+        initMonthlyBars();
+        initQuarterChart();
+        renderMonthlyTables();
+        updateTickerUI(false);
+        updateBafMetrics();
+        updateVolCards();
+      } catch (err) {
+        console.error('Boot render error', err);
+      }
 
-      document.getElementById('loading-screen').classList.add('hidden');
+      const ls = document.getElementById('loading-screen');
+      if (ls) ls.classList.add('hidden');
       setInterval(liveTick, 1500);
       setInterval(updateLastUpdatedLabel, 1000);
       setInterval(tickClock, 1000);
@@ -2818,8 +3002,10 @@
 
       // Fix chart sizes after fonts/layout settle
       setTimeout(() => {
-        Object.values(state.charts).forEach(c => { try { c && c.resize(); } catch (e) {} });
-      }, 200);
+        Object.keys(state.charts).forEach(function (k) {
+          try { state.charts[k] && state.charts[k].resize && state.charts[k].resize(); } catch (e) {}
+        });
+      }, 250);
     }, 750);
 
     window.addEventListener('resize', () => {
