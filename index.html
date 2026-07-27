@@ -546,37 +546,61 @@
       color: var(--text);
     }
     .chart-box.main { height: 400px; }
-    /* VLSFO Daily Price Trend host — single empty box Apex mounts into */
+    /* ===== VLSFO Daily Price Trend — balanced layout ===== */
+    .price-trend-card {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .price-trend-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem 1.35rem;
+      padding: 0.15rem 0 0.55rem;
+      margin: 0;
+      list-style: none;
+    }
+    .price-trend-legend li {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      user-select: none;
+      opacity: 1;
+      transition: opacity 0.15s;
+    }
+    .price-trend-legend li.off { opacity: 0.35; }
+    .price-trend-legend .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
     .price-trend-host {
       display: block;
       position: relative;
-      width: 100% !important;
-      max-width: 100% !important;
-      height: 400px;
-      margin: 0 !important;
-      padding: 0 !important;
+      width: 100%;
+      height: 360px;
+      margin: 0 auto;
+      padding: 0;
       overflow: hidden;
       box-sizing: border-box;
     }
-    /* Pin canvas to left edge — this is the usual cause of “chart shifted right” */
     .price-trend-host .apexcharts-canvas {
       left: 0 !important;
-      right: auto !important;
-      margin: 0 !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
+      margin: 0 auto !important;
       max-width: 100% !important;
     }
     .price-trend-host .apexcharts-legend {
-      left: 0 !important;
-      right: 0 !important;
-      width: 100% !important;
-      padding: 0 !important;
-      display: flex !important;
-      justify-content: center !important;
+      display: none !important; /* custom HTML legend above */
     }
     @media (max-width: 640px) {
-      .price-trend-host { height: 320px; }
+      .price-trend-host { height: 300px; }
     }
     .chart-box.full { height: 460px; }
     .chart-box.bar { height: 300px; }
@@ -1032,13 +1056,13 @@
             </div>
           </div>
 
-          <!-- Chart FULL WIDTH row (fixes right-shift from side-column layout) -->
+          <!-- Chart FULL WIDTH — balanced center plot -->
           <div class="overview-chart-row">
-            <div class="card overview-chart-card" style="padding:1rem 1.1rem 0.75rem;">
+            <div class="card overview-chart-card price-trend-card" style="padding:1.1rem 1.15rem 0.9rem;">
               <div class="chart-toolbar">
                 <div style="min-width:0;flex:1;">
-                  <h2 style="margin:0;font-size:0.9rem;font-weight:600;">VLSFO Daily Price Trend</h2>
-                  <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">01 May → 26 Jul 2026 · USD/mt · Ship &amp; Bunker · Zoom &amp; pan</p>
+                  <h2 style="margin:0;font-size:0.95rem;font-weight:600;text-align:left;">VLSFO Daily Price Trend</h2>
+                  <p class="t3" style="margin:0.25rem 0 0;font-size:11px;">01 May → 26 Jul 2026 · USD/mt · Ship &amp; Bunker</p>
                 </div>
                 <div class="chart-actions">
                   <button class="chip active" data-range="all" onclick="setChartRange('all', this)">All</button>
@@ -1048,13 +1072,18 @@
                   <button class="btn" onclick="exportChartPNG()">PNG</button>
                 </div>
               </div>
-              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-bottom:0.65rem;font-size:0.75rem;">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.5rem;font-size:0.75rem;">
                 <label class="t3">From</label>
                 <input type="date" id="date-from" value="2026-05-01" min="2026-05-01" max="2026-07-26" onchange="applyDateFilter()" />
                 <label class="t3">To</label>
                 <input type="date" id="date-to" value="2026-07-26" min="2026-05-01" max="2026-07-26" onchange="applyDateFilter()" />
               </div>
-              <!-- Single absolute host — prevents skeleton stack from shifting Apex plot -->
+              <!-- External centered legend (keeps plot area symmetric) -->
+              <ul class="price-trend-legend" id="price-trend-legend">
+                <li data-series="0" onclick="toggleTrendSeries(0, this)"><span class="dot" style="background:#22d3ee"></span>Singapore VLSFO</li>
+                <li data-series="1" onclick="toggleTrendSeries(1, this)"><span class="dot" style="background:#34d399"></span>Rotterdam VLSFO</li>
+                <li data-series="2" onclick="toggleTrendSeries(2, this)"><span class="dot" style="background:#60a5fa"></span>Global 20 Ports</li>
+              </ul>
               <div id="main-chart" class="price-trend-host" aria-label="VLSFO Daily Price Trend chart"></div>
             </div>
           </div>
@@ -1801,12 +1830,14 @@
     });
   }
 
-  function lineChartOptions(data, height, showToolbar, widthPx) {
-    const opts = {
+  function lineChartOptions(data, height, showToolbar, widthPx, balanced) {
+    // balanced=true → overview chart: external legend, equal gutters, no toolbar
+    const isBalanced = balanced !== false && !showToolbar;
+    return {
       series: buildSeries(data),
       chart: {
         type: 'area',
-        height: height || 400,
+        height: height || 360,
         width: widthPx || '100%',
         fontFamily: 'Inter, sans-serif',
         background: 'transparent',
@@ -1824,55 +1855,63 @@
       },
       colors: ['#22d3ee', '#34d399', '#60a5fa'],
       dataLabels: { enabled: false },
-      stroke: { curve: 'smooth', width: [2.4, 2.4, 2], dashArray: [0, 0, 5] },
+      stroke: { curve: 'smooth', width: [2.5, 2.5, 2], dashArray: [0, 0, 4] },
       fill: {
         type: 'gradient',
-        gradient: { shadeIntensity: 1, opacityFrom: isDark() ? 0.28 : 0.18, opacityTo: 0.02, stops: [0, 90, 100] }
+        gradient: { shadeIntensity: 1, opacityFrom: isDark() ? 0.26 : 0.16, opacityTo: 0.02, stops: [0, 92, 100] }
       },
-      markers: { size: 0, hover: { size: 4 } },
+      markers: { size: 0, hover: { size: 5 } },
       xaxis: {
         type: 'datetime',
+        tickAmount: 6,
         labels: {
           datetimeUTC: false,
-          style: { fontSize: '11px', colors: chartFore() },
+          style: { fontSize: '11px', colors: chartFore(), fontFamily: 'Inter, sans-serif' },
           trim: true,
           hideOverlappingLabels: true,
+          offsetY: 2,
         },
         axisBorder: { show: false },
         axisTicks: { show: false },
         tooltip: { enabled: false },
+        crosshairs: {
+          show: true,
+          stroke: { color: isDark() ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.3)', width: 1, dashArray: 4 }
+        },
       },
       yaxis: {
         labels: {
-          formatter: function (v) { return v == null ? '' : Math.round(v); },
+          formatter: function (v) { return v == null ? '' : String(Math.round(v)); },
           style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() },
-          // Pull labels closer — large left gutter is what makes plot look right-shifted
-          offsetX: 0,
-          maxWidth: 40,
-          minWidth: 32,
+          offsetX: isBalanced ? 4 : 0,
+          maxWidth: 42,
+          minWidth: 36,
           align: 'right',
+          padding: 0,
         },
         forceNiceScale: true,
         tickAmount: 5,
+        decimalsInFloat: 0,
       },
-      // Symmetric padding is critical for visual balance
+      // Mirror left axis gutter on the right so plot sits centered
       grid: {
         borderColor: gridColor(),
         strokeDashArray: 3,
-        padding: { left: 6, right: 6, top: 8, bottom: 4 },
+        padding: isBalanced
+          ? { left: 8, right: 18, top: 6, bottom: 8 }
+          : { left: 10, right: 10, top: 10, bottom: 4 },
         xaxis: { lines: { show: false } },
+        yaxis: { lines: { show: true } },
       },
+      // External HTML legend for overview; Apex legend for full page
       legend: {
-        show: true,
+        show: !isBalanced,
         position: 'top',
         horizontalAlign: 'center',
-        floating: false,
         fontSize: '12px',
-        fontWeight: 500,
         labels: { colors: chartFore() },
         markers: { width: 9, height: 9, radius: 9 },
-        itemMargin: { horizontal: 12, vertical: 2 },
-        onItemClick: { toggleDataSeries: true },
+        itemMargin: { horizontal: 12 },
       },
       tooltip: {
         theme: tooltipTheme(),
@@ -1882,16 +1921,24 @@
         y: { formatter: function (v) { return v != null ? '$' + v.toFixed(2) + '/mt' : '—'; } },
         style: { fontSize: '12px', fontFamily: 'Inter, sans-serif' }
       },
-      annotations: {
-        points: annotationPoints(data),
-        xaxis: [
-          { x: parseDate('2026-05-01').getTime(), x2: parseDate('2026-05-31').getTime(), fillColor: 'rgba(34,211,238,0.05)', opacity: 0.3, label: { text: 'MAY', borderWidth: 0, style: { color: '#22d3ee', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
-          { x: parseDate('2026-06-01').getTime(), x2: parseDate('2026-06-30').getTime(), fillColor: 'rgba(248,113,113,0.04)', opacity: 0.3, label: { text: 'JUN', borderWidth: 0, style: { color: '#f87171', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
-          { x: parseDate('2026-07-01').getTime(), x2: parseDate('2026-07-26').getTime(), fillColor: 'rgba(52,211,153,0.05)', opacity: 0.3, label: { text: 'JUL', borderWidth: 0, style: { color: '#34d399', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
-        ]
-      }
+      annotations: isBalanced
+        ? {
+            // Soft month bands only — no point labels that pull layout
+            xaxis: [
+              { x: parseDate('2026-05-01').getTime(), x2: parseDate('2026-05-31').getTime(), fillColor: 'rgba(34,211,238,0.04)', opacity: 0.4 },
+              { x: parseDate('2026-06-01').getTime(), x2: parseDate('2026-06-30').getTime(), fillColor: 'rgba(248,113,113,0.035)', opacity: 0.4 },
+              { x: parseDate('2026-07-01').getTime(), x2: parseDate('2026-07-26').getTime(), fillColor: 'rgba(52,211,153,0.045)', opacity: 0.4 },
+            ]
+          }
+        : {
+            points: annotationPoints(data),
+            xaxis: [
+              { x: parseDate('2026-05-01').getTime(), x2: parseDate('2026-05-31').getTime(), fillColor: 'rgba(34,211,238,0.05)', opacity: 0.3, label: { text: 'MAY', borderWidth: 0, style: { color: '#22d3ee', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
+              { x: parseDate('2026-06-01').getTime(), x2: parseDate('2026-06-30').getTime(), fillColor: 'rgba(248,113,113,0.04)', opacity: 0.3, label: { text: 'JUN', borderWidth: 0, style: { color: '#f87171', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
+              { x: parseDate('2026-07-01').getTime(), x2: parseDate('2026-07-26').getTime(), fillColor: 'rgba(52,211,153,0.05)', opacity: 0.3, label: { text: 'JUL', borderWidth: 0, style: { color: '#34d399', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
+            ]
+          }
     };
-    return opts;
   }
 
   function destroyChart(key) {
@@ -1983,30 +2030,14 @@
     }
   }
 
-  function pinMainChartFlush() {
-    const host = document.getElementById('main-chart');
-    if (!host) return;
-    const w = Math.floor(host.getBoundingClientRect().width);
-    if (w < 80) return;
-    const canvas = host.querySelector('.apexcharts-canvas');
-    if (canvas) {
-      canvas.style.setProperty('left', '0px', 'important');
-      canvas.style.setProperty('margin', '0px', 'important');
-      canvas.style.setProperty('margin-left', '0px', 'important');
-      canvas.style.width = w + 'px';
-    }
-    const svg = host.querySelector('.apexcharts-svg');
-    if (svg) {
-      svg.setAttribute('width', String(w));
-      // Keep viewBox in sync when present
-      const vb = svg.getAttribute('viewBox');
-      if (vb) {
-        const parts = vb.split(/[\s,]+/).map(Number);
-        if (parts.length === 4 && parts[2] > 0) {
-          svg.setAttribute('viewBox', '0 0 ' + w + ' ' + parts[3]);
-        }
-      }
-    }
+  function toggleTrendSeries(index, li) {
+    if (!state.charts.main) return;
+    try {
+      state.charts.main.toggleSeries(
+        ['Singapore VLSFO', 'Rotterdam VLSFO', 'Global 20 Ports'][index]
+      );
+      if (li) li.classList.toggle('off');
+    } catch (e) {}
   }
 
   function initMainChart() {
@@ -2017,47 +2048,59 @@
     destroyChart('main');
     el.innerHTML = '';
 
-    // Measure AFTER layout — use getBoundingClientRect (more reliable than clientWidth during boot)
-    const rect = el.getBoundingClientRect();
-    let w = Math.floor(rect.width);
-    let h = Math.floor(rect.height);
-    if (!w || w < 100) {
-      // Fallback: card content width
-      const card = el.closest('.overview-chart-card');
-      w = card ? Math.floor(card.getBoundingClientRect().width - 36) : 800;
-    }
-    if (!h || h < 100) h = 400;
+    // Reset legend toggles
+    document.querySelectorAll('#price-trend-legend li').forEach(function (li) {
+      li.classList.remove('off');
+    });
 
-    const opts = lineChartOptions(data, h, false, w);
-    opts.chart.width = w;
-    opts.chart.height = h;
+    // Wait one frame so card width is final (sidebar + fonts)
+    const mount = function () {
+      const rect = el.getBoundingClientRect();
+      let w = Math.floor(rect.width);
+      let h = Math.floor(rect.height) || 360;
+      if (w < 120) {
+        const card = el.closest('.price-trend-card') || el.closest('.overview-chart-card');
+        w = card ? Math.max(280, Math.floor(card.getBoundingClientRect().width - 40)) : 720;
+      }
 
-    try {
-      state.charts.main = new ApexCharts(el, opts);
-      const done = function () {
-        try {
-          if (!state.charts.main) return;
-          const r2 = el.getBoundingClientRect();
-          const w2 = Math.floor(r2.width);
-          const h2 = Math.floor(r2.height) || h;
-          if (w2 > 80) {
-            state.charts.main.updateOptions({
-              chart: { width: w2, height: h2, offsetX: 0, offsetY: 0 }
-            }, false, false);
-          }
-          state.charts.main.resize();
-          pinMainChartFlush();
-        } catch (e) {}
-      };
-      const p = state.charts.main.render();
-      if (p && typeof p.then === 'function') p.then(done);
-      else setTimeout(done, 40);
-      // Late settle (fonts / sidebar)
-      setTimeout(done, 180);
-      setTimeout(done, 400);
-    } catch (err) {
-      console.error('initMainChart', err);
-      el.innerHTML = '<div class="chart-error">Chart failed to render</div>';
+      // balanced=true → external legend + mirrored gutters
+      const opts = lineChartOptions(data, h, false, w, true);
+      opts.chart.width = w;
+      opts.chart.height = h;
+
+      try {
+        state.charts.main = new ApexCharts(el, opts);
+        state.charts.main.render().then(function () {
+          // Final sync to container — no viewBox hacks
+          requestAnimationFrame(function () {
+            try {
+              const w2 = Math.floor(el.getBoundingClientRect().width);
+              const h2 = Math.floor(el.getBoundingClientRect().height) || h;
+              if (w2 > 100 && state.charts.main) {
+                state.charts.main.updateOptions({
+                  chart: { width: w2, height: h2, offsetX: 0, offsetY: 0 },
+                  grid: { padding: { left: 8, right: 18, top: 6, bottom: 8 } }
+                }, false, false);
+                state.charts.main.resize();
+              }
+              const canvas = el.querySelector('.apexcharts-canvas');
+              if (canvas) {
+                canvas.style.left = '0px';
+                canvas.style.margin = '0 auto';
+              }
+            } catch (e) {}
+          });
+        });
+      } catch (err) {
+        console.error('initMainChart', err);
+        el.innerHTML = '<div class="chart-error">Chart failed to render</div>';
+      }
+    };
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () { requestAnimationFrame(mount); });
+    } else {
+      requestAnimationFrame(function () { setTimeout(mount, 30); });
     }
   }
 
@@ -3260,6 +3303,7 @@
   window.exportChartPNG = exportChartPNG;
   window.forceRefresh = forceRefresh;
   window.refreshModels = refreshModels;
+  window.toggleTrendSeries = toggleTrendSeries;
 
   document.addEventListener('DOMContentLoaded', boot);
   </script>
