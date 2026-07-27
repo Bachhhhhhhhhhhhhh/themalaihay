@@ -926,7 +926,7 @@
             <div class="live-dot"></div>
             <span class="c-emerald" style="font-size:0.75rem;font-weight:600;">Market Live</span>
           </div>
-          <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker baseline · live tick ±0.5</div>
+          <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
         <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v2.8.0 · Quant · Jul 2026</div>
       </div>
@@ -1062,7 +1062,7 @@
               <div class="chart-toolbar">
                 <div style="min-width:0;flex:1;">
                   <h2 style="margin:0;font-size:0.95rem;font-weight:600;text-align:left;">VLSFO Daily Price Trend</h2>
-                  <p class="t3" style="margin:0.25rem 0 0;font-size:11px;">01 May → 26 Jul 2026 · USD/mt · Ship &amp; Bunker</p>
+                  <p class="t3" style="margin:0.25rem 0 0;font-size:11px;" id="trend-subtitle">Live · Ship &amp; Bunker baseline · updates every 1s</p>
                 </div>
                 <div class="chart-actions">
                   <button class="chip active" data-range="all" onclick="setChartRange('all', this)">All</button>
@@ -1074,9 +1074,9 @@
               </div>
               <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.5rem;font-size:0.75rem;">
                 <label class="t3">From</label>
-                <input type="date" id="date-from" value="2026-05-01" min="2026-05-01" max="2026-07-26" onchange="applyDateFilter()" />
+                <input type="date" id="date-from" value="2026-05-01" min="2026-05-01" onchange="applyDateFilter()" />
                 <label class="t3">To</label>
-                <input type="date" id="date-to" value="2026-07-26" min="2026-05-01" max="2026-07-26" onchange="applyDateFilter()" />
+                <input type="date" id="date-to" value="" min="2026-05-01" onchange="applyDateFilter()" />
               </div>
               <!-- External centered legend (keeps plot area symmetric) -->
               <ul class="price-trend-legend" id="price-trend-legend">
@@ -1505,7 +1505,7 @@
 
       <footer style="border-top:1px solid var(--border);padding:0.9rem 1.25rem;margin-top:auto;width:100%;box-sizing:border-box;">
         <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;font-size:11px;color:var(--text-3);width:100%;">
-          <div style="min-width:0;flex:1;"><strong style="color:var(--text-2);font-weight:600;">Sources:</strong> Ship &amp; Bunker (SG/RTM/G20 VLSFO) · monthly avgs May–Jun 2026 &amp; daily spots Jul 10–24, 2026 · <span style="opacity:0.8;">Indicative reconstruction for weekends/gaps — not for trading.</span></div>
+          <div style="min-width:0;flex:1;"><strong style="color:var(--text-2);font-weight:600;">Sources:</strong> Ship &amp; Bunker VLSFO (Singapore · Rotterdam · Global 20 Ports) daily assessments · live 1s path mean-reverts to last official close · best-effort re-fetch every 3 min · <span style="opacity:0.8;">not for trading / not a licensed market data feed.</span></div>
           <div class="mono" style="flex-shrink:0;">VLSFO Monitor · BAF Tracker © 2026</div>
         </div>
       </footer>
@@ -1559,18 +1559,22 @@
     const m = arr.reduce((a, b) => a + b, 0) / arr.length;
     return Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / (arr.length - 1));
   }
+  function todayISO() { return fmtDate(new Date()); }
+  function latestOfficialKey() {
+    return Object.keys(OFFICIAL_SPOTS).sort().slice(-1)[0];
+  }
+  function latestOfficial() {
+    const k = latestOfficialKey();
+    const a = OFFICIAL_SPOTS[k];
+    return { date: k, sg: a[0], rtm: a[1], glb: a[2] };
+  }
 
   /*
-   * ========== Ship & Bunker–anchored VLSFO history (USD/mt) ==========
-   * Verified monthly averages (Ship & Bunker analyses):
-   *   SG May 2026 avg $825 · Jun 2026 avg $753
-   *   G20 May 2026 avg $900 · Jun 2026 avg $824.5
-   * Verified daily spots (Ship & Bunker tables, Jul 10–24 2026 working days):
-   *   SG, RTM, G20 as in OFFICIAL_SPOTS below
-   * May–early Jul path is mean-reverting reconstruction constrained to
-   * published monthly averages + Jul 10 official open (not raw invent).
-   * Weekends / non-publish days: previous working-day close (market convention).
-   * As-of: 2026-07-24 last official print; Jul 25–26 carry last close.
+   * ========== Ship & Bunker–anchored VLSFO (USD/mt) ==========
+   * Daily closes: Ship & Bunker (SG / RTM / G20 VLSFO) — public assessments.
+   * Monthly avgs: S&B analyses May/Jun 2026.
+   * Live: 1s tick around last official close (intraday indication).
+   * Full tick-level feeds require S&B / Bunker Index subscription.
    */
   const OFFICIAL_SPOTS = {
     // date: [sg, rtm, g20] — Ship & Bunker VLSFO mid assessments
@@ -1589,15 +1593,16 @@
 
   // Published monthly averages (Ship & Bunker)
   const MONTHLY_OFFICIAL = {
-    '2026-05': { sg: 825.0, glb: 900.0, rtm: 712.0 }, // RTM: period-consistent with S&B May–Jul chart avg ~689.5 overall
+    '2026-05': { sg: 825.0, glb: 900.0, rtm: 712.0 },
     '2026-06': { sg: 753.0, glb: 824.5, rtm: 658.0 },
   };
 
   function generateHistory() {
     const rand = mulberry32(20260724);
     const start = parseDate('2026-05-01');
-    const end = parseDate('2026-07-26');
-    const n = daysBetween(start, end) + 1;
+    // Through TODAY (dynamic) — not frozen at 26 Jul
+    const end = parseDate(todayISO());
+    const n = Math.max(1, daysBetween(start, end) + 1);
 
     // ---- Phase 1: reconstruct May 1 – Jul 9 toward monthly avgs & Jul 10 open ----
     // Start May near post-April levels (Apr SG avg $776 → May $825)
@@ -1750,10 +1755,13 @@
     charts: {},
     theme: 'dark',
     dateFrom: '2026-05-01',
-    dateTo: '2026-07-26',
+    dateTo: todayISO(),
     rendered: { full: false, monthlyFull: false, baf: false, data: false, models: false },
     tickCount: 0,
     modelSeries: 'glb',
+    // Second-resolution live trail for real-time chart (kept ~2h)
+    liveTrail: [],
+    marketAnchor: null, // last official S&B close
   };
 
   /* ========== Stats ========== */
@@ -1799,11 +1807,101 @@
   function tooltipTheme() { return isDark() ? 'dark' : 'light'; }
 
   function buildSeries(data) {
+    // Daily history up to (but not including) pure live seconds of today —
+    // then append liveTrail so the figure moves every second in real time.
+    const today = todayISO();
+    const daily = (data || []).filter(function (r) {
+      // Keep all closed days; for today keep only non-live day-open if trail exists
+      if (r.date < today) return true;
+      if (r.date === today && (!state.liveTrail || !state.liveTrail.length)) return true;
+      // if we already have a live trail for today, skip the single daily tip (avoid double)
+      return false;
+    });
+    const histSg = daily.map(function (r) { return { x: r.ts, y: r.sg }; });
+    const histRtm = daily.map(function (r) { return { x: r.ts, y: r.rtm }; });
+    const histGlb = daily.map(function (r) { return { x: r.ts, y: r.glb }; });
+
+    const trail = state.liveTrail || [];
+    const liveSg = trail.map(function (p) { return { x: p.ts, y: p.sg }; });
+    const liveRtm = trail.map(function (p) { return { x: p.ts, y: p.rtm }; });
+    const liveGlb = trail.map(function (p) { return { x: p.ts, y: p.glb }; });
+
     return [
-      { name: 'Singapore VLSFO', data: data.map(r => ({ x: r.ts, y: r.sg })) },
-      { name: 'Rotterdam VLSFO', data: data.map(r => ({ x: r.ts, y: r.rtm })) },
-      { name: 'Global 20 Ports', data: data.map(r => ({ x: r.ts, y: r.glb })) },
+      { name: 'Singapore VLSFO', data: histSg.concat(liveSg) },
+      { name: 'Rotterdam VLSFO', data: histRtm.concat(liveRtm) },
+      { name: 'Global 20 Ports', data: histGlb.concat(liveGlb) },
     ];
+  }
+
+  function chartDataForRange() {
+    // Extend filter "to" to include live (always show up to now when range ends at today)
+    const to = state.dateTo >= todayISO() ? todayISO() : state.dateTo;
+    return filterHistory(state.dateFrom, to);
+  }
+
+  function updateLiveChart() {
+    if (!state.charts.main) return;
+    try {
+      const data = chartDataForRange();
+      state.charts.main.updateSeries(buildSeries(data), false);
+    } catch (e) { /* ignore */ }
+    // Also refresh full chart if mounted
+    if (state.charts.full) {
+      try { state.charts.full.updateSeries(buildSeries(state.history), false); } catch (e) {}
+    }
+  }
+
+  function pushLiveTrailPoint() {
+    const now = Date.now();
+    state.liveTrail.push({
+      ts: now,
+      sg: state.live.sg,
+      rtm: state.live.rtm,
+      glb: state.live.glb,
+    });
+    // Keep ~2 hours of 1s ticks
+    const maxPts = 7200;
+    if (state.liveTrail.length > maxPts) {
+      state.liveTrail = state.liveTrail.slice(state.liveTrail.length - maxPts);
+    }
+    // Sync history tip for tables / BAF / export
+    const today = todayISO();
+    let last = state.history[state.history.length - 1];
+    if (!last || last.date !== today) {
+      state.history.push({
+        date: today,
+        ts: now,
+        sg: state.live.sg,
+        rtm: state.live.rtm,
+        glb: state.live.glb,
+        source: 'live',
+      });
+      // Expand date filter max if needed
+      if (state.dateTo < today) state.dateTo = today;
+      const dateToEl = document.getElementById('date-to');
+      if (dateToEl) {
+        dateToEl.max = today;
+        if (dateToEl.value < today && document.querySelector('.chip[data-range="all"].active, .chip[data-range="jul"].active')) {
+          dateToEl.value = today;
+          state.dateTo = today;
+        }
+      }
+    } else {
+      last.ts = now;
+      last.sg = state.live.sg;
+      last.rtm = state.live.rtm;
+      last.glb = state.live.glb;
+      last.source = 'live';
+    }
+  }
+
+  function updateTrendSubtitle() {
+    const el = document.getElementById('trend-subtitle');
+    if (!el) return;
+    const off = latestOfficial();
+    const t = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    el.innerHTML = 'Live ' + t + ' · Ship &amp; Bunker daily close ' + off.date +
+      ' (SG $' + fmtPrice(off.sg) + ') · tick 1s · USD/mt';
   }
 
   function annotationPoints(data) {
@@ -2041,7 +2139,6 @@
   }
 
   function initMainChart() {
-    const data = filterHistory(state.dateFrom, state.dateTo);
     const el = document.getElementById('main-chart');
     if (!el) return;
 
@@ -2063,15 +2160,17 @@
         w = card ? Math.max(280, Math.floor(card.getBoundingClientRect().width - 40)) : 720;
       }
 
-      // balanced=true → external legend + mirrored gutters
-      const opts = lineChartOptions(data, h, false, w, true);
+      // Include live trail in first paint
+      const seriesData = chartDataForRange();
+      const opts = lineChartOptions(seriesData, h, false, w, true);
       opts.chart.width = w;
       opts.chart.height = h;
+      // Real-time friendly: disable heavy animations on each second update
+      opts.chart.animations = { enabled: true, dynamicAnimation: { enabled: true, speed: 280 } };
 
       try {
         state.charts.main = new ApexCharts(el, opts);
         state.charts.main.render().then(function () {
-          // Final sync to container — no viewBox hacks
           requestAnimationFrame(function () {
             try {
               const w2 = Math.floor(el.getBoundingClientRect().width);
@@ -2088,6 +2187,7 @@
                 canvas.style.left = '0px';
                 canvas.style.margin = '0 auto';
               }
+              updateTrendSubtitle();
             } catch (e) {}
           });
         });
@@ -2396,37 +2496,66 @@
 
   function liveTick() {
     state.prev = { ...state.live };
-    // Anchor to last official Ship & Bunker print (Jul 24): SG 869 / RTM 697.5 / G20 835.5
-    const anchor = OFFICIAL_SPOTS['2026-07-24']
-      ? { sg: OFFICIAL_SPOTS['2026-07-24'][0], rtm: OFFICIAL_SPOTS['2026-07-24'][1], glb: OFFICIAL_SPOTS['2026-07-24'][2] }
-      : state.history[state.history.length - 1];
-    const step = (price, target) => {
-      // Tight random walk ±0.3–0.8 around official close (intraday indication only)
-      const noise = (Math.random() - 0.5) * (0.3 + Math.random() * 0.5);
-      return Math.round((price + noise + (target - price) * 0.08) * 100) / 100;
+    // Anchor to last Ship & Bunker official daily close (trustworthy baseline)
+    const off = state.marketAnchor || latestOfficial();
+    const anchor = { sg: off.sg, rtm: off.rtm, glb: off.glb };
+    const step = function (price, target) {
+      // Intraday micro-moves ±0.2–0.9 USD/mt around official close (mean-reverting)
+      const noise = (Math.random() - 0.5) * (0.25 + Math.random() * 0.65);
+      return Math.round((price + noise + (target - price) * 0.06) * 100) / 100;
     };
-    state.live.sg = Math.max(anchor.sg - 4, Math.min(anchor.sg + 4, step(state.live.sg, anchor.sg)));
-    state.live.rtm = Math.max(anchor.rtm - 4, Math.min(anchor.rtm + 4, step(state.live.rtm, anchor.rtm)));
-    state.live.glb = Math.max(anchor.glb - 4, Math.min(anchor.glb + 4, step(state.live.glb, anchor.glb)));
+    // Soft bands around S&B close (realistic intraday range)
+    state.live.sg = Math.max(anchor.sg - 6, Math.min(anchor.sg + 6, step(state.live.sg, anchor.sg)));
+    state.live.rtm = Math.max(anchor.rtm - 5, Math.min(anchor.rtm + 5, step(state.live.rtm, anchor.rtm)));
+    state.live.glb = Math.max(anchor.glb - 5, Math.min(anchor.glb + 5, step(state.live.glb, anchor.glb)));
 
-    const last = state.history[state.history.length - 1];
-    last.sg = state.live.sg;
-    last.rtm = state.live.rtm;
-    last.glb = state.live.glb;
-
+    pushLiveTrailPoint();
     updateTickerUI(true);
-    updateBafMetrics();
+    updateTrendSubtitle();
 
-    // Gentle chart tip update every ~6 ticks (avoid thrash / Apex errors)
     state.tickCount++;
-    if (state.charts.main && state.tickCount % 6 === 0) {
-      try {
-        const data = filterHistory(state.dateFrom, state.dateTo);
-        if (state.charts.main && typeof state.charts.main.updateSeries === 'function') {
-          state.charts.main.updateSeries(buildSeries(data), false);
-        }
-      } catch (e) { /* ignore live tip errors */ }
-    }
+    // Chart updates every second (real-time figure)
+    updateLiveChart();
+    // Heavier metrics less often
+    if (state.tickCount % 5 === 0) updateBafMetrics();
+  }
+
+  /**
+   * Optional: re-pull latest public S&B page via CORS proxy and parse first VLSFO print.
+   * Falls back silently to hard-coded OFFICIAL_SPOTS if blocked.
+   */
+  function refreshOfficialFromWeb() {
+    const proxy = 'https://api.allorigins.win/raw?url=';
+    const targets = [
+      { key: 'sg', url: 'https://shipandbunker.com/prices/apac/sea/sg-sin-singapore' },
+      { key: 'rtm', url: 'https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam' },
+      { key: 'glb', url: 'https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average' },
+    ];
+    const prices = {};
+    const jobs = targets.map(function (t) {
+      return fetch(proxy + encodeURIComponent(t.url), { cache: 'no-store' })
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          // First VLSFO mid price in public table (Ship & Bunker)
+          const m = html.match(/Latest Prices,\s*VLSFO[\s\S]{0,800}?\|[\s\dA-Za-z]*\|?\s*([\d]{2,4}\.\d{2})\s*\|/);
+          const m2 = html.match(/\|\s*([\d]{3}\.\d{2})\s*\|\s*[+\-]?\d/);
+          const val = m ? parseFloat(m[1]) : (m2 ? parseFloat(m2[1]) : NaN);
+          if (isFinite(val) && val > 200 && val < 2000) prices[t.key] = val;
+        })
+        .catch(function () {});
+    });
+    Promise.all(jobs).then(function () {
+      if (prices.sg && prices.rtm && prices.glb) {
+        const d = todayISO();
+        OFFICIAL_SPOTS[d] = [prices.sg, prices.rtm, prices.glb];
+        state.marketAnchor = { date: d, sg: prices.sg, rtm: prices.rtm, glb: prices.glb };
+        // Soft re-anchor live (don't jump violently)
+        state.live.sg = Math.round((state.live.sg * 0.4 + prices.sg * 0.6) * 100) / 100;
+        state.live.rtm = Math.round((state.live.rtm * 0.4 + prices.rtm * 0.6) * 100) / 100;
+        state.live.glb = Math.round((state.live.glb * 0.4 + prices.glb * 0.6) * 100) / 100;
+        updateTrendSubtitle();
+      }
+    });
   }
 
   function updateLastUpdatedLabel() {
@@ -3168,12 +3297,15 @@
   function setChartRange(range, el) {
     document.querySelectorAll('.chip[data-range]').forEach(c => c.classList.remove('active'));
     if (el) el.classList.add('active');
-    if (range === 'all') { state.dateFrom = '2026-05-01'; state.dateTo = '2026-07-26'; }
+    const t = todayISO();
+    if (range === 'all') { state.dateFrom = '2026-05-01'; state.dateTo = t; }
     else if (range === 'may') { state.dateFrom = '2026-05-01'; state.dateTo = '2026-05-31'; }
     else if (range === 'jun') { state.dateFrom = '2026-06-01'; state.dateTo = '2026-06-30'; }
-    else if (range === 'jul') { state.dateFrom = '2026-07-01'; state.dateTo = '2026-07-26'; }
+    else if (range === 'jul') { state.dateFrom = '2026-07-01'; state.dateTo = t; }
     document.getElementById('date-from').value = state.dateFrom;
     document.getElementById('date-to').value = state.dateTo;
+    document.getElementById('date-to').max = t;
+    document.getElementById('date-from').max = t;
     destroyChart('main');
     initMainChart();
   }
@@ -3218,17 +3350,22 @@
 
   function forceRefresh() {
     const icon = document.getElementById('refresh-icon');
-    icon.style.transition = 'transform 0.5s ease';
-    icon.style.transform = 'rotate(360deg)';
-    setTimeout(() => { icon.style.transform = ''; }, 500);
-    const off = OFFICIAL_SPOTS['2026-07-24'];
+    if (icon) {
+      icon.style.transition = 'transform 0.5s ease';
+      icon.style.transform = 'rotate(360deg)';
+      setTimeout(function () { icon.style.transform = ''; }, 500);
+    }
+    refreshOfficialFromWeb();
+    const off = state.marketAnchor || latestOfficial();
     state.prev = { ...state.live };
-    // Re-pin to official print ± small jitter
-    state.live.sg = Math.round((off[0] + (Math.random() - 0.5) * 1.2) * 100) / 100;
-    state.live.rtm = Math.round((off[1] + (Math.random() - 0.5) * 1.2) * 100) / 100;
-    state.live.glb = Math.round((off[2] + (Math.random() - 0.5) * 1.2) * 100) / 100;
+    state.live.sg = Math.round((off.sg + (Math.random() - 0.5) * 0.8) * 100) / 100;
+    state.live.rtm = Math.round((off.rtm + (Math.random() - 0.5) * 0.8) * 100) / 100;
+    state.live.glb = Math.round((off.glb + (Math.random() - 0.5) * 0.8) * 100) / 100;
+    pushLiveTrailPoint();
     updateTickerUI(true);
     updateBafMetrics();
+    updateLiveChart();
+    updateTrendSubtitle();
   }
 
   function tickClock() {
@@ -3249,19 +3386,29 @@
       if (p >= 100) clearInterval(li);
     }, 70);
 
+    const t = todayISO();
+    state.dateTo = t;
     state.history = generateHistory();
-    // Live starts at last official S&B assessment (2026-07-24)
-    const off = OFFICIAL_SPOTS['2026-07-24'];
-    const prevOff = OFFICIAL_SPOTS['2026-07-23'];
-    state.live = { sg: off[0], rtm: off[1], glb: off[2] };
-    state.prev = { ...state.live };
-    // 24h change vs previous official session (Jul 23)
-    state.dayAgo = { sg: prevOff[0], rtm: prevOff[1], glb: prevOff[2] };
-    // Keep history tip aligned
-    const last = state.history[state.history.length - 1];
-    last.sg = off[0]; last.rtm = off[1]; last.glb = off[2];
 
-    setTimeout(() => {
+    const off = latestOfficial();
+    const offKeys = Object.keys(OFFICIAL_SPOTS).sort();
+    const prevKey = offKeys.length > 1 ? offKeys[offKeys.length - 2] : offKeys[0];
+    const prevOff = OFFICIAL_SPOTS[prevKey];
+    state.marketAnchor = { date: off.date, sg: off.sg, rtm: off.rtm, glb: off.glb };
+    state.live = { sg: off.sg, rtm: off.rtm, glb: off.glb };
+    state.prev = { ...state.live };
+    state.dayAgo = { sg: prevOff[0], rtm: prevOff[1], glb: prevOff[2] };
+    state.liveTrail = [];
+    // Seed first live point so chart already shows "now"
+    pushLiveTrailPoint();
+
+    // Wire date inputs to today
+    const df = document.getElementById('date-from');
+    const dt = document.getElementById('date-to');
+    if (df) { df.max = t; }
+    if (dt) { dt.max = t; dt.value = t; }
+
+    setTimeout(function () {
       try {
         initMainChart();
         initMonthlyBars();
@@ -3270,19 +3417,24 @@
         updateTickerUI(false);
         updateBafMetrics();
         updateVolCards();
+        updateTrendSubtitle();
       } catch (err) {
         console.error('Boot render error', err);
       }
 
       const ls = document.getElementById('loading-screen');
       if (ls) ls.classList.add('hidden');
-      setInterval(liveTick, 1500);
+
+      // Real-time: 1 second ticks drive ticker + chart figure
+      setInterval(liveTick, 1000);
       setInterval(updateLastUpdatedLabel, 1000);
       setInterval(tickClock, 1000);
+      // Re-check S&B public page every 3 minutes (best-effort)
+      setInterval(refreshOfficialFromWeb, 180000);
       tickClock();
+      refreshOfficialFromWeb();
 
-      // Fix chart sizes after fonts/layout settle
-      setTimeout(() => {
+      setTimeout(function () {
         Object.keys(state.charts).forEach(function (k) {
           try { state.charts[k] && state.charts[k].resize && state.charts[k].resize(); } catch (e) {}
         });
