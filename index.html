@@ -502,6 +502,37 @@
     .chart-box .apexcharts-canvas,
     .chart-box > div {
       max-width: 100% !important;
+      width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+    /* Overview main chart — pin flush left/right, no auto-center drift */
+    #main-chart-wrap,
+    #main-chart {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      box-sizing: border-box;
+    }
+    #main-chart .apexcharts-canvas {
+      margin: 0 !important;
+      left: 0 !important;
+      transform: none !important;
+      width: 100% !important;
+    }
+    #main-chart .apexcharts-inner {
+      transform: none !important;
+    }
+    #main-chart .apexcharts-legend {
+      justify-content: center !important;
+      padding: 0 4px !important;
+    }
+    #main-chart .apexcharts-toolbar {
+      right: 4px !important;
+      top: 0 !important;
     }
     .chart-error {
       position: absolute;
@@ -614,7 +645,7 @@
       border-radius: 999px;
       background: linear-gradient(90deg, var(--cyan), var(--emerald));
     }
-    .chart-box .apexcharts-canvas { margin: 0 auto; }
+    .chart-box .apexcharts-canvas { margin: 0 !important; }
     .apexcharts-tooltip {
       border-radius: 10px !important;
       box-shadow: 0 8px 24px rgba(0,0,0,0.25) !important;
@@ -1450,10 +1481,12 @@
       #refresh-text { display: none; }
       .page-body { padding: 0.75rem !important; }
     }
-    /* Keep ApexCharts inside cards */
+    /* Keep ApexCharts inside cards — flush, not auto-centered */
     .overview-chart-card .apexcharts-canvas,
     .bottom-grid .apexcharts-canvas {
-      margin: 0 auto !important;
+      margin: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
     }
     .ticker-row {
       padding-left: 1.25rem;
@@ -1767,8 +1800,12 @@
         fontFamily: 'Inter, sans-serif',
         background: 'transparent',
         foreColor: chartFore(),
+        offsetX: 0,
+        offsetY: 0,
         toolbar: {
           show: true,
+          offsetX: -4,
+          offsetY: 0,
           tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true },
           export: { csv: { filename: 'vlsfo-prices' }, png: { filename: 'vlsfo-chart' } }
         },
@@ -1788,7 +1825,11 @@
       markers: { size: 0, hover: { size: 4 } },
       xaxis: {
         type: 'datetime',
-        labels: { datetimeUTC: false, style: { fontSize: '11px', colors: chartFore() } },
+        labels: {
+          datetimeUTC: false,
+          style: { fontSize: '11px', colors: chartFore() },
+          offsetY: 0,
+        },
         axisBorder: { show: false },
         axisTicks: { show: false },
         tooltip: { enabled: false },
@@ -1797,19 +1838,37 @@
       yaxis: {
         labels: {
           formatter: v => (v == null ? '' : Math.round(v)),
-          style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() }
+          style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() },
+          // Keep label column tight so plot area is centered in the card
+          offsetX: 0,
+          minWidth: 36,
+          maxWidth: 44,
+          align: 'right',
+          padding: 4,
         },
-        title: { text: 'USD/mt', style: { fontSize: '11px', color: chartFore(), fontWeight: 500 } },
+        // Title moved to legend area via floating false — avoid left bulk
+        title: { text: undefined },
         forceNiceScale: true,
+        tickAmount: 5,
       },
-      grid: { borderColor: gridColor(), strokeDashArray: 3, padding: { left: 4, right: 8, top: 0, bottom: 0 } },
+      // Symmetric horizontal padding keeps plot visually balanced
+      grid: {
+        borderColor: gridColor(),
+        strokeDashArray: 3,
+        padding: { left: 8, right: 12, top: 8, bottom: 4 },
+        xaxis: { lines: { show: false } },
+        yaxis: { lines: { show: true } },
+      },
       legend: {
         position: 'top',
-        horizontalAlign: 'right',
+        horizontalAlign: 'center',
+        floating: false,
         fontSize: '12px',
         labels: { colors: chartFore() },
         markers: { width: 9, height: 9, radius: 9 },
-        itemMargin: { horizontal: 10 }
+        itemMargin: { horizontal: 12, vertical: 0 },
+        offsetY: 0,
+        offsetX: 0,
       },
       tooltip: {
         theme: tooltipTheme(),
@@ -1822,9 +1881,9 @@
       annotations: {
         points: annotationPoints(data),
         xaxis: [
-          { x: parseDate('2026-05-01').getTime(), x2: parseDate('2026-05-31').getTime(), fillColor: 'rgba(34,211,238,0.05)', opacity: 0.4, label: { text: 'MAY', style: { color: '#22d3ee', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
-          { x: parseDate('2026-06-01').getTime(), x2: parseDate('2026-06-30').getTime(), fillColor: 'rgba(248,113,113,0.04)', opacity: 0.4, label: { text: 'JUN', style: { color: '#f87171', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
-          { x: parseDate('2026-07-01').getTime(), x2: parseDate('2026-07-26').getTime(), fillColor: 'rgba(52,211,153,0.05)', opacity: 0.4, label: { text: 'JUL', style: { color: '#34d399', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
+          { x: parseDate('2026-05-01').getTime(), x2: parseDate('2026-05-31').getTime(), fillColor: 'rgba(34,211,238,0.05)', opacity: 0.4, label: { text: 'MAY', style: { color: '#22d3ee', background: 'transparent', fontSize: '10px', fontWeight: 700 }, orientation: 'horizontal', offsetY: 0 } },
+          { x: parseDate('2026-06-01').getTime(), x2: parseDate('2026-06-30').getTime(), fillColor: 'rgba(248,113,113,0.04)', opacity: 0.4, label: { text: 'JUN', style: { color: '#f87171', background: 'transparent', fontSize: '10px', fontWeight: 700 }, orientation: 'horizontal', offsetY: 0 } },
+          { x: parseDate('2026-07-01').getTime(), x2: parseDate('2026-07-26').getTime(), fillColor: 'rgba(52,211,153,0.05)', opacity: 0.4, label: { text: 'JUL', style: { color: '#34d399', background: 'transparent', fontSize: '10px', fontWeight: 700 }, orientation: 'horizontal', offsetY: 0 } },
         ]
       }
     };
@@ -1874,14 +1933,19 @@
       }
       // Clear any leftover Apex DOM
       el.innerHTML = '';
-      // Ensure measurable size
+      // Ensure measurable size (keep explicit width if caller set pixel width)
       const h = opts.chart && opts.chart.height
         ? opts.chart.height
         : (el.clientHeight || el.parentElement && el.parentElement.clientHeight || 300);
+      const parentW = (el.parentElement && el.parentElement.clientWidth) || el.clientWidth || 0;
+      const w = (opts.chart && opts.chart.width != null)
+        ? opts.chart.width
+        : (parentW > 0 ? parentW : '100%');
       opts.chart = {
         ...(opts.chart || {}),
         height: h,
-        width: '100%',
+        width: w,
+        offsetX: 0,
         parentHeightOffset: 0,
         redrawOnParentResize: true,
         redrawOnWindowResize: true,
@@ -1917,11 +1981,34 @@
   function initMainChart() {
     const data = filterHistory(state.dateFrom, state.dateTo);
     const el = document.getElementById('main-chart');
+    const wrap = document.getElementById('main-chart-wrap');
     const sk = document.getElementById('main-chart-skeleton');
-    const h = document.getElementById('main-chart-wrap').clientHeight || 400;
-    sk.style.display = 'none';
+    if (!el || !wrap) return;
+    const h = wrap.clientHeight || 400;
+    if (sk) sk.style.display = 'none';
     el.style.display = 'block';
-    renderOrUpdate('main', el, lineChartOptions(data, h));
+    el.style.width = '100%';
+    el.style.margin = '0';
+    el.style.padding = '0';
+    // Measure actual card width so Apex doesn't overshoot / drift right
+    const w = Math.max(wrap.clientWidth || el.clientWidth || 0, 280);
+    const opts = lineChartOptions(data, h);
+    opts.chart.width = w;
+    renderOrUpdate('main', el, opts, true);
+    // Second pass after paint — corrects any residual offset
+    requestAnimationFrame(function () {
+      setTimeout(function () {
+        if (!state.charts.main) return;
+        try {
+          const ww = wrap.clientWidth;
+          const hh = wrap.clientHeight || h;
+          if (ww > 0) {
+            state.charts.main.updateOptions({ chart: { width: ww, height: hh, offsetX: 0 } }, false, false);
+            state.charts.main.resize();
+          }
+        } catch (e) {}
+      }, 50);
+    });
   }
 
   function initFullChart() {
