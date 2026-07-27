@@ -194,19 +194,18 @@
       margin-bottom: 1rem;
       width: 100%;
     }
-    .overview-grid {
+    /* Chart always full row — never squeezed/shifted by side column */
+    .overview-chart-row {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    .overview-side-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       gap: 1rem;
       margin-bottom: 1rem;
       width: 100%;
-      align-items: start;
-    }
-    .overview-side {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      min-width: 0;
+      align-items: stretch;
     }
     .bottom-grid {
       display: grid;
@@ -249,17 +248,12 @@
     @media (min-width: 640px) {
       .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     }
-    @media (min-width: 1100px) {
-      .overview-grid {
-        grid-template-columns: minmax(0, 1fr) 300px;
+    @media (min-width: 900px) {
+      .overview-side-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       }
       .bottom-grid {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      }
-    }
-    @media (min-width: 1400px) {
-      .overview-grid {
-        grid-template-columns: minmax(0, 1fr) 340px;
       }
     }
     @media (max-width: 1023px) {
@@ -499,40 +493,32 @@
       overflow: hidden;
       min-width: 0;
     }
-    .chart-box .apexcharts-canvas,
-    .chart-box > div {
+    .chart-box .apexcharts-canvas {
       max-width: 100% !important;
-      width: 100% !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
     }
-    /* Overview main chart — pin flush left/right, no auto-center drift */
-    #main-chart-wrap,
-    #main-chart {
-      width: 100% !important;
-      max-width: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
+    /* Overview main chart container — clean box, do NOT override Apex transforms */
+    #main-chart-wrap {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    }
+    #main-chart {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      position: relative;
     }
     #main-chart .apexcharts-canvas {
       margin: 0 !important;
-      left: 0 !important;
-      transform: none !important;
-      width: 100% !important;
     }
-    #main-chart .apexcharts-inner {
-      transform: none !important;
-    }
-    #main-chart .apexcharts-legend {
+    #main-chart .apexcharts-legend.apexcharts-align-center {
       justify-content: center !important;
-      padding: 0 4px !important;
-    }
-    #main-chart .apexcharts-toolbar {
-      right: 4px !important;
-      top: 0 !important;
     }
     .chart-error {
       position: absolute;
@@ -1014,10 +1000,11 @@
             </div>
           </div>
 
-          <div class="overview-grid">
-            <div class="card overview-chart-card" style="padding:1rem 1.1rem;">
+          <!-- Chart FULL WIDTH row (fixes right-shift from side-column layout) -->
+          <div class="overview-chart-row">
+            <div class="card overview-chart-card" style="padding:1rem 1.1rem 0.75rem;">
               <div class="chart-toolbar">
-                <div style="min-width:0;">
+                <div style="min-width:0;flex:1;">
                   <h2 style="margin:0;font-size:0.9rem;font-weight:600;">VLSFO Daily Price Trend</h2>
                   <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">01 May → 26 Jul 2026 · USD/mt · Ship &amp; Bunker · Zoom &amp; pan</p>
                 </div>
@@ -1029,7 +1016,7 @@
                   <button class="btn" onclick="exportChartPNG()">PNG</button>
                 </div>
               </div>
-              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-bottom:0.65rem;font-size:0.75rem;">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-bottom:0.5rem;font-size:0.75rem;">
                 <label class="t3">From</label>
                 <input type="date" id="date-from" value="2026-05-01" min="2026-05-01" max="2026-07-26" onchange="applyDateFilter()" />
                 <label class="t3">To</label>
@@ -1037,42 +1024,43 @@
               </div>
               <div class="chart-box main" id="main-chart-wrap">
                 <div id="main-chart-skeleton" class="skeleton"></div>
-                <div id="main-chart" style="display:none;height:100%;width:100%;"></div>
+                <div id="main-chart"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Side cards equal 50/50 under chart -->
+          <div class="overview-side-row">
+            <div class="card card-hover" style="padding:1.1rem;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
+                <h3 style="margin:0;font-size:0.9rem;font-weight:600;">BAF Impact Preview</h3>
+                <span class="badge badge-sim">Model 0.85×</span>
+              </div>
+              <p class="t3" style="margin:0 0 0.85rem;font-size:11px;line-height:1.5;">
+                ΔBAF ≈ ΔVLSFO × 0.85 (pass-through). Ước tính dựa trên Global VLSFO.
+              </p>
+              <div class="row-line"><span class="t2" style="font-size:0.8rem;">Base (Jun avg)</span><span id="baf-base" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
+              <div class="row-line"><span class="t2" style="font-size:0.8rem;">Current (Jul MTD)</span><span id="baf-curr" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
+              <div class="row-line"><span class="t2" style="font-size:0.8rem;">Δ VLSFO</span><span id="baf-delta-fuel" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
+              <div class="row-line"><span class="t2" style="font-size:0.8rem;">Est. BAF Impact</span><span id="baf-impact" class="mono c-emerald" style="font-size:1rem;font-weight:700;">—</span></div>
+              <div class="signal-box">
+                <div class="t3" style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.2rem;">Signal</div>
+                <div id="baf-signal" class="c-cyan" style="font-size:0.85rem;font-weight:600;">—</div>
               </div>
             </div>
 
-            <div class="overview-side">
-              <div class="card card-hover" style="padding:1.1rem;">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
-                  <h3 style="margin:0;font-size:0.9rem;font-weight:600;">BAF Impact Preview</h3>
-                  <span class="badge badge-sim">Model 0.85×</span>
+            <div class="card card-hover" style="padding:1.1rem;">
+              <h3 style="margin:0 0 0.25rem;font-size:0.9rem;font-weight:600;">Current vs Previous Quarter</h3>
+              <p class="t3" style="margin:0 0 0.5rem;font-size:11px;">Q2 2026 (May–Jun) vs Jul MTD</p>
+              <div class="chart-box quarter" id="quarter-chart"></div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0.5rem;margin-top:0.5rem;">
+                <div class="bg-soft" style="border-radius:10px;padding:0.55rem 0.65rem;min-width:0;">
+                  <div class="t3" style="font-size:10px;">Q2 Avg</div>
+                  <div id="q2-avg" class="mono t1" style="font-size:0.85rem;font-weight:700;">—</div>
                 </div>
-                <p class="t3" style="margin:0 0 0.85rem;font-size:11px;line-height:1.5;">
-                  ΔBAF ≈ ΔVLSFO × 0.85 (pass-through). Ước tính dựa trên Global VLSFO.
-                </p>
-                <div class="row-line"><span class="t2" style="font-size:0.8rem;">Base (Jun avg)</span><span id="baf-base" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
-                <div class="row-line"><span class="t2" style="font-size:0.8rem;">Current (Jul MTD)</span><span id="baf-curr" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
-                <div class="row-line"><span class="t2" style="font-size:0.8rem;">Δ VLSFO</span><span id="baf-delta-fuel" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
-                <div class="row-line"><span class="t2" style="font-size:0.8rem;">Est. BAF Impact</span><span id="baf-impact" class="mono c-emerald" style="font-size:1rem;font-weight:700;">—</span></div>
-                <div class="signal-box">
-                  <div class="t3" style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.2rem;">Signal</div>
-                  <div id="baf-signal" class="c-cyan" style="font-size:0.85rem;font-weight:600;">—</div>
-                </div>
-              </div>
-
-              <div class="card card-hover" style="padding:1.1rem;">
-                <h3 style="margin:0 0 0.25rem;font-size:0.9rem;font-weight:600;">Current vs Previous Quarter</h3>
-                <p class="t3" style="margin:0 0 0.5rem;font-size:11px;">Q2 2026 (May–Jun) vs Jul MTD</p>
-                <div class="chart-box quarter" id="quarter-chart"></div>
-                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0.5rem;margin-top:0.5rem;">
-                  <div class="bg-soft" style="border-radius:10px;padding:0.55rem 0.65rem;min-width:0;">
-                    <div class="t3" style="font-size:10px;">Q2 Avg</div>
-                    <div id="q2-avg" class="mono t1" style="font-size:0.85rem;font-weight:700;">—</div>
-                  </div>
-                  <div class="bg-soft" style="border-radius:10px;padding:0.55rem 0.65rem;min-width:0;">
-                    <div class="t3" style="font-size:10px;">Jul MTD</div>
-                    <div id="q3-avg" class="mono c-cyan" style="font-size:0.85rem;font-weight:700;">—</div>
-                  </div>
+                <div class="bg-soft" style="border-radius:10px;padding:0.55rem 0.65rem;min-width:0;">
+                  <div class="t3" style="font-size:10px;">Jul MTD</div>
+                  <div id="q3-avg" class="mono c-cyan" style="font-size:0.85rem;font-weight:700;">—</div>
                 </div>
               </div>
             </div>
@@ -1481,13 +1469,6 @@
       #refresh-text { display: none; }
       .page-body { padding: 0.75rem !important; }
     }
-    /* Keep ApexCharts inside cards — flush, not auto-centered */
-    .overview-chart-card .apexcharts-canvas,
-    .bottom-grid .apexcharts-canvas {
-      margin: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-    }
     .ticker-row {
       padding-left: 1.25rem;
       padding-right: 1.25rem;
@@ -1790,37 +1771,33 @@
     });
   }
 
-  function lineChartOptions(data, height) {
+  function lineChartOptions(data, height, showToolbar) {
     return {
       series: buildSeries(data),
       chart: {
         type: 'area',
-        height,
+        height: height || 400,
         width: '100%',
         fontFamily: 'Inter, sans-serif',
         background: 'transparent',
         foreColor: chartFore(),
-        offsetX: 0,
-        offsetY: 0,
-        toolbar: {
-          show: true,
-          offsetX: -4,
-          offsetY: 0,
-          tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true },
-          export: { csv: { filename: 'vlsfo-prices' }, png: { filename: 'vlsfo-chart' } }
-        },
-        animations: { enabled: true, easing: 'easeinout', speed: 400, dynamicAnimation: { enabled: true, speed: 250 } },
+        // Overview: toolbar off (use PNG button). Full page can enable tools.
+        toolbar: showToolbar
+          ? { show: true, tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } }
+          : { show: false },
+        animations: { enabled: true, easing: 'easeinout', speed: 400 },
         zoom: { enabled: true, type: 'x', autoScaleYaxis: true },
         parentHeightOffset: 0,
         redrawOnParentResize: true,
         redrawOnWindowResize: true,
+        sparkline: { enabled: false },
       },
       colors: ['#22d3ee', '#34d399', '#60a5fa'],
       dataLabels: { enabled: false },
       stroke: { curve: 'smooth', width: [2.4, 2.4, 2], dashArray: [0, 0, 5] },
       fill: {
         type: 'gradient',
-        gradient: { shadeIntensity: 1, opacityFrom: isDark() ? 0.32 : 0.22, opacityTo: 0.02, stops: [0, 90, 100] }
+        gradient: { shadeIntensity: 1, opacityFrom: isDark() ? 0.28 : 0.18, opacityTo: 0.02, stops: [0, 90, 100] }
       },
       markers: { size: 0, hover: { size: 4 } },
       xaxis: {
@@ -1828,62 +1805,51 @@
         labels: {
           datetimeUTC: false,
           style: { fontSize: '11px', colors: chartFore() },
-          offsetY: 0,
         },
         axisBorder: { show: false },
         axisTicks: { show: false },
         tooltip: { enabled: false },
-        crosshairs: { show: true, stroke: { color: isDark() ? 'rgba(148,163,184,0.3)' : 'rgba(100,116,139,0.35)', width: 1, dashArray: 3 } }
       },
       yaxis: {
         labels: {
-          formatter: v => (v == null ? '' : Math.round(v)),
+          formatter: function (v) { return v == null ? '' : Math.round(v); },
           style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() },
-          // Keep label column tight so plot area is centered in the card
-          offsetX: 0,
-          minWidth: 36,
-          maxWidth: 44,
-          align: 'right',
-          padding: 4,
+          offsetX: -2,
+          maxWidth: 48,
         },
-        // Title moved to legend area via floating false — avoid left bulk
-        title: { text: undefined },
         forceNiceScale: true,
         tickAmount: 5,
       },
-      // Symmetric horizontal padding keeps plot visually balanced
+      // Equal L/R grid padding so plot sits centered in the card
       grid: {
         borderColor: gridColor(),
         strokeDashArray: 3,
-        padding: { left: 8, right: 12, top: 8, bottom: 4 },
-        xaxis: { lines: { show: false } },
-        yaxis: { lines: { show: true } },
+        padding: { left: 10, right: 10, top: 12, bottom: 0 },
       },
       legend: {
+        show: true,
         position: 'top',
         horizontalAlign: 'center',
         floating: false,
         fontSize: '12px',
         labels: { colors: chartFore() },
         markers: { width: 9, height: 9, radius: 9 },
-        itemMargin: { horizontal: 12, vertical: 0 },
-        offsetY: 0,
-        offsetX: 0,
+        itemMargin: { horizontal: 14, vertical: 0 },
       },
       tooltip: {
         theme: tooltipTheme(),
         shared: true,
         intersect: false,
         x: { format: 'dd MMM yyyy' },
-        y: { formatter: v => (v != null ? '$' + v.toFixed(2) + '/mt' : '—') },
+        y: { formatter: function (v) { return v != null ? '$' + v.toFixed(2) + '/mt' : '—'; } },
         style: { fontSize: '12px', fontFamily: 'Inter, sans-serif' }
       },
       annotations: {
         points: annotationPoints(data),
         xaxis: [
-          { x: parseDate('2026-05-01').getTime(), x2: parseDate('2026-05-31').getTime(), fillColor: 'rgba(34,211,238,0.05)', opacity: 0.4, label: { text: 'MAY', style: { color: '#22d3ee', background: 'transparent', fontSize: '10px', fontWeight: 700 }, orientation: 'horizontal', offsetY: 0 } },
-          { x: parseDate('2026-06-01').getTime(), x2: parseDate('2026-06-30').getTime(), fillColor: 'rgba(248,113,113,0.04)', opacity: 0.4, label: { text: 'JUN', style: { color: '#f87171', background: 'transparent', fontSize: '10px', fontWeight: 700 }, orientation: 'horizontal', offsetY: 0 } },
-          { x: parseDate('2026-07-01').getTime(), x2: parseDate('2026-07-26').getTime(), fillColor: 'rgba(52,211,153,0.05)', opacity: 0.4, label: { text: 'JUL', style: { color: '#34d399', background: 'transparent', fontSize: '10px', fontWeight: 700 }, orientation: 'horizontal', offsetY: 0 } },
+          { x: parseDate('2026-05-01').getTime(), x2: parseDate('2026-05-31').getTime(), fillColor: 'rgba(34,211,238,0.05)', opacity: 0.35, label: { text: 'MAY', style: { color: '#22d3ee', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
+          { x: parseDate('2026-06-01').getTime(), x2: parseDate('2026-06-30').getTime(), fillColor: 'rgba(248,113,113,0.04)', opacity: 0.35, label: { text: 'JUN', style: { color: '#f87171', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
+          { x: parseDate('2026-07-01').getTime(), x2: parseDate('2026-07-26').getTime(), fillColor: 'rgba(52,211,153,0.05)', opacity: 0.35, label: { text: 'JUL', style: { color: '#34d399', background: 'transparent', fontSize: '10px', fontWeight: 700 } } },
         ]
       }
     };
@@ -1984,37 +1950,41 @@
     const wrap = document.getElementById('main-chart-wrap');
     const sk = document.getElementById('main-chart-skeleton');
     if (!el || !wrap) return;
-    const h = wrap.clientHeight || 400;
     if (sk) sk.style.display = 'none';
     el.style.display = 'block';
     el.style.width = '100%';
-    el.style.margin = '0';
-    el.style.padding = '0';
-    // Measure actual card width so Apex doesn't overshoot / drift right
-    const w = Math.max(wrap.clientWidth || el.clientWidth || 0, 280);
+    el.innerHTML = '';
+    destroyChart('main');
+
+    // Use wrap height; width = 100% string so Apex fills container (no pixel drift)
+    const h = wrap.clientHeight || 400;
     const opts = lineChartOptions(data, h);
-    opts.chart.width = w;
-    renderOrUpdate('main', el, opts, true);
-    // Second pass after paint — corrects any residual offset
-    requestAnimationFrame(function () {
-      setTimeout(function () {
-        if (!state.charts.main) return;
+    opts.chart.width = '100%';
+    opts.chart.height = h;
+
+    try {
+      state.charts.main = new ApexCharts(el, opts);
+      const rendered = state.charts.main.render();
+      const after = function () {
         try {
-          const ww = wrap.clientWidth;
-          const hh = wrap.clientHeight || h;
-          if (ww > 0) {
-            state.charts.main.updateOptions({ chart: { width: ww, height: hh, offsetX: 0 } }, false, false);
-            state.charts.main.resize();
-          }
+          // Force resize to actual box after layout settles
+          if (state.charts.main) state.charts.main.resize();
         } catch (e) {}
-      }, 50);
-    });
+      };
+      if (rendered && typeof rendered.then === 'function') rendered.then(after);
+      else setTimeout(after, 30);
+      setTimeout(after, 200);
+    } catch (err) {
+      console.error('initMainChart', err);
+      el.innerHTML = '<div class="chart-error">Chart failed to render</div>';
+    }
   }
 
   function initFullChart() {
     const el = document.getElementById('full-chart');
+    if (!el) return;
     const h = el.clientHeight || 460;
-    renderOrUpdate('full', el, lineChartOptions(state.history, h));
+    renderOrUpdate('full', el, lineChartOptions(state.history, h, true), true);
     state.rendered.full = true;
   }
 
