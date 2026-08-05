@@ -912,6 +912,10 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
           Data Sources
         </button>
+        <button class="nav-item" data-section="guide" onclick="navigateTo('guide', this)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.5v.5"/></svg>
+          Giải thích
+        </button>
 
         <div class="nav-label" style="margin-top:0.75rem;">Tools</div>
         <button class="nav-item" onclick="exportCSV()">
@@ -936,7 +940,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.0.0 · S&amp;B accurate · 1s/60s</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.1.0 · Guide · S&amp;B · 1s/60s</div>
       </div>
     </aside>
 
@@ -1720,6 +1724,195 @@
               <a class="btn btn-primary" href="https://shipandbunker.com/prices" target="_blank" rel="noopener">Mở Ship &amp; Bunker Prices ↗</a>
               <a class="btn" href="https://www.bunkerindex.com/" target="_blank" rel="noopener">Mở Bunker Index ↗</a>
               <a class="btn" href="https://shipandbunker.com/store/subscribe" target="_blank" rel="noopener">S&amp;B Subscribe / full DB ↗</a>
+              <button class="btn" type="button" onclick="navigateTo('guide', document.querySelector('[data-section=guide]'))">Xem Giải thích →</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- GUIDE — dữ liệu thể hiện điều gì -->
+        <section id="section-guide" class="section">
+          <div style="margin-bottom:1rem;">
+            <h2 style="margin:0;font-size:1.1rem;font-weight:700;">Giải thích — Dữ liệu thể hiện điều gì?</h2>
+            <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.6;max-width:920px;">
+              Mục này giúp đọc dashboard như một <strong style="color:var(--text);">bảng điều khiển giá nhiên liệu tàu (bunker)</strong> phục vụ phân tích
+              <strong style="color:var(--text);">BAF (Bunker Adjustment Factor)</strong> và biến động chi phí nhiên liệu tuyến.
+              Đơn vị mặc định: <span class="mono c-cyan">USD/mt</span> (đô la Mỹ / metric ton).
+            </p>
+          </div>
+
+          <!-- Big picture -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">1. Bức tranh tổng thể</h3>
+            <p class="t2" style="margin:0;font-size:13px;line-height:1.65;">
+              Dashboard theo dõi giá <strong>VLSFO 0.5%</strong> (Very Low Sulphur Fuel Oil — dầu bunker lưu huỳnh ≤0.5%, chuẩn IMO 2020)
+              tại hai hub lớn và chỉ số toàn cầu:
+            </p>
+            <ul class="t2" style="margin:0.65rem 0 0;padding-left:1.2rem;font-size:13px;line-height:1.7;">
+              <li><strong class="c-cyan">Singapore (SG)</strong> — hub bunker lớn nhất châu Á; neo giá châu Á / tuyến Á–Âu, nội Á.</li>
+              <li><strong class="c-emerald">Rotterdam (RTM)</strong> — hub châu Âu (ARA); neo giá tuyến châu Âu / Địa Trung Hải.</li>
+              <li><strong class="c-blue">Global 20 Ports (G20)</strong> — trung bình 20 cảng bunker chính (Ship &amp; Bunker G20-VLSFO Index); proxy “thị trường thế giới”.</li>
+            </ul>
+            <p class="t3" style="margin:0.75rem 0 0;font-size:12px;line-height:1.55;">
+              Khi <strong>SG và G20 tăng</strong> → chi phí bunker châu Á / toàn cầu tăng áp lực → hãng tàu thường cân nhắc <strong>tăng BAF / GRI fuel</strong>.
+              Khi <strong>RTM giảm sâu hơn SG</strong> → spread SG–RTM nới → chênh lệch vùng; ảnh hưởng contract theo hub định giá.
+            </p>
+          </div>
+
+          <!-- What each UI block means -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.7rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">2. Từng khối trên màn hình nghĩa là gì?</h3>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:680px;">
+                <thead>
+                  <tr>
+                    <th>Khối / chỉ số</th>
+                    <th>Thể hiện điều gì</th>
+                    <th>Cách dùng (shipping / BAF)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="cell-label">Ticker LIVE (SG / RTM / G20)</td>
+                    <td>Giá spot “đang chạy” quanh daily mid S&amp;B; cập nhật mỗi 1 giây; re-neo mỗi 60 giây khi scrape được.</td>
+                    <td>Theo dõi <em>hướng</em> và mức hiện tại. 24h % so với print ngày trước (day-ago).</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">KPI Spot + % 24h</td>
+                    <td>Cùng mức giá ticker, tóm tắt 1 dòng. % = thay đổi so với print chính thức ngày trước.</td>
+                    <td>Xanh = tăng (áp lực chi phí lên); đỏ = giảm (dư địa nới BAF / tiết kiệm fuel).</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Est. BAF Δ (MoM)</td>
+                    <td>Ước lượng thay đổi BAF minh họa: ΔVLSFO (G20 Jul vs Jun) × pass-through 0.85, quy ra $/TEU minh họa.</td>
+                    <td><strong>Không</strong> phải BAF chính thức của hãng. Dùng để cảm nhận độ lớn biến động fuel → surcharge.</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">VLSFO Daily Price Trend</td>
+                    <td>Đường giá theo ngày (May → hôm nay) + đuôi live 1s. SG / RTM / G20 chồng lên nhau.</td>
+                    <td>Nhìn trend, spike, mean-revert. Filter All / May / Jun / Jul / date range để so giai đoạn.</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Spread SG − RTM</td>
+                    <td>Chênh Singapore trừ Rotterdam (USD/mt).</td>
+                    <td>Spread rộng = châu Á đắt hơn châu Âu tương đối; ảnh hưởng định giá theo hub contract.</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Q2 vs Q3 (bar)</td>
+                    <td>Trung bình giá Q2 (May–Jun) so với Q3 MTD (Jul–Aug) theo 3 series.</td>
+                    <td>So nhanh “mùa trước” vs “quý hiện tại” — hữu ích review BAF quý / contract.</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Monthly Compare</td>
+                    <td>Avg / High / Low / MoM % theo tháng × cảng. Scale để khớp monthly official S&amp;B khi có.</td>
+                    <td>BAF thường neo theo <strong>monthly average</strong> hoặc basket — đây là khung so sánh tháng.</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">BAF Impact panel</td>
+                    <td>Base (Jun avg G20), Current (Jul+ MTD), Δ fuel, Est. impact, tín hiệu HOLD / INCREASE / REDUCE (minh họa).</td>
+                    <td>Storyline cho BA: “fuel đã dịch bao nhiêu so base tháng trước?” — luôn đối chiếu policy hãng thực tế.</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Quant Models</td>
+                    <td>RSI, MACD, Bollinger, EWMA, z-score, OLS, Monte Carlo… tính local từ chuỗi giá app.</td>
+                    <td>Hỗ trợ đọc momentum / volatility — <strong>không</strong> phải tín hiệu giao dịch financial market.</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Data Table</td>
+                    <td>Bảng ngày: SG, RTM, G20, spread. Export CSV được.</td>
+                    <td>Audit, copy sang Excel / báo cáo nội bộ.</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Data Sources</td>
+                    <td>Link website/database gốc + bảng daily print hardcode/scrape.</td>
+                    <td>Xác minh số — bấm Verify on S&amp;B để đối chiếu public table.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- How to read price moves -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0.85rem;margin-bottom:0.9rem;">
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:700;color:var(--emerald);">3. Giá tăng / giảm nói lên gì?</h3>
+              <ul class="t2" style="margin:0;padding-left:1.1rem;font-size:12.5px;line-height:1.65;">
+                <li><strong class="c-up">Tăng mạnh (spike)</strong> — thường gắn tin crude, crack, cung bunker, căng thẳng logistics. Chi phí vận hành lên nhanh; BAF/contract review có thể bị kích hoạt.</li>
+                <li><strong class="c-down">Giảm liên tục</strong> — áp lực fuel giảm; shipper có thể kỳ vọng BAF nới; carrier cân nhắc timing giảm surcharge.</li>
+                <li><strong>Dao động hẹp</strong> — thị trường sideway; BAF thường “HOLD” nếu policy theo band.</li>
+                <li><strong>SG vs RTM lệch hướng</strong> — chênh vùng; đừng dùng 1 hub cho mọi trade lane.</li>
+              </ul>
+            </div>
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:700;color:var(--amber);">4. Daily print vs Live 1s</h3>
+              <ul class="t2" style="margin:0;padding-left:1.1rem;font-size:12.5px;line-height:1.65;">
+                <li><strong>Daily mid (S&amp;B)</strong> = mức “chính thức công bố công khai” trong ngày assessment — <em>neo tin cậy</em> cho so sánh ngày/tháng.</li>
+                <li><strong>Live 1s</strong> = đường mảnh quanh neo đó (microstructure), giúp chart “sống”, <em>không</em> thay tick Platts/S&amp;B Terminal.</li>
+                <li><strong>Re-fetch 60s</strong> = cố gắng kéo lại hàng “Latest Prices” từ web S&amp;B; nếu proxy chặn → giữ hardcode print đã xác minh.</li>
+                <li>Báo cáo nội bộ / BAF: ưu tiên <strong>daily / monthly average</strong>, không lấy 1 tick ngẫu nhiên trong ngày.</li>
+              </ul>
+            </div>
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:700;color:var(--blue);">5. Liên hệ BAF</h3>
+              <ul class="t2" style="margin:0;padding-left:1.1rem;font-size:12.5px;line-height:1.65;">
+                <li><strong>BAF</strong> = phụ thu điều chỉnh nhiên liệu hãng tàu thu từ shipper để bù biến động bunker.</li>
+                <li>Nhiều hãng neo theo basket (Platts/Argus/S&amp;B), formula + lag (ví dụ M-1), pass-through ≠ 100%.</li>
+                <li>App dùng G20 + pass-through <span class="mono">0.85</span> chỉ để <strong>minh họa độ lớn</strong>.</li>
+                <li>Luôn đối chiếu <strong>circular / tariff BAF</strong> của carrier (Maersk, MSC, CMA CGM, ONE…).</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- How to use workflow -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">6. Gợi ý quy trình đọc (cho BA / pricing)</h3>
+            <ol class="t2" style="margin:0;padding-left:1.25rem;font-size:13px;line-height:1.7;">
+              <li><strong>Overview</strong> — xem ticker + %24h: thị trường đang up hay down?</li>
+              <li><strong>Chart All</strong> — xác định trend May→nay; zoom Jun/Jul nếu review BAF tháng.</li>
+              <li><strong>Monthly</strong> — so avg tháng (MoM %); ghi chú high/low để hiểu biên độ.</li>
+              <li><strong>BAF Impact</strong> — đọc Δ fuel và tín hiệu minh họa; so với policy hãng.</li>
+              <li><strong>Data Table / CSV</strong> — xuất số vào memo / model nội bộ.</li>
+              <li><strong>Data Sources</strong> — verify print trên Ship &amp; Bunker trước khi đưa vào quyết định formal.</li>
+            </ol>
+          </div>
+
+          <!-- Glossary -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.7rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">7. Thuật ngữ ngắn</h3>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:620px;">
+                <thead>
+                  <tr><th>Thuật ngữ</th><th>Ý nghĩa</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="cell-label">VLSFO 0.5%</td><td>Nhiên liệu bunker lưu huỳnh tối đa 0.5% m/m — grade phổ biến ngoài ECA (thay HSFO sau IMO 2020, trừ khi dùng scrubber).</td></tr>
+                  <tr><td class="cell-label">USD/mt</td><td>Đô la Mỹ trên một metric ton (1.000 kg) — đơn vị báo giá bunker chuẩn.</td></tr>
+                  <tr><td class="cell-label">Daily mid / assessment</td><td>Mức giá đánh giá trong ngày (thường mid range bid/offer) do price agency / platform công bố.</td></tr>
+                  <tr><td class="cell-label">G20-VLSFO Index</td><td>Trung bình tuyến tính VLSFO tại 20 cảng bunker chính theo Ship &amp; Bunker.</td></tr>
+                  <tr><td class="cell-label">BAF</td><td>Bunker Adjustment Factor — phụ thu nhiên liệu trên cước container / bulk (tùy hãng).</td></tr>
+                  <tr><td class="cell-label">Pass-through</td><td>Tỷ lệ chi phí fuel được chuyển sang khách (app demo = 0.85).</td></tr>
+                  <tr><td class="cell-label">Spread SG−RTM</td><td>SG minus RTM; đo chênh hub Á–Âu.</td></tr>
+                  <tr><td class="cell-label">MoM</td><td>Month-over-month — so với tháng trước.</td></tr>
+                  <tr><td class="cell-label">MTD</td><td>Month-to-date / period-to-date — lũy kế từ đầu kỳ đến hiện tại.</td></tr>
+                  <tr><td class="cell-label">Mean-reversion (live)</td><td>Giá live bị kéo về neo daily print — tránh random walk xa thực tế assessment.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Reality check -->
+          <div class="card" style="padding:1.1rem;border-color:rgba(251,191,36,0.28);margin-bottom:0.5rem;">
+            <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:700;color:var(--amber);">8. Dữ liệu <em>không</em> thể hiện điều gì</h3>
+            <ul class="t3" style="margin:0;padding-left:1.15rem;font-size:12.5px;line-height:1.65;">
+              <li>Không phải lệnh mua/bán bunker real-time của physical supplier.</li>
+              <li>Không thay thế Platts / Argus / S&amp;B Intelligence (feed licensed).</li>
+              <li>Không phải BAF công bố chính thức của bất kỳ hãng tàu nào.</li>
+              <li>Quant models không phải khuyến nghị đầu tư tài chính.</li>
+              <li>Ngày không có print (cuối tuần / holiday) = carry hoặc reconstruction có ràng buộc — ghi rõ trong source field.</li>
+            </ul>
+            <div style="margin-top:0.85rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
+              <button class="btn btn-primary" type="button" onclick="navigateTo('overview', document.querySelector('[data-section=overview]'))">Về Overview</button>
+              <button class="btn" type="button" onclick="navigateTo('sources', document.querySelector('[data-section=sources]'))">Xem nguồn gốc số</button>
+              <button class="btn" type="button" onclick="navigateTo('baf', document.querySelector('[data-section=baf]'))">Mở BAF Impact</button>
             </div>
           </div>
         </section>
@@ -1733,7 +1926,8 @@
             <a class="src-link" href="https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam" target="_blank" rel="noopener">S&amp;B RTM</a> ·
             <a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">S&amp;B G20</a> ·
             <a class="src-link" href="https://www.bunkerindex.com/" target="_blank" rel="noopener">Bunker Index</a> ·
-            <a class="src-link" href="#" onclick="navigateTo('sources', document.querySelector('[data-section=sources]')); return false;">Full source list →</a>
+            <a class="src-link" href="#" onclick="navigateTo('sources', document.querySelector('[data-section=sources]')); return false;">Sources</a> ·
+            <a class="src-link" href="#" onclick="navigateTo('guide', document.querySelector('[data-section=guide]')); return false;">Giải thích</a>
           </div>
           <div class="mono" style="flex-shrink:0;">VLSFO Monitor · BAF Tracker © 2026</div>
         </div>
