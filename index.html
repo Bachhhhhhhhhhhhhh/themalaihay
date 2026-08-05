@@ -1013,6 +1013,16 @@
       color: var(--cyan-2);
       font-size: 12px;
     }
+    table.bafrates tbody td.calc-hit {
+      outline: 2px solid var(--cyan);
+      outline-offset: -2px;
+      background: rgba(34, 211, 238, 0.18) !important;
+      color: var(--cyan-2);
+      font-weight: 800;
+    }
+    table.bafrates tbody tr.row-hit td.region {
+      color: var(--cyan);
+    }
 
     input[type="date"] {
       background: var(--bg-soft);
@@ -1217,7 +1227,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.4.0 · BAF Calculator</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.5.0 · BAF matrix table</div>
       </div>
     </aside>
 
@@ -1771,181 +1781,205 @@
           </div>
         </section>
 
-        <!-- BAF CALCULATOR -->
+        <!-- BAF CALCULATOR — output = full BAF Rates 2026 matrix table -->
         <section id="section-bafcalc" class="section">
           <div style="margin-bottom:0.9rem;">
-            <h2 style="margin:0;font-size:1.15rem;font-weight:800;">BAF Calculator</h2>
-            <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.6;max-width:900px;">
-              Tính BAF <strong style="color:var(--text);">siêu chi tiết</strong> theo 3 chế độ: bảng tariff 2026, mô hình differential G20 (S&amp;B),
-              và voyage engineering (burn × days / TEU). Kết quả kèm <strong style="color:var(--text);">báo cáo giải thích</strong> cập nhật theo dữ liệu live.
+            <h2 style="margin:0;font-size:1.15rem;font-weight:800;">BAF Calculator → bảng BAF Rates 2026</h2>
+            <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.6;max-width:920px;">
+              Công cụ tính và <strong style="color:var(--text);">xuất full bảng</strong> đúng cấu trúc:
+              Region (C / I) × 3 kỳ × 20DC / 40HC.
+              Chọn số lượng container, hệ số điều chỉnh, chế độ unit/total — bấm <strong style="color:var(--text);">Tính bảng</strong>.
             </p>
           </div>
 
           <div class="calc-mode-tabs" role="tablist">
-            <button type="button" class="active" data-calc-mode="tariff" onclick="setBafCalcMode('tariff', this)">1 · Tariff Rates 2026</button>
-            <button type="button" data-calc-mode="model" onclick="setBafCalcMode('model', this)">2 · Model G20 (ΔP×PT×CF)</button>
-            <button type="button" data-calc-mode="voyage" onclick="setBafCalcMode('voyage', this)">3 · Voyage engineering</button>
+            <button type="button" class="active" data-calc-mode="matrix" onclick="setBafCalcMode('matrix', this)">1 · Bảng Rates 2026</button>
+            <button type="button" data-calc-mode="model" onclick="setBafCalcMode('model', this)">2 · Model G20 (1 ô)</button>
+            <button type="button" data-calc-mode="voyage" onclick="setBafCalcMode('voyage', this)">3 · Voyage eng. (1 ô)</button>
           </div>
 
-          <div class="calc-grid">
-            <!-- LEFT: inputs -->
-            <div class="card" style="padding:1.1rem;">
-              <h3 style="margin:0 0 0.75rem;font-size:0.9rem;font-weight:700;">Tham số đầu vào</h3>
-
-              <!-- Mode: Tariff -->
-              <div id="calc-panel-tariff" class="calc-mode-panel active">
-                <div class="calc-field">
-                  <label for="calc-region">Region / hub</label>
-                  <select id="calc-region" onchange="runBafCalculator()">
-                    <option value="C">C — via Rotterdam (châu Âu / ARA)</option>
-                    <option value="I">I — Via Singapore (châu Á)</option>
-                  </select>
-                  <span class="hint">Lấy từ bảng BAF Rates 2026</span>
-                </div>
-                <div class="calc-field">
-                  <label for="calc-period">Kỳ hiệu lực</label>
-                  <select id="calc-period" onchange="runBafCalculator()">
-                    <option value="feb_apr">BAF Feb'26 ~ Apr'26</option>
-                    <option value="may_jul" selected>BAF 103Ki 1Q May'26 ~ Jul'26</option>
-                    <option value="aug_oct">BAF 103Ki 1Q Aug'26 ~ Oct'26</option>
-                  </select>
-                </div>
-                <div class="calc-field">
-                  <label for="calc-equip">Equipment</label>
-                  <select id="calc-equip" onchange="runBafCalculator()">
-                    <option value="20DC">20DC (1 TEU)</option>
-                    <option value="40HC" selected>40HC (≈ 2 TEU)</option>
-                  </select>
-                </div>
-                <div class="calc-field">
-                  <label for="calc-qty">Số lượng container</label>
-                  <input id="calc-qty" type="number" min="1" step="1" value="1" oninput="runBafCalculator()" />
-                </div>
+          <!-- Controls for full matrix -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.75rem;font-size:0.9rem;font-weight:700;">Tham số tính bảng</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem 1rem;">
+              <div class="calc-field" style="margin:0;">
+                <label for="calc-qty-20">Qty 20DC (mọi region/kỳ)</label>
+                <input id="calc-qty-20" type="number" min="0" step="1" value="1" oninput="runBafCalculator()" />
+                <span class="hint">Số container 20′ áp cho mỗi ô 20DC</span>
               </div>
-
-              <!-- Mode: Model G20 -->
-              <div id="calc-panel-model" class="calc-mode-panel">
-                <div class="calc-field">
-                  <label for="calc-pt">VLSFO_t — giá hiện tại (USD/mt)</label>
-                  <input id="calc-pt" type="number" step="0.01" value="806.50" oninput="runBafCalculator()" />
-                  <span class="hint">Mặc định kéo từ S&amp;B G20 live · <button type="button" class="src-link" style="background:none;border:none;padding:0;cursor:pointer;font:inherit;" onclick="syncCalcFromMarket()">Sync từ market live</button></span>
-                </div>
-                <div class="calc-field">
-                  <label for="calc-pref">VLSFO_ref — mốc tham chiếu (USD/mt)</label>
-                  <input id="calc-pref" type="number" step="0.01" value="800" oninput="runBafCalculator()" />
-                  <span class="hint">Default $800 · hoặc Jun G20 avg cho so sánh MoM</span>
-                </div>
-                <div class="calc-field">
-                  <label for="calc-bafbase">BAF_base (USD / TEU)</label>
-                  <input id="calc-bafbase" type="number" step="0.01" value="0" oninput="runBafCalculator()" />
-                </div>
-                <div class="calc-field">
-                  <label for="calc-passthrough">PassThrough (0–1)</label>
-                  <input id="calc-passthrough" type="number" min="0" max="1" step="0.01" value="0.85" oninput="runBafCalculator()" />
-                  <span class="hint">% Δ fuel chuyển sang shipper · default 0.85</span>
-                </div>
-                <div class="calc-field">
-                  <label for="calc-cons">ConsumptionFactor / TEU (mt/TEU)</label>
-                  <input id="calc-cons" type="number" min="0" step="0.0001" value="0.012" oninput="runBafCalculator()" />
-                </div>
-                <div class="calc-field">
-                  <label for="calc-teu-model">Số TEU shipment</label>
-                  <input id="calc-teu-model" type="number" min="0.01" step="0.01" value="2" oninput="runBafCalculator()" />
-                  <span class="hint">40HC ≈ 2 TEU; 20DC = 1 TEU</span>
-                </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="calc-qty-40">Qty 40HC (mọi region/kỳ)</label>
+                <input id="calc-qty-40" type="number" min="0" step="1" value="1" oninput="runBafCalculator()" />
+                <span class="hint">Số container 40′ HC áp cho mỗi ô 40HC</span>
               </div>
-
-              <!-- Mode: Voyage -->
-              <div id="calc-panel-voyage" class="calc-mode-panel">
-                <div class="calc-field">
-                  <label for="calc-burn">Burn rate (mt bunker / day)</label>
-                  <input id="calc-burn" type="number" min="0" step="0.1" value="100" oninput="runBafCalculator()" />
-                </div>
-                <div class="calc-field">
-                  <label for="calc-days">Sea days (ngày chạy)</label>
-                  <input id="calc-days" type="number" min="0" step="0.1" value="20" oninput="runBafCalculator()" />
-                </div>
-                <div class="calc-field">
-                  <label for="calc-capacity">Vessel capacity (TEU)</label>
-                  <input id="calc-capacity" type="number" min="1" step="1" value="16000" oninput="runBafCalculator()" />
-                </div>
-                <div class="calc-field">
-                  <label for="calc-util">Utilization (0–1)</label>
-                  <input id="calc-util" type="number" min="0.01" max="1" step="0.01" value="0.85" oninput="runBafCalculator()" />
-                  <span class="hint">Laden TEU ≈ capacity × utilization</span>
-                </div>
-                <div class="calc-field">
-                  <label for="calc-vpt">VLSFO_t (USD/mt)</label>
-                  <input id="calc-vpt" type="number" step="0.01" value="806.50" oninput="runBafCalculator()" />
-                </div>
-                <div class="calc-field">
-                  <label for="calc-vpref">VLSFO_ref (USD/mt)</label>
-                  <input id="calc-vpref" type="number" step="0.01" value="800" oninput="runBafCalculator()" />
-                </div>
-                <div class="calc-field">
-                  <label for="calc-vpass">PassThrough</label>
-                  <input id="calc-vpass" type="number" min="0" max="1" step="0.01" value="0.85" oninput="runBafCalculator()" />
-                </div>
-                <div class="calc-field">
-                  <label for="calc-vteu">TEU shipment (tính total)</label>
-                  <input id="calc-vteu" type="number" min="0.01" step="0.01" value="2" oninput="runBafCalculator()" />
-                </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="calc-uplift">Hệ số điều chỉnh (×)</label>
+                <input id="calc-uplift" type="number" min="0" step="0.01" value="1.00" oninput="runBafCalculator()" />
+                <span class="hint">1.00 = giữ nguyên schedule · 1.10 = +10%</span>
               </div>
-
-              <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0.5rem;">
-                <button type="button" class="btn btn-primary" onclick="runBafCalculator()">Tính BAF</button>
-                <button type="button" class="btn" onclick="syncCalcFromMarket()">Sync market S&amp;B</button>
-                <button type="button" class="btn" onclick="exportBafCalcReport()">Copy báo cáo</button>
+              <div class="calc-field" style="margin:0;">
+                <label for="calc-table-mode">Hiển thị ô bảng</label>
+                <select id="calc-table-mode" onchange="runBafCalculator()">
+                  <option value="unit" selected>Unit rate (USD / container)</option>
+                  <option value="total">Total = rate × qty (USD)</option>
+                </select>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="calc-round">Làm tròn</label>
+                <select id="calc-round" onchange="runBafCalculator()">
+                  <option value="0" selected>Số nguyên (USD)</option>
+                  <option value="2">2 chữ số thập phân</option>
+                </select>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="calc-highlight-region">Highlight region</label>
+                <select id="calc-highlight-region" onchange="runBafCalculator()">
+                  <option value="">— không —</option>
+                  <option value="C">C (via Rotterdam)</option>
+                  <option value="I">I (Via Singapore)</option>
+                </select>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="calc-highlight-period">Highlight kỳ</label>
+                <select id="calc-highlight-period" onchange="runBafCalculator()">
+                  <option value="">— không —</option>
+                  <option value="feb_apr">Feb'26 ~ Apr'26</option>
+                  <option value="may_jul">103Ki May'26 ~ Jul'26</option>
+                  <option value="aug_oct">103Ki Aug'26 ~ Oct'26</option>
+                </select>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="calc-highlight-equip">Highlight equipment</label>
+                <select id="calc-highlight-equip" onchange="runBafCalculator()">
+                  <option value="">— không —</option>
+                  <option value="20DC">20DC</option>
+                  <option value="40HC">40HC</option>
+                </select>
               </div>
             </div>
 
-            <!-- RIGHT: results + explanation -->
-            <div>
-              <div class="card" style="padding:1.1rem;margin-bottom:0.85rem;">
-                <h3 style="margin:0 0 0.65rem;font-size:0.9rem;font-weight:700;">Kết quả</h3>
-                <div class="calc-kpi-row">
-                  <div class="calc-kpi">
-                    <div class="k">BAF / unit</div>
-                    <div class="v c-cyan" id="calc-out-unit">—</div>
-                    <div class="s" id="calc-out-unit-sub">USD</div>
-                  </div>
-                  <div class="calc-kpi">
-                    <div class="k">Total shipment</div>
-                    <div class="v c-emerald" id="calc-out-total">—</div>
-                    <div class="s" id="calc-out-total-sub">USD</div>
-                  </div>
-                  <div class="calc-kpi">
-                    <div class="k">Δ fuel / exposure</div>
-                    <div class="v" id="calc-out-delta">—</div>
-                    <div class="s" id="calc-out-delta-sub">chi tiết</div>
-                  </div>
-                  <div class="calc-kpi">
-                    <div class="k">Mode</div>
-                    <div class="v" style="font-size:0.95rem;" id="calc-out-mode">—</div>
-                    <div class="s" id="calc-out-stamp">—</div>
-                  </div>
-                </div>
-                <div class="calc-steps" id="calc-steps">
-                  <strong style="color:var(--text);">Bước tính</strong>
-                  <ol id="calc-steps-list"><li>Chọn chế độ và bấm Tính BAF…</li></ol>
-                </div>
+            <!-- Advanced single-cell panels (model / voyage) — collapsed by default via mode -->
+            <div id="calc-panel-matrix" class="calc-mode-panel active" style="margin-top:0.85rem;">
+              <p class="t3" style="margin:0;font-size:12px;line-height:1.55;">
+                <strong style="color:var(--text-2);">Mode bảng:</strong> lấy base từ schedule
+                <span class="mono c-cyan">BAF Rates 2026</span>
+                (C: 240/480 · 345/690 · 450/900 · I: 30/60 · 66/132 · 90/180),
+                rồi áp <code>ô = base × uplift × (qty nếu Total)</code>.
+              </p>
+            </div>
+            <div id="calc-panel-model" class="calc-mode-panel" style="margin-top:0.85rem;">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.65rem;">
+                <div class="calc-field" style="margin:0;"><label for="calc-pt">VLSFO_t G20</label><input id="calc-pt" type="number" step="0.01" value="806.50" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-pref">VLSFO_ref</label><input id="calc-pref" type="number" step="0.01" value="800" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-bafbase">BAF_base $/TEU</label><input id="calc-bafbase" type="number" step="0.01" value="0" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-passthrough">PassThrough</label><input id="calc-passthrough" type="number" step="0.01" value="0.85" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-cons">Cons/TEU</label><input id="calc-cons" type="number" step="0.0001" value="0.012" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-teu-model">TEU shipment</label><input id="calc-teu-model" type="number" step="0.01" value="2" oninput="runBafCalculator()" /></div>
               </div>
+              <span class="hint">Model 1-ô: không thay full schedule — KPI + báo cáo bên dưới. Bấm Sync market để lấy G20 live.</span>
+            </div>
+            <div id="calc-panel-voyage" class="calc-mode-panel" style="margin-top:0.85rem;">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.65rem;">
+                <div class="calc-field" style="margin:0;"><label for="calc-burn">Burn mt/day</label><input id="calc-burn" type="number" step="0.1" value="100" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-days">Sea days</label><input id="calc-days" type="number" step="0.1" value="20" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-capacity">Capacity TEU</label><input id="calc-capacity" type="number" step="1" value="16000" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-util">Utilization</label><input id="calc-util" type="number" step="0.01" value="0.85" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-vpt">VLSFO_t</label><input id="calc-vpt" type="number" step="0.01" value="806.50" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-vpref">VLSFO_ref</label><input id="calc-vpref" type="number" step="0.01" value="800" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-vpass">PassThrough</label><input id="calc-vpass" type="number" step="0.01" value="0.85" oninput="runBafCalculator()" /></div>
+                <div class="calc-field" style="margin:0;"><label for="calc-vteu">TEU shipment</label><input id="calc-vteu" type="number" step="0.01" value="2" oninput="runBafCalculator()" /></div>
+              </div>
+            </div>
 
-              <div class="report-box" id="calc-report">
-                <h4>Báo cáo giải thích (cập nhật theo kết quả)</h4>
-                <div class="report-meta" id="calc-report-meta">Chưa có lần tính — điền form bên trái.</div>
-                <div id="calc-report-body">
-                  <p>Kết quả và diễn giải sẽ hiện ở đây: công thức, số liệu đầu vào, ý nghĩa vận hành, so sánh tariff vs model (nếu có).</p>
-                </div>
-              </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:1rem;">
+              <button type="button" class="btn btn-primary" onclick="runBafCalculator()">Tính bảng BAF</button>
+              <button type="button" class="btn" onclick="resetBafMatrixDefaults()">Reset schedule gốc</button>
+              <button type="button" class="btn" onclick="syncCalcFromMarket()">Sync market S&amp;B</button>
+              <button type="button" class="btn" onclick="exportBafMatrixCSV()">Export bảng CSV</button>
+              <button type="button" class="btn" onclick="exportBafCalcReport()">Copy báo cáo</button>
             </div>
           </div>
 
-          <div class="card" style="padding:1rem 1.1rem;margin-top:0.9rem;border-color:rgba(251,191,36,0.22);">
+          <!-- FULL RESULT TABLE — same structure as BAF Rates 2026 -->
+          <div class="card" style="padding:1rem 1rem 1.15rem;margin-bottom:0.9rem;">
+            <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:0.65rem;margin-bottom:0.65rem;">
+              <div>
+                <h3 style="margin:0;font-size:1.05rem;font-weight:800;" id="calc-table-title">BAF Rates 2026</h3>
+                <p class="t3" style="margin:0.3rem 0 0;font-size:12px;" id="calc-table-subtitle">Unit rate USD/container · schedule gốc × uplift 1.00</p>
+              </div>
+              <div class="calc-kpi-row" style="margin:0;flex:1;min-width:220px;max-width:520px;">
+                <div class="calc-kpi" style="padding:0.55rem 0.65rem;">
+                  <div class="k">Ô đang chọn</div>
+                  <div class="v" style="font-size:1rem;" id="calc-out-unit">—</div>
+                  <div class="s" id="calc-out-unit-sub">chọn highlight</div>
+                </div>
+                <div class="calc-kpi" style="padding:0.55rem 0.65rem;">
+                  <div class="k">Grand total (highlight)</div>
+                  <div class="v c-emerald" style="font-size:1rem;" id="calc-out-total">—</div>
+                  <div class="s" id="calc-out-total-sub">USD</div>
+                </div>
+                <div class="calc-kpi" style="padding:0.55rem 0.65rem;">
+                  <div class="k">Mode</div>
+                  <div class="v" style="font-size:0.9rem;" id="calc-out-mode">Matrix</div>
+                  <div class="s" id="calc-out-stamp">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bafrates-chips" id="calc-table-chips">
+              <span class="bafrates-chip"><i class="a"></i> Feb'26 – Apr'26</span>
+              <span class="bafrates-chip"><i class="b"></i> BAF 103Ki 1Q · May'26 – Jul'26</span>
+              <span class="bafrates-chip"><i class="c"></i> BAF 103Ki 1Q · Aug'26 – Oct'26</span>
+            </div>
+
+            <div class="bafrates-wrap" role="region" aria-label="BAF Rates 2026 calculated table">
+              <table class="bafrates" id="calc-result-table">
+                <thead>
+                  <tr>
+                    <th class="bafrates-corner" rowspan="2" scope="col">Region</th>
+                    <th class="period-a" colspan="2" scope="colgroup">BAF Feb'26 ~ Apr'26</th>
+                    <th class="period-b" colspan="2" scope="colgroup">BAF 103Ki 1Q<br>May'26 ~ Jul'26</th>
+                    <th class="period-c" colspan="2" scope="colgroup">BAF 103Ki 1Q<br>Aug'26 ~ Oct'26</th>
+                  </tr>
+                  <tr>
+                    <th class="sub-a" scope="col">20DC</th>
+                    <th class="sub-a" scope="col">40HC</th>
+                    <th class="sub-b" scope="col">20DC</th>
+                    <th class="sub-b" scope="col">40HC</th>
+                    <th class="sub-c" scope="col">20DC</th>
+                    <th class="sub-c" scope="col">40HC</th>
+                  </tr>
+                </thead>
+                <tbody id="calc-result-tbody">
+                  <!-- filled by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="bafrates-note" id="calc-table-note">
+              <strong>Ghi chú</strong> — Bảng kết quả calculator. Base = BAF Rates 2026 published schedule.
+            </div>
+
+            <div class="calc-steps" style="margin-top:0.85rem;" id="calc-steps">
+              <strong style="color:var(--text);">Bước tính bảng</strong>
+              <ol id="calc-steps-list"><li>Điều chỉnh qty / uplift và bấm <em>Tính bảng BAF</em>…</li></ol>
+            </div>
+            <span id="calc-out-delta" style="display:none;"></span>
+            <span id="calc-out-delta-sub" style="display:none;"></span>
+          </div>
+
+          <div class="report-box" id="calc-report" style="margin-bottom:0.9rem;">
+            <h4>Báo cáo giải thích bảng (cập nhật theo kết quả)</h4>
+            <div class="report-meta" id="calc-report-meta">Chưa tính — bấm Tính bảng BAF.</div>
+            <div id="calc-report-body">
+              <p>Sau khi tính, báo cáo sẽ mô tả toàn bộ ma trận Region × kỳ × equipment, qty, uplift và ô highlight.</p>
+            </div>
+          </div>
+
+          <div class="card" style="padding:1rem 1.1rem;border-color:rgba(251,191,36,0.22);">
             <p class="t3" style="margin:0;font-size:12px;line-height:1.6;">
-              <strong style="color:var(--amber);">Disclaimer:</strong> Calculator hỗ trợ phân tích / quote nội bộ.
-              Tariff 2026 = bảng trên dashboard; model G20 = S&amp;B + hệ số minh họa.
-              Quyết định commercial: đối chiếu circular hãng &amp; contract.
+              <strong style="color:var(--amber);">Disclaimer:</strong> Bảng calculator dựa trên schedule BAF Rates 2026 trên dashboard + hệ số bạn nhập.
+              Model G20 / Voyage chỉ hỗ trợ phân tích 1-ô. Quote formal: circular hãng.
             </p>
           </div>
         </section>
@@ -2947,11 +2981,16 @@
   };
 
   let bafCalcState = {
-    mode: 'tariff',
+    mode: 'matrix',
     lastResult: null,
     lastReportHtml: '',
     lastStamp: null,
+    lastMatrix: null,
   };
+
+  const BAF_MATRIX_PERIODS = ['feb_apr', 'may_jul', 'aug_oct'];
+  const BAF_MATRIX_REGIONS = ['C', 'I'];
+  const BAF_MATRIX_EQUIP = ['20DC', '40HC'];
 
   function numInput(id, fallback) {
     const el = document.getElementById(id);
@@ -2973,7 +3012,7 @@
   }
 
   function setBafCalcMode(mode, btn) {
-    bafCalcState.mode = mode || 'tariff';
+    bafCalcState.mode = mode || 'matrix';
     document.querySelectorAll('.calc-mode-tabs button').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-calc-mode') === bafCalcState.mode);
     });
@@ -2982,8 +3021,152 @@
     });
     const panel = document.getElementById('calc-panel-' + bafCalcState.mode);
     if (panel) panel.classList.add('active');
+    // matrix panel always useful as note when in matrix mode
+    if (bafCalcState.mode === 'matrix') {
+      const mp = document.getElementById('calc-panel-matrix');
+      if (mp) mp.classList.add('active');
+    }
     if (btn) btn.classList.add('active');
     runBafCalculator();
+  }
+
+  function resetBafMatrixDefaults() {
+    const q20 = document.getElementById('calc-qty-20');
+    const q40 = document.getElementById('calc-qty-40');
+    const up = document.getElementById('calc-uplift');
+    const tm = document.getElementById('calc-table-mode');
+    const rd = document.getElementById('calc-round');
+    if (q20) q20.value = '1';
+    if (q40) q40.value = '1';
+    if (up) up.value = '1.00';
+    if (tm) tm.value = 'unit';
+    if (rd) rd.value = '0';
+    ['calc-highlight-region', 'calc-highlight-period', 'calc-highlight-equip'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    bafCalcState.mode = 'matrix';
+    setBafCalcMode('matrix');
+  }
+
+  /** Build full matrix: region × period × equip → computed value */
+  function buildBafRatesMatrix(opts) {
+    opts = opts || {};
+    const uplift = opts.uplift != null ? opts.uplift : 1;
+    const qty20 = opts.qty20 != null ? opts.qty20 : 1;
+    const qty40 = opts.qty40 != null ? opts.qty40 : 1;
+    const tableMode = opts.tableMode || 'unit'; // unit | total
+    const roundDig = opts.roundDig != null ? opts.roundDig : 0;
+    const matrix = {};
+    BAF_MATRIX_REGIONS.forEach(function (region) {
+      matrix[region] = {};
+      BAF_MATRIX_PERIODS.forEach(function (period) {
+        matrix[region][period] = {};
+        BAF_MATRIX_EQUIP.forEach(function (equip) {
+          const base = lookupTariffRate(region, period, equip);
+          const qty = equip === '20DC' ? qty20 : qty40;
+          let val = base * uplift;
+          if (tableMode === 'total') val = val * qty;
+          if (roundDig === 0) val = Math.round(val);
+          else val = Math.round(val * Math.pow(10, roundDig)) / Math.pow(10, roundDig);
+          matrix[region][period][equip] = {
+            base: base,
+            value: val,
+            qty: qty,
+            uplift: uplift,
+          };
+        });
+      });
+    });
+    return matrix;
+  }
+
+  function formatMatrixCell(n, dig) {
+    if (!isFinite(n)) return '—';
+    if (dig === 0) return String(Math.round(n));
+    return n.toFixed(dig);
+  }
+
+  function renderBafMatrixTable(matrix, opts) {
+    opts = opts || {};
+    const tbody = document.getElementById('calc-result-tbody');
+    if (!tbody || !matrix) return;
+    const dig = opts.roundDig != null ? opts.roundDig : 0;
+    const hR = opts.highlightRegion || '';
+    const hP = opts.highlightPeriod || '';
+    const hE = opts.highlightEquip || '';
+    const periodClass = { feb_apr: 'col-a', may_jul: 'col-b', aug_oct: 'col-c' };
+
+    tbody.innerHTML = BAF_MATRIX_REGIONS.map(function (region) {
+      const reg = BAF_RATES_2026.regions[region];
+      const rowHit = hR && hR === region ? ' row-hit' : '';
+      let cells = '';
+      BAF_MATRIX_PERIODS.forEach(function (period) {
+        BAF_MATRIX_EQUIP.forEach(function (equip) {
+          const cell = matrix[region][period][equip];
+          const matchR = !hR || hR === region;
+          const matchP = !hP || hP === period;
+          const matchE = !hE || hE === equip;
+          const anyH = !!(hR || hP || hE);
+          const hit = anyH && matchR && matchP && matchE;
+          const cls = (periodClass[period] || '') + (hit ? ' calc-hit' : '');
+          cells += '<td class="' + cls + '" data-region="' + region + '" data-period="' + period +
+            '" data-equip="' + equip + '" title="base ' + cell.base + ' × uplift ' + cell.uplift +
+            (opts.tableMode === 'total' ? ' × qty ' + cell.qty : '') + '">' +
+            formatMatrixCell(cell.value, dig) + '</td>';
+        });
+      });
+      return '<tr class="' + rowHit.trim() + '">' +
+        '<td class="region" scope="row">' + (reg ? reg.name : region) + '</td>' +
+        cells + '</tr>';
+    }).join('');
+
+    // Click cell to set highlight
+    tbody.querySelectorAll('td[data-region]').forEach(function (td) {
+      td.style.cursor = 'pointer';
+      td.addEventListener('click', function () {
+        const r = td.getAttribute('data-region');
+        const p = td.getAttribute('data-period');
+        const e = td.getAttribute('data-equip');
+        const elR = document.getElementById('calc-highlight-region');
+        const elP = document.getElementById('calc-highlight-period');
+        const elE = document.getElementById('calc-highlight-equip');
+        if (elR) elR.value = r;
+        if (elP) elP.value = p;
+        if (elE) elE.value = e;
+        runBafCalculator();
+      });
+    });
+  }
+
+  function exportBafMatrixCSV() {
+    const m = bafCalcState.lastMatrix;
+    if (!m) {
+      alert('Chưa có bảng — bấm Tính bảng BAF trước.');
+      return;
+    }
+    const dig = parseInt(strInput('calc-round', '0'), 10) || 0;
+    const lines = [
+      'Region,Feb26-Apr26 20DC,Feb26-Apr26 40HC,May26-Jul26 20DC,May26-Jul26 40HC,Aug26-Oct26 20DC,Aug26-Oct26 40HC',
+    ];
+    BAF_MATRIX_REGIONS.forEach(function (region) {
+      const reg = BAF_RATES_2026.regions[region];
+      const row = [reg ? reg.name : region];
+      BAF_MATRIX_PERIODS.forEach(function (period) {
+        BAF_MATRIX_EQUIP.forEach(function (equip) {
+          row.push(formatMatrixCell(m[region][period][equip].value, dig));
+        });
+      });
+      lines.push(row.join(','));
+    });
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'BAF_Rates_2026_calculated.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function syncCalcFromMarket() {
@@ -3033,42 +3216,109 @@
   }
 
   function runBafCalculator() {
-    const mode = bafCalcState.mode || 'tariff';
+    const mode = bafCalcState.mode || 'matrix';
     const stamp = new Date();
     let result = { mode: mode, stamp: stamp, steps: [], unitBaf: 0, totalBaf: 0, unitLabel: 'USD', meta: {} };
 
+    // Always rebuild full matrix table (main deliverable)
+    const qty20 = Math.max(0, Math.round(numInput('calc-qty-20', 1)));
+    const qty40 = Math.max(0, Math.round(numInput('calc-qty-40', 1)));
+    const uplift = Math.max(0, numInput('calc-uplift', 1));
+    const tableMode = strInput('calc-table-mode', 'unit');
+    const roundDig = parseInt(strInput('calc-round', '0'), 10);
+    const dig = isFinite(roundDig) ? roundDig : 0;
+    const hR = strInput('calc-highlight-region', '');
+    const hP = strInput('calc-highlight-period', '');
+    const hE = strInput('calc-highlight-equip', '');
+
+    const matrix = buildBafRatesMatrix({
+      uplift: uplift,
+      qty20: qty20,
+      qty40: qty40,
+      tableMode: tableMode,
+      roundDig: dig,
+    });
+    bafCalcState.lastMatrix = matrix;
+    renderBafMatrixTable(matrix, {
+      roundDig: dig,
+      tableMode: tableMode,
+      highlightRegion: hR,
+      highlightPeriod: hP,
+      highlightEquip: hE,
+    });
+
+    // Title / subtitle for table
+    const titleEl = document.getElementById('calc-table-title');
+    const subEl = document.getElementById('calc-table-subtitle');
+    if (titleEl) titleEl.textContent = 'BAF Rates 2026';
+    if (subEl) {
+      subEl.textContent = (tableMode === 'total'
+        ? ('Total USD = unit × qty (20DC×' + qty20 + ', 40HC×' + qty40 + ')')
+        : 'Unit rate USD/container') +
+        ' · uplift ×' + uplift.toFixed(2) +
+        (uplift === 1 && tableMode === 'unit' && qty20 === 1 && qty40 === 1
+          ? ' · schedule gốc'
+          : ' · đã tính');
+    }
+    const noteEl = document.getElementById('calc-table-note');
+    if (noteEl) {
+      noteEl.innerHTML = '<strong>Ghi chú kỳ hạn</strong>' +
+        '<ul style="margin:0.45rem 0 0;padding-left:1.15rem;">' +
+        '<li><strong>BAF Feb\'26 ~ Apr\'26</strong> — Feb, Mar, Apr 2026.</li>' +
+        '<li><strong>BAF 103Ki 1Q May\'26 ~ Jul\'26</strong> — mã 103Ki 1Q · May–Jul 2026.</li>' +
+        '<li><strong>BAF 103Ki 1Q Aug\'26 ~ Oct\'26</strong> — mã 103Ki 1Q · Aug–Oct 2026.</li>' +
+        '<li><strong>C (via Rotterdam)</strong> · <strong>I (Via Singapore)</strong> · 20DC / 40HC · USD.</li>' +
+        '<li>Công thức ô: <code>base_schedule × uplift' +
+        (tableMode === 'total' ? ' × qty_equipment' : '') + '</code>.</li>' +
+        '<li>Bấm vào ô để highlight Region / kỳ / equipment.</li></ul>';
+    }
+
+    // Highlight cell KPI
+    if (hR && hP && hE && matrix[hR] && matrix[hR][hP] && matrix[hR][hP][hE]) {
+      const hit = matrix[hR][hP][hE];
+      result.unitBaf = hit.value;
+      result.totalBaf = hit.value;
+      result.unitLabel = tableMode === 'total' ? ('USD total · ' + hE) : ('USD / ' + hE);
+      result.meta.highlight = { region: hR, period: hP, equip: hE, base: hit.base, value: hit.value, qty: hit.qty };
+    } else {
+      // Sum all cells if total mode for grand overview
+      let sum = 0;
+      BAF_MATRIX_REGIONS.forEach(function (r) {
+        BAF_MATRIX_PERIODS.forEach(function (p) {
+          BAF_MATRIX_EQUIP.forEach(function (e) {
+            sum += matrix[r][p][e].value;
+          });
+        });
+      });
+      result.unitBaf = matrix.C.may_jul['40HC'].value;
+      result.totalBaf = tableMode === 'total' ? sum : matrix.C.may_jul['40HC'].value;
+      result.unitLabel = tableMode === 'total' ? 'USD (sum all cells)' : 'USD / 40HC C May–Jul (vd)';
+    }
+
     try {
-      if (mode === 'tariff') {
-        const region = strInput('calc-region', 'C');
-        const period = strInput('calc-period', 'may_jul');
-        const equip = strInput('calc-equip', '40HC');
-        const qty = Math.max(1, Math.round(numInput('calc-qty', 1)));
-        const unit = lookupTariffRate(region, period, equip);
-        if (unit == null) throw new Error('Không tìm thấy rate tariff');
-        const total = unit * qty;
-        const teu = (BAF_RATES_2026.teuOf[equip] || 1) * qty;
-        const perTeu = total / teu;
-        const reg = BAF_RATES_2026.regions[region];
-        const per = BAF_RATES_2026.periods[period];
-        result.unitBaf = unit;
-        result.totalBaf = total;
-        result.unitLabel = 'USD / ' + equip;
-        result.meta = {
-          region: region, regionName: reg ? reg.name : region, hub: reg ? reg.hub : '',
-          period: period, periodLabel: per ? per.label : period, periodCode: per ? per.code : null,
-          equip: equip, qty: qty, teu: teu, perTeu: perTeu, source: 'BAF Rates 2026 schedule',
-        };
+      if (mode === 'matrix' || mode === 'tariff') {
+        result.mode = 'matrix';
+        result.meta = Object.assign({}, result.meta || {}, {
+          qty20: qty20, qty40: qty40, uplift: uplift, tableMode: tableMode, roundDig: dig,
+          source: 'BAF Rates 2026 full matrix',
+          matrix: matrix,
+        });
         result.steps = [
-          'Chế độ <strong>Tariff Rates 2026</strong> — lookup bảng published, không dùng ΔVLSFO.',
-          'Region = <code>' + (reg ? reg.name : region) + '</code> · hub <code>' + (reg ? reg.hub : '—') + '</code>.',
-          'Kỳ = <code>' + (per ? per.label : period) + '</code>' + (per && per.code ? ' (mã <code>' + per.code + '</code>)' : '') + '.',
-          'Equipment = <code>' + equip + '</code> · TEU quy đổi 1 unit = <code>' + (BAF_RATES_2026.teuOf[equip] || 1) + '</code>.',
-          'Rate unit = <code>' + money(unit, 0) + '</code> / container (từ bảng).',
-          'Số lượng = <code>' + qty + '</code> → Total = ' + qty + ' × ' + money(unit, 0) + ' = <code>' + money(total, 0) + '</code>.',
-          'Quy đổi ≈ <code>' + money(perTeu, 2) + '/TEU</code> (total / ' + teu + ' TEU) để so với model differential.',
+          'Xuất <strong>full bảng BAF Rates 2026</strong> — cấu trúc Region × 3 kỳ × 20DC/40HC.',
+          'Base schedule: C (240/480, 345/690, 450/900) · I (30/60, 66/132, 90/180).',
+          'Uplift = <code>×' + uplift.toFixed(2) + '</code> · Qty 20DC = <code>' + qty20 + '</code> · Qty 40HC = <code>' + qty40 + '</code>.',
+          'Mode hiển thị = <code>' + (tableMode === 'total' ? 'Total = base × uplift × qty' : 'Unit = base × uplift') + '</code>.',
+          'Làm tròn = <code>' + dig + '</code> chữ số thập phân.',
+          hR && hP && hE
+            ? ('Highlight: <code>' + (BAF_RATES_2026.regions[hR] ? BAF_RATES_2026.regions[hR].name : hR) +
+              ' · ' + (BAF_RATES_2026.periods[hP] ? BAF_RATES_2026.periods[hP].short : hP) +
+              ' · ' + hE + '</code> = <code>' + formatMatrixCell(matrix[hR][hP][hE].value, dig) + '</code>.')
+            : 'Chưa chọn ô highlight — bấm vào ô trên bảng.',
         ];
-        result.reportTitle = 'Giải thích kết quả Tariff BAF';
-        result.explain = buildTariffExplain(result);
+        result.reportTitle = 'Giải thích bảng BAF Rates 2026';
+        result.explain = buildMatrixExplain(result, matrix, {
+          qty20: qty20, qty40: qty40, uplift: uplift, tableMode: tableMode, dig: dig, hR: hR, hP: hP, hE: hE,
+        });
       } else if (mode === 'model') {
         const pt = numInput('calc-pt', (state.live && state.live.glb) || 806.5);
         const pref = numInput('calc-pref', BAF_PARAMS.VLSFO_REF);
@@ -3155,22 +3405,25 @@
 
   function renderBafCalcResult(result) {
     if (!result) return;
-    const digits = result.mode === 'tariff' ? 0 : 3;
-    setTextSafe('calc-out-unit', result.error ? '—' : money(result.unitBaf, digits));
+    const isMatrix = result.mode === 'matrix' || result.mode === 'tariff';
+    const digits = isMatrix ? (result.meta && result.meta.roundDig != null ? result.meta.roundDig : 0) : 3;
+    if (result.error) {
+      setTextSafe('calc-out-unit', '—');
+      setTextSafe('calc-out-total', '—');
+    } else if (isMatrix) {
+      setTextSafe('calc-out-unit', formatMatrixCell(result.unitBaf, digits));
+      setTextSafe('calc-out-total', formatMatrixCell(result.totalBaf, digits));
+    } else {
+      setTextSafe('calc-out-unit', money(result.unitBaf, digits));
+      setTextSafe('calc-out-total', money(result.totalBaf, 2));
+    }
     setTextSafe('calc-out-unit-sub', result.unitLabel || 'USD');
-    setTextSafe('calc-out-total', result.error ? '—' : money(result.totalBaf, result.mode === 'tariff' ? 0 : 2));
-    setTextSafe('calc-out-total-sub', 'USD shipment');
-    if (result.mode === 'tariff' && result.meta) {
-      setTextSafe('calc-out-delta', money(result.meta.perTeu, 2) + '/TEU');
-      setTextSafe('calc-out-delta-sub', 'quy đổi từ tariff');
-    } else if (result.meta && result.meta.dP != null) {
+    setTextSafe('calc-out-total-sub', isMatrix ? 'USD (ô / tổng)' : 'USD shipment');
+    if (result.meta && result.meta.dP != null) {
       setTextSafe('calc-out-delta', money(result.meta.dP, 2) + '/mt');
       setTextSafe('calc-out-delta-sub', 'ΔVLSFO (t − ref)');
-    } else {
-      setTextSafe('calc-out-delta', '—');
-      setTextSafe('calc-out-delta-sub', '—');
     }
-    const modeNames = { tariff: 'Tariff 2026', model: 'Model G20', voyage: 'Voyage eng.' };
+    const modeNames = { matrix: 'Bảng Rates 2026', tariff: 'Bảng Rates 2026', model: 'Model G20', voyage: 'Voyage eng.' };
     setTextSafe('calc-out-mode', modeNames[result.mode] || result.mode);
     setTextSafe('calc-out-stamp', result.stamp ? result.stamp.toLocaleString('vi-VN') : '—');
 
@@ -3185,28 +3438,47 @@
     bafCalcState.lastReportHtml = result.explain || '';
   }
 
-  function buildTariffExplain(r) {
-    const m = r.meta;
+  function buildMatrixExplain(r, matrix, o) {
+    o = o || {};
+    let rowsHtml = '';
+    BAF_MATRIX_REGIONS.forEach(function (region) {
+      const reg = BAF_RATES_2026.regions[region];
+      const vals = [];
+      BAF_MATRIX_PERIODS.forEach(function (p) {
+        BAF_MATRIX_EQUIP.forEach(function (e) {
+          vals.push(formatMatrixCell(matrix[region][p][e].value, o.dig || 0));
+        });
+      });
+      rowsHtml += '<li><span class="hl">' + (reg ? reg.name : region) + '</span>: ' +
+        '<span class="mono-inline">' + vals.join(' · ') + '</span></li>';
+    });
+    let hitHtml = '';
+    if (o.hR && o.hP && o.hE && matrix[o.hR] && matrix[o.hR][o.hP]) {
+      const cell = matrix[o.hR][o.hP][o.hE];
+      hitHtml = '<h5>3. Ô highlight</h5><p>' +
+        (BAF_RATES_2026.regions[o.hR] ? BAF_RATES_2026.regions[o.hR].name : o.hR) + ' · ' +
+        (BAF_RATES_2026.periods[o.hP] ? BAF_RATES_2026.periods[o.hP].label : o.hP) + ' · ' +
+        o.hE + ' = <span class="mono-inline">' + formatMatrixCell(cell.value, o.dig || 0) + '</span>' +
+        ' (base ' + cell.base + ' × uplift ' + cell.uplift +
+        (o.tableMode === 'total' ? ' × qty ' + cell.qty : '') + ').</p>';
+    }
     return (
-      '<h5>1. Đây là gì?</h5>' +
-      '<p>BAF <span class="hl">theo bảng tariff cố định</span> theo region + kỳ + equipment — ' +
-      'không biến thiên từng giây theo VLSFO. Phù hợp quote theo schedule đã công bố (BAF Rates 2026).</p>' +
-      '<h5>2. Số liệu vừa tính</h5>' +
-      '<ul>' +
-      '<li>Region: <span class="hl">' + m.regionName + '</span> (hub ' + m.hub + ')</li>' +
-      '<li>Kỳ: <span class="hl">' + m.periodLabel + '</span>' + (m.periodCode ? ' · mã ' + m.periodCode : '') + '</li>' +
-      '<li>Equipment: <span class="mono-inline">' + m.equip + '</span> × <span class="mono-inline">' + m.qty + '</span></li>' +
-      '<li>BAF/unit: <span class="mono-inline">' + money(r.unitBaf, 0) + '</span></li>' +
-      '<li>Total shipment: <span class="mono-inline">' + money(r.totalBaf, 0) + '</span></li>' +
-      '<li>≈ <span class="mono-inline">' + money(m.perTeu, 2) + '/TEU</span> để so model G20</li>' +
-      '</ul>' +
-      '<h5>3. Ý nghĩa vận hành</h5>' +
-      '<p>Region <strong>C (Rotterdam)</strong> thường cao hơn <strong>I (Singapore)</strong> trên bảng này — ' +
-      'phản ánh chênh exposure / policy theo trade lane. 40HC = 2× 20DC (tỷ lệ 2:1) trên schedule hiện tại.</p>' +
-      '<h5>4. So với model live</h5>' +
-      '<p>Model G20 (ΔP×0.85×0.012) cho <em>độ nhạy</em> theo giá bunker; tariff cho <em>mức thu cố định kỳ</em>. ' +
-      'Hai số không bắt buộc bằng nhau — dùng tariff để quote, dùng model để stress-test khi VLSFO nhảy.</p>' +
-      '<p class="report-meta" style="margin-top:0.6rem;">Cập nhật theo lần tính · dữ liệu bảng BAF Rates 2026 trên dashboard.</p>'
+      '<h5>1. Cấu trúc bảng (giống BAF Rates 2026)</h5>' +
+      '<p>Header: <span class="hl">Region</span> | Feb\'26~Apr\'26 | 103Ki May~Jul\'26 | 103Ki Aug~Oct\'26 — mỗi kỳ có <span class="mono-inline">20DC</span> &amp; <span class="mono-inline">40HC</span>.</p>' +
+      '<p>Hàng: <span class="hl">C (via Rotterdam)</span>, <span class="hl">I (Via Singapore)</span>.</p>' +
+      '<h5>2. Ma trận vừa tính</h5>' +
+      '<ul>' + rowsHtml + '</ul>' +
+      '<p>Qty 20DC=<span class="mono-inline">' + o.qty20 + '</span> · Qty 40HC=<span class="mono-inline">' + o.qty40 +
+      '</span> · Uplift=<span class="mono-inline">×' + (o.uplift != null ? o.uplift.toFixed(2) : '1') +
+      '</span> · Mode=<span class="mono-inline">' + (o.tableMode === 'total' ? 'Total' : 'Unit rate') + '</span>.</p>' +
+      hitHtml +
+      '<h5>4. Ý nghĩa</h5>' +
+      '<p>Đây là <span class="hl">bảng quote BAF</span> theo region/kỳ/equipment. ' +
+      'C (Rotterdam) cao hơn I (Singapore) trên schedule. 40HC = 2× 20DC. ' +
+      'Đổi qty/uplift để mô phỏng shipment hoặc surcharge factor; Export CSV để đưa vào Excel.</p>' +
+      '<h5>5. Dữ liệu base (published)</h5>' +
+      '<p class="mono-inline" style="display:block;line-height:1.7;">C: 240/480 · 345/690 · 450/900<br>I: 30/60 · 66/132 · 90/180</p>' +
+      '<p class="report-meta" style="margin-top:0.55rem;">Báo cáo cập nhật theo lần Tính bảng · schedule BAF Rates 2026.</p>'
     );
   }
 
@@ -5273,7 +5545,8 @@
         if (section === 'data') renderDailyTable();
         if (section === 'sources') renderSourcesOfficialTable();
         if (section === 'bafcalc') {
-          syncCalcFromMarket();
+          bafCalcState.mode = bafCalcState.mode || 'matrix';
+          try { syncCalcFromMarket(); } catch (e) {}
           runBafCalculator();
         }
         if (section === 'guide') refreshGuideReport();
@@ -5535,6 +5808,8 @@
   window.runBafCalculator = runBafCalculator;
   window.syncCalcFromMarket = syncCalcFromMarket;
   window.exportBafCalcReport = exportBafCalcReport;
+  window.exportBafMatrixCSV = exportBafMatrixCSV;
+  window.resetBafMatrixDefaults = resetBafMatrixDefaults;
   window.refreshGuideReport = refreshGuideReport;
 
   if (document.readyState === 'loading') {
