@@ -936,7 +936,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v2.8.0 · Quant · Jul 2026</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.0.0 · S&amp;B accurate · 1s/60s</div>
       </div>
     </aside>
 
@@ -982,7 +982,7 @@
                 <span class="badge">VLSFO</span>
               </div>
               <div style="display:flex;align-items:baseline;gap:0.35rem;margin-top:0.2rem;">
-                <span id="price-sg" class="price-val port-sg">869.00</span>
+                <span id="price-sg" class="price-val port-sg">844.50</span>
                 <span class="t3" style="font-size:10px;">USD/mt</span>
               </div>
             </div>
@@ -998,7 +998,7 @@
                 <span class="badge">VLSFO</span>
               </div>
               <div style="display:flex;align-items:baseline;gap:0.35rem;margin-top:0.2rem;">
-                <span id="price-rtm" class="price-val port-rtm">697.50</span>
+                <span id="price-rtm" class="price-val port-rtm">662.00</span>
                 <span class="t3" style="font-size:10px;">USD/mt</span>
               </div>
             </div>
@@ -1014,7 +1014,7 @@
                 <span class="badge">AVG</span>
               </div>
               <div style="display:flex;align-items:baseline;gap:0.35rem;margin-top:0.2rem;">
-                <span id="price-glb" class="price-val port-glb">835.50</span>
+                <span id="price-glb" class="price-val port-glb">806.50</span>
                 <span class="t3" style="font-size:10px;">USD/mt</span>
               </div>
             </div>
@@ -1041,21 +1041,24 @@
       <main class="page-body">
         <!-- OVERVIEW -->
         <section id="section-overview" class="section active">
+          <div id="data-status" class="card" style="padding:0.55rem 0.85rem;margin-bottom:0.85rem;font-size:11px;line-height:1.45;box-shadow:none;">
+            PRIMARY Ship &amp; Bunker · loading…
+          </div>
           <div class="kpi-grid">
             <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">SG Spot (Live)</div>
-              <div id="kpi-sg" class="mono c-cyan" style="font-weight:700;">$869.00</div>
-              <div id="kpi-sg-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">Ship &amp; Bunker close</div>
+              <div id="kpi-sg" class="mono c-cyan" style="font-weight:700;">$844.50</div>
+              <div id="kpi-sg-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">S&amp;B close 4 Aug</div>
             </div>
             <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">RTM Spot (Live)</div>
-              <div id="kpi-rtm" class="mono c-emerald" style="font-weight:700;">$697.50</div>
-              <div id="kpi-rtm-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">Ship &amp; Bunker close</div>
+              <div id="kpi-rtm" class="mono c-emerald" style="font-weight:700;">$662.00</div>
+              <div id="kpi-rtm-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">S&amp;B close 4 Aug</div>
             </div>
             <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">Global Avg</div>
-              <div id="kpi-glb" class="mono c-blue" style="font-weight:700;">$835.50</div>
-              <div id="kpi-glb-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">Ship &amp; Bunker close</div>
+              <div id="kpi-glb" class="mono c-blue" style="font-weight:700;">$806.50</div>
+              <div id="kpi-glb-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">S&amp;B G20 4 Aug</div>
             </div>
             <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">Est. BAF Δ (MoM)</div>
@@ -1515,8 +1518,10 @@
           <div style="margin-bottom:1rem;">
             <h2 style="margin:0;font-size:1.1rem;font-weight:700;">Nguồn dữ liệu (Data Sources)</h2>
             <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.55;max-width:900px;">
-              Mọi số liệu trên dashboard đều truy vết được. Bấm link <strong style="color:var(--cyan);">mở website / database gốc</strong> (tab mới).
-              Live 1 giây = path quanh <em>daily close</em> chính thức — <strong>không</strong> phải feed tick trả phí Platts/S&amp;B Terminal.
+              Mọi số liệu truy vết được. Bấm link <strong style="color:var(--cyan);">mở website / database gốc</strong> (tab mới).
+              <strong>Chuẩn:</strong> daily mid Ship &amp; Bunker (public tables) · re-fetch mỗi <strong>60 giây</strong> ·
+              ticker/chart tick mỗi <strong>1 giây</strong> quanh print chính thức.
+              Full tick Platts / S&amp;B Terminal cần subscription — app không claim là feed licensed.
             </p>
           </div>
 
@@ -1602,20 +1607,26 @@
                   <tr>
                     <td class="cell-label">Singapore VLSFO (SG Spot)</td>
                     <td class="cell-label">Daily mid</td>
-                    <td>869.00 (2026-07-24)</td>
+                    <td>844.50 (2026-08-04)</td>
                     <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener">S&amp;B Singapore VLSFO ↗</a></td>
                   </tr>
                   <tr>
                     <td class="cell-label">Rotterdam VLSFO (RTM Spot)</td>
                     <td class="cell-label">Daily mid</td>
-                    <td>697.50 (2026-07-24)</td>
+                    <td>662.00 (2026-08-04)</td>
                     <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam" target="_blank" rel="noopener">S&amp;B Rotterdam VLSFO ↗</a></td>
                   </tr>
                   <tr>
                     <td class="cell-label">Global 20 Ports Avg</td>
                     <td class="cell-label">Index daily</td>
-                    <td>835.50 (2026-07-24)</td>
+                    <td>806.50 (2026-08-04)</td>
                     <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">S&amp;B G20-VLSFO ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Web re-fetch (60s)</td>
+                    <td class="cell-label">Live scrape</td>
+                    <td>Latest row S&amp;B HTML</td>
+                    <td class="cell-label">Multi CORS proxy → parse Latest Prices, VLSFO</td>
                   </tr>
                   <tr>
                     <td class="cell-label">SG May 2026 monthly avg</td>
@@ -1642,16 +1653,16 @@
                     <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/news/apac/241396-analysis-singapore-june-bunker-sales-up-17-on-year-as-hsfo-sales-jump" target="_blank" rel="noopener">S&amp;B (G20 in June article) ↗</a></td>
                   </tr>
                   <tr>
-                    <td class="cell-label">Daily spots Jul 10–24 (SG/RTM/G20)</td>
+                    <td class="cell-label">Daily spots Jul 10 – Aug 4 (SG/RTM/G20)</td>
                     <td class="cell-label">Daily table</td>
-                    <td>11 working-day prints</td>
+                    <td>18 working-day prints</td>
                     <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener">S&amp;B Latest Prices tables ↗</a></td>
                   </tr>
                   <tr>
                     <td class="cell-label">Live ticker / chart tip (1s)</td>
-                    <td class="cell-label">Intraday model</td>
-                    <td>±5–6 USD quanh close</td>
-                    <td class="cell-label">Nội bộ (mean-revert về S&amp;B close) — <em>không</em> phải Platts tick</td>
+                    <td class="cell-label">Intraday micro</td>
+                    <td>±2.5–3.5 USD quanh print · session-aware</td>
+                    <td class="cell-label">Mean-revert về S&amp;B close — <em>không</em> phải Platts tick feed</td>
                   </tr>
                   <tr>
                     <td class="cell-label">BAF Impact / pass-through 0.85</td>
@@ -1678,12 +1689,13 @@
 
           <!-- Official daily prints table with link -->
           <div class="card" style="padding:1.1rem;margin-bottom:1rem;overflow:hidden;">
-            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:600;">Daily prints đã hardcode (Ship &amp; Bunker public tables)</h3>
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:600;">Daily prints Ship &amp; Bunker (hardcode + live scrape merge)</h3>
             <p class="t3" style="margin:0 0 0.85rem;font-size:12px;">
-              Tra cứu / xác minh trên:
+              Xác minh trên:
               <a class="src-link" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener">SG</a> ·
               <a class="src-link" href="https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam" target="_blank" rel="noopener">RTM</a> ·
               <a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">G20</a>
+              · Bảng tự cập nhật khi scrape 60s thành công.
             </p>
             <div class="table-wrap">
               <table class="data-table" style="min-width:520px;">
@@ -1700,7 +1712,7 @@
             <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:600;color:var(--amber);">Disclaimer / Giới hạn</h3>
             <ul class="t3" style="margin:0;padding-left:1.15rem;font-size:12px;line-height:1.65;">
               <li>Ship &amp; Bunker và Bunker Index công bố một phần giá free trên web; <strong>full history / API / terminal</strong> cần subscription.</li>
-              <li>Live 1s trên app là <strong>intraday indication</strong> quanh daily close — không thay thế feed licensed (S&amp;B Intelligence, Platts, Argus…).</li>
+              <li>Live 1s = microstructure quanh daily mid; live 60s = re-scrape public HTML. <strong>Không</strong> thay feed licensed (S&amp;B Intelligence, Platts, Argus).</li>
               <li>BAF formula là <strong>illustrative</strong> cho phân tích — công thức BAF thực tế từng carrier (Maersk, MSC, CMA CGM…) khác nhau.</li>
               <li>Không dùng dashboard này để giao dịch / quyết định thương mại có ràng buộc pháp lý.</li>
             </ul>
@@ -1844,13 +1856,17 @@
 
   /*
    * ========== Ship & Bunker–anchored VLSFO (USD/mt) ==========
-   * Daily closes: Ship & Bunker (SG / RTM / G20 VLSFO) — public assessments.
-   * Monthly avgs: S&B analyses May/Jun 2026.
-   * Live: 1s tick around last official close (intraday indication).
-   * Full tick-level feeds require S&B / Bunker Index subscription.
+   * PRIMARY: Ship & Bunker public daily mid assessments
+   *   SG  https://shipandbunker.com/prices/apac/sea/sg-sin-singapore
+   *   RTM https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam
+   *   G20 https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average
+   * CROSS: Bunker Index (port pages) — verification only
+   * Live 1s: microstructure around last official print (not Platts tick)
+   * Live 60s: re-scrape public S&B HTML via CORS proxies → re-anchor
+   * Full API/tick feeds require S&B Intelligence / Platts / Argus license.
    */
   const OFFICIAL_SPOTS = {
-    // date: [sg, rtm, g20] — Ship & Bunker VLSFO mid assessments
+    // date: [sg, rtm, g20] — Ship & Bunker VLSFO mid (USD/mt)
     '2026-07-10': [677.50, 613.50, 711.50],
     '2026-07-13': [692.50, 630.00, 724.50],
     '2026-07-14': [750.50, 659.00, 758.50],
@@ -1862,13 +1878,36 @@
     '2026-07-22': [820.50, 699.50, 809.50],
     '2026-07-23': [874.50, 713.00, 831.50],
     '2026-07-24': [869.00, 697.50, 835.50],
+    // Jul 27 – Aug 4 2026: verified from S&B "Latest Prices, VLSFO" public tables
+    '2026-07-27': [837.50, 678.50, 825.00],
+    '2026-07-28': [814.50, 684.50, 805.00],
+    '2026-07-29': [816.00, 684.50, 807.50],
+    '2026-07-30': [830.50, 683.00, 815.00],
+    '2026-07-31': [837.50, 678.50, 814.50],
+    '2026-08-03': [840.00, 669.00, 810.00],
+    '2026-08-04': [844.50, 662.00, 806.50],
   };
 
-  // Published monthly averages (Ship & Bunker)
+  // Published monthly averages (Ship & Bunker analyses / index)
   const MONTHLY_OFFICIAL = {
     '2026-05': { sg: 825.0, glb: 900.0, rtm: 712.0 },
     '2026-06': { sg: 753.0, glb: 824.5, rtm: 658.0 },
   };
+
+  const SOURCE_URLS = {
+    sg: 'https://shipandbunker.com/prices/apac/sea/sg-sin-singapore',
+    rtm: 'https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam',
+    glb: 'https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average',
+    hub: 'https://shipandbunker.com/prices',
+    bi: 'https://www.bunkerindex.com/',
+  };
+
+  // Multi CORS proxy chain — browser cannot hit S&B directly (CORS)
+  const CORS_PROXIES = [
+    function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
+    function (u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
+  ];
 
   function generateHistory() {
     const rand = mulberry32(20260724);
@@ -2017,6 +2056,7 @@
     { date: '2026-06-15', label: 'Jun soft · SG $753' },
     { date: '2026-07-14', label: 'SG +$58 day' },
     { date: '2026-07-23', label: 'SG $874.5 spike' },
+    { date: '2026-08-04', label: 'S&B SG $844.5' },
   ];
 
   const state = {
@@ -2025,6 +2065,10 @@
     prev: { sg: 0, rtm: 0, glb: 0 },
     dayAgo: { sg: 0, rtm: 0, glb: 0 },
     lastUpdate: Date.now(),
+    lastWebRefresh: 0,
+    lastWebOk: false,
+    dataSourceLabel: 'S&B hardcode (Aug 4)',
+    refreshStatus: 'boot',
     charts: {},
     theme: 'dark',
     dateFrom: '2026-05-01',
@@ -2035,15 +2079,16 @@
     // Second-resolution live trail for real-time chart (kept ~2h)
     liveTrail: [],
     marketAnchor: null, // last official S&B close
+    webPrices: null,    // last successful web scrape
   };
 
   /* ========== Stats ========== */
   function monthlyStats(history) {
-    const months = { '2026-05': [], '2026-06': [], '2026-07': [] };
+    const months = { '2026-05': [], '2026-06': [], '2026-07': [], '2026-08': [] };
     history.forEach(r => { const k = r.date.slice(0, 7); if (months[k]) months[k].push(r); });
     const ports = ['sg', 'rtm', 'glb'];
     const labels = { sg: 'Singapore', rtm: 'Rotterdam', glb: 'Global 20' };
-    const monthLabel = { '2026-05': 'May 2026', '2026-06': 'Jun 2026', '2026-07': 'Jul 2026' };
+    const monthLabel = { '2026-05': 'May 2026', '2026-06': 'Jun 2026', '2026-07': 'Jul 2026', '2026-08': 'Aug 2026' };
     const keys = Object.keys(months);
     const result = [];
     keys.forEach((key, mi) => {
@@ -2171,10 +2216,30 @@
   function updateTrendSubtitle() {
     const el = document.getElementById('trend-subtitle');
     if (!el) return;
-    const off = latestOfficial();
+    const off = state.marketAnchor || latestOfficial();
     const t = new Date().toLocaleTimeString('en-GB', { hour12: false });
-    el.innerHTML = 'Live ' + t + ' · Ship &amp; Bunker daily close ' + off.date +
-      ' (SG $' + fmtPrice(off.sg) + ') · tick 1s · USD/mt';
+    const src = state.lastWebOk ? 'S&amp;B live scrape' : 'S&amp;B official print';
+    el.innerHTML = 'Live ' + t + ' · ' + src + ' ' + (off.date || '') +
+      ' (SG $' + fmtPrice(off.sg) + ' · RTM $' + fmtPrice(off.rtm) + ' · G20 $' + fmtPrice(off.glb) +
+      ') · 1s tick · 60s re-fetch · USD/mt';
+    updateDataStatusUI();
+  }
+
+  function updateDataStatusUI() {
+    const el = document.getElementById('data-status');
+    if (!el) return;
+    const off = state.marketAnchor || latestOfficial();
+    const age = state.lastWebRefresh
+      ? Math.floor((Date.now() - state.lastWebRefresh) / 1000)
+      : null;
+    const webLine = state.lastWebOk
+      ? ('Web OK · ' + (age != null ? age + 's ago' : 'now'))
+      : 'Web pending · using hardcode ' + (off.date || '');
+    el.innerHTML =
+      '<span class="live-dot" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>' +
+      '<strong class="c-cyan">PRIMARY</strong> Ship &amp; Bunker · print ' + (off.date || '—') +
+      ' · SG $' + fmtPrice(off.sg) + ' / RTM $' + fmtPrice(off.rtm) + ' / G20 $' + fmtPrice(off.glb) +
+      ' · <span class="t2">' + webLine + '</span> · tick 1s · re-fetch 60s';
   }
 
   function annotationPoints(data) {
@@ -2487,7 +2552,7 @@
 
   function monthlyBarOptions(height) {
     const stats = monthlyStats(state.history);
-    const months = ['May 2026', 'Jun 2026', 'Jul 2026'];
+    const months = ['May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026'];
     const get = (m, p) => {
       const row = stats.find(s => s.monthLabel === m && s.port === p);
       return row ? Math.round(row.avg * 10) / 10 : 0;
@@ -2539,10 +2604,10 @@
 
   function initQuarterChart() {
     const mayJun = state.history.filter(r => r.date >= '2026-05-01' && r.date <= '2026-06-30');
-    const jul = state.history.filter(r => r.date >= '2026-07-01');
+    const q3h = state.history.filter(r => r.date >= '2026-07-01');
     const avg = (arr, k) => arr.reduce((s, r) => s + r[k], 0) / (arr.length || 1);
     const q2 = { sg: avg(mayJun, 'sg'), rtm: avg(mayJun, 'rtm'), glb: avg(mayJun, 'glb') };
-    const q3 = { sg: avg(jul, 'sg'), rtm: avg(jul, 'rtm'), glb: avg(jul, 'glb') };
+    const q3 = { sg: avg(q3h, 'sg'), rtm: avg(q3h, 'rtm'), glb: avg(q3h, 'glb') };
     const q2El = document.getElementById('q2-avg');
     const q3El = document.getElementById('q3-avg');
     if (q2El) q2El.textContent = '$' + fmtPrice(q2.glb);
@@ -2553,7 +2618,7 @@
     const opts = {
       series: [
         { name: 'Q2 (May–Jun)', data: [Math.round(q2.sg), Math.round(q2.rtm), Math.round(q2.glb)] },
-        { name: 'Jul MTD', data: [Math.round(q3.sg), Math.round(q3.rtm), Math.round(q3.glb)] },
+        { name: 'Q3 MTD (Jul–Aug)', data: [Math.round(q3.sg), Math.round(q3.rtm), Math.round(q3.glb)] },
       ],
       chart: {
         type: 'bar', height: el.clientHeight || 168, width: '100%',
@@ -2789,73 +2854,162 @@
     }
   }
 
+  /** Weekday + hour (local) → wider intraday band when Asia/Europe bunker desks active */
+  function marketSessionFactor() {
+    const now = new Date();
+    const dow = now.getDay(); // 0 Sun
+    if (dow === 0 || dow === 6) return 0.15; // weekend: almost flat
+    const h = now.getHours();
+    // Asia open ~07–12, Europe ~13–18, overlap/late ~18–22 (local-ish)
+    if (h >= 7 && h < 22) return 1;
+    return 0.35; // off-hours quieter
+  }
+
   function liveTick() {
-    state.prev = { ...state.live };
-    // Anchor to last Ship & Bunker official daily close (trustworthy baseline)
+    state.prev = { sg: state.live.sg, rtm: state.live.rtm, glb: state.live.glb };
+    // Anchor = last Ship & Bunker official daily close (web scrape wins when available)
     const off = state.marketAnchor || latestOfficial();
     const anchor = { sg: off.sg, rtm: off.rtm, glb: off.glb };
-    const step = function (price, target) {
-      // Intraday micro-moves ±0.2–0.9 USD/mt around official close (mean-reverting)
-      const noise = (Math.random() - 0.5) * (0.25 + Math.random() * 0.65);
-      return Math.round((price + noise + (target - price) * 0.06) * 100) / 100;
+    const sess = marketSessionFactor();
+    const step = function (price, target, band) {
+      // Mean-revert hard to official print; micro noise scales with session
+      const noise = (Math.random() - 0.5) * (0.08 + Math.random() * 0.35) * sess;
+      const next = price + noise + (target - price) * (0.12 + 0.08 * sess);
+      const half = band * sess;
+      return Math.round(Math.max(target - half, Math.min(target + half, next)) * 100) / 100;
     };
-    // Soft bands around S&B close (realistic intraday range)
-    state.live.sg = Math.max(anchor.sg - 6, Math.min(anchor.sg + 6, step(state.live.sg, anchor.sg)));
-    state.live.rtm = Math.max(anchor.rtm - 5, Math.min(anchor.rtm + 5, step(state.live.rtm, anchor.rtm)));
-    state.live.glb = Math.max(anchor.glb - 5, Math.min(anchor.glb + 5, step(state.live.glb, anchor.glb)));
+    // Tight bands around S&B mid (realistic desk range, not random walk)
+    state.live.sg = step(state.live.sg, anchor.sg, 3.5);
+    state.live.rtm = step(state.live.rtm, anchor.rtm, 3.0);
+    state.live.glb = step(state.live.glb, anchor.glb, 2.5);
 
     pushLiveTrailPoint();
     updateTickerUI(true);
     updateTrendSubtitle();
 
     state.tickCount++;
-    // Chart updates every second (real-time figure)
     updateLiveChart();
-    // Heavier metrics less often
     if (state.tickCount % 5 === 0) updateBafMetrics();
+    if (state.tickCount % 15 === 0) updateDataStatusUI();
+  }
+
+  /** Parse first VLSFO mid from Ship & Bunker public HTML/markdown */
+  function parseSBprice(html) {
+    if (!html || typeof html !== 'string') return NaN;
+    const patterns = [
+      /Latest Prices[,\s]*VLSFO[\s\S]{0,1200}?(?:Price\s*\$\/mt|\$\/mt)[\s\S]{0,200}?(\d{3}\.\d{2})/i,
+      /Latest Prices[,\s]*VLSFO[\s\S]{0,800}?\|?\s*(\d{3}\.\d{2})\s*\|/i,
+      /\|\s*(\d{3}\.\d{2})\s*\|\s*[+\-−]?\s*\d/,
+      /Singapore[^|]{0,40}\|\s*(\d{3}\.\d{2})/i,
+      /VLSFO[^0-9]{0,40}(\d{3}\.\d{2})/,
+    ];
+    for (let i = 0; i < patterns.length; i++) {
+      const m = html.match(patterns[i]);
+      if (m) {
+        const v = parseFloat(m[1]);
+        if (isFinite(v) && v > 200 && v < 2000) return v;
+      }
+    }
+    return NaN;
+  }
+
+  function fetchViaProxies(url) {
+    let chain = Promise.reject(new Error('start'));
+    CORS_PROXIES.forEach(function (make) {
+      chain = chain.catch(function () {
+        return fetch(make(url), { cache: 'no-store', mode: 'cors' })
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(function (txt) {
+            if (!txt || txt.length < 80) throw new Error('empty');
+            return txt;
+          });
+      });
+    });
+    return chain;
   }
 
   /**
-   * Optional: re-pull latest public S&B page via CORS proxy and parse first VLSFO print.
-   * Falls back silently to hard-coded OFFICIAL_SPOTS if blocked.
+   * Re-pull latest public S&B pages every minute (multi-proxy).
+   * On success → hard re-anchor OFFICIAL_SPOTS + live + history tip.
+   * On fail → keep last hardcode / last good scrape (never blank).
    */
   function refreshOfficialFromWeb() {
-    const proxy = 'https://api.allorigins.win/raw?url=';
+    state.refreshStatus = 'fetching';
+    updateDataStatusUI();
     const targets = [
-      { key: 'sg', url: 'https://shipandbunker.com/prices/apac/sea/sg-sin-singapore' },
-      { key: 'rtm', url: 'https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam' },
-      { key: 'glb', url: 'https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average' },
+      { key: 'sg', url: SOURCE_URLS.sg },
+      { key: 'rtm', url: SOURCE_URLS.rtm },
+      { key: 'glb', url: SOURCE_URLS.glb },
     ];
     const prices = {};
     const jobs = targets.map(function (t) {
-      return fetch(proxy + encodeURIComponent(t.url), { cache: 'no-store' })
-        .then(function (r) { return r.text(); })
+      return fetchViaProxies(t.url)
         .then(function (html) {
-          // First VLSFO mid price in public table (Ship & Bunker)
-          const m = html.match(/Latest Prices,\s*VLSFO[\s\S]{0,800}?\|[\s\dA-Za-z]*\|?\s*([\d]{2,4}\.\d{2})\s*\|/);
-          const m2 = html.match(/\|\s*([\d]{3}\.\d{2})\s*\|\s*[+\-]?\d/);
-          const val = m ? parseFloat(m[1]) : (m2 ? parseFloat(m2[1]) : NaN);
-          if (isFinite(val) && val > 200 && val < 2000) prices[t.key] = val;
+          const val = parseSBprice(html);
+          if (isFinite(val)) prices[t.key] = val;
         })
         .catch(function () {});
     });
     Promise.all(jobs).then(function () {
+      state.lastWebRefresh = Date.now();
       if (prices.sg && prices.rtm && prices.glb) {
-        const d = todayISO();
+        // Map scraped "latest" to the most recent business day (or today if weekday)
+        const d = latestBusinessDateISO();
         OFFICIAL_SPOTS[d] = [prices.sg, prices.rtm, prices.glb];
         state.marketAnchor = { date: d, sg: prices.sg, rtm: prices.rtm, glb: prices.glb };
-        // Soft re-anchor live (don't jump violently)
-        state.live.sg = Math.round((state.live.sg * 0.4 + prices.sg * 0.6) * 100) / 100;
-        state.live.rtm = Math.round((state.live.rtm * 0.4 + prices.rtm * 0.6) * 100) / 100;
-        state.live.glb = Math.round((state.live.glb * 0.4 + prices.glb * 0.6) * 100) / 100;
+        state.webPrices = { date: d, sg: prices.sg, rtm: prices.rtm, glb: prices.glb, ts: Date.now() };
+        state.lastWebOk = true;
+        state.dataSourceLabel = 'S&B web · ' + d;
+        state.refreshStatus = 'ok';
+        // Snap live toward official (authoritative print wins)
+        state.prev = { sg: state.live.sg, rtm: state.live.rtm, glb: state.live.glb };
+        state.live.sg = prices.sg;
+        state.live.rtm = prices.rtm;
+        state.live.glb = prices.glb;
+        // Patch history tip
+        pushLiveTrailPoint();
+        // Update dayAgo from previous official key
+        const keys = Object.keys(OFFICIAL_SPOTS).sort();
+        if (keys.length > 1) {
+          const prevA = OFFICIAL_SPOTS[keys[keys.length - 2]];
+          state.dayAgo = { sg: prevA[0], rtm: prevA[1], glb: prevA[2] };
+        }
+        updateTickerUI(true);
         updateTrendSubtitle();
+        updateLiveChart();
+        updateBafMetrics();
+        if (document.getElementById('section-sources') &&
+            document.getElementById('section-sources').classList.contains('active')) {
+          renderSourcesOfficialTable();
+        }
+      } else {
+        state.lastWebOk = false;
+        state.refreshStatus = 'partial';
+        state.dataSourceLabel = 'S&B hardcode · ' + latestOfficialKey();
+        updateDataStatusUI();
       }
+    }).catch(function () {
+      state.lastWebOk = false;
+      state.refreshStatus = 'fail';
+      state.lastWebRefresh = Date.now();
+      updateDataStatusUI();
     });
   }
 
+  /** Latest weekday date ISO (skip Sat/Sun) — bunker desks rarely print weekends */
+  function latestBusinessDateISO() {
+    const d = new Date();
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+    return fmtDate(d);
+  }
+
   function updateLastUpdatedLabel() {
-    const sec = Math.floor((Date.now() - state.lastUpdate) / 1000);
     const el = document.getElementById('last-updated');
+    if (!el) return;
+    const sec = Math.floor((Date.now() - state.lastUpdate) / 1000);
     el.textContent = sec < 1 ? 'just now' : (sec === 1 ? '1s ago' : sec + 's ago');
   }
 
@@ -3667,17 +3821,18 @@
       icon.style.transform = 'rotate(360deg)';
       setTimeout(function () { icon.style.transform = ''; }, 500);
     }
-    refreshOfficialFromWeb();
+    // Immediate snap to last official, then force web scrape
     const off = state.marketAnchor || latestOfficial();
-    state.prev = { ...state.live };
-    state.live.sg = Math.round((off.sg + (Math.random() - 0.5) * 0.8) * 100) / 100;
-    state.live.rtm = Math.round((off.rtm + (Math.random() - 0.5) * 0.8) * 100) / 100;
-    state.live.glb = Math.round((off.glb + (Math.random() - 0.5) * 0.8) * 100) / 100;
+    state.prev = { sg: state.live.sg, rtm: state.live.rtm, glb: state.live.glb };
+    state.live.sg = off.sg;
+    state.live.rtm = off.rtm;
+    state.live.glb = off.glb;
     pushLiveTrailPoint();
     updateTickerUI(true);
     updateBafMetrics();
     updateLiveChart();
     updateTrendSubtitle();
+    refreshOfficialFromWeb();
   }
 
   function tickClock() {
@@ -3741,11 +3896,11 @@
       if (dt) { dt.max = t; dt.value = t; }
     } catch (err) {
       console.error('Boot data error', err);
-      // Fallback seed so UI is never blank
-      state.live = { sg: 869, rtm: 697.5, glb: 835.5 };
-      state.prev = { sg: 869, rtm: 697.5, glb: 835.5 };
-      state.dayAgo = { sg: 874.5, rtm: 713, glb: 831.5 };
-      state.marketAnchor = { date: '2026-07-24', sg: 869, rtm: 697.5, glb: 835.5 };
+      // Fallback seed = last verified S&B print (2026-08-04)
+      state.live = { sg: 844.50, rtm: 662.00, glb: 806.50 };
+      state.prev = { sg: 844.50, rtm: 662.00, glb: 806.50 };
+      state.dayAgo = { sg: 840.00, rtm: 669.00, glb: 810.00 };
+      state.marketAnchor = { date: '2026-08-04', sg: 844.50, rtm: 662.00, glb: 806.50 };
       try { updateTickerUI(false); } catch (e2) {}
     }
 
@@ -3758,13 +3913,15 @@
       safeRun('updateBafMetrics', updateBafMetrics);
       safeRun('updateVolCards', updateVolCards);
       safeRun('updateTrendSubtitle', updateTrendSubtitle);
+      safeRun('updateDataStatusUI', updateDataStatusUI);
 
       hideLoading();
 
+      // 1s: ticker + chart micro; 60s: authoritative S&B re-scrape
       setInterval(liveTick, 1000);
       setInterval(updateLastUpdatedLabel, 1000);
       setInterval(tickClock, 1000);
-      setInterval(refreshOfficialFromWeb, 180000);
+      setInterval(refreshOfficialFromWeb, 60000);
       safeRun('tickClock', tickClock);
       safeRun('refreshOfficialFromWeb', refreshOfficialFromWeb);
 
