@@ -1191,6 +1191,10 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 7-8"/><path d="M14 7h6v6"/></svg>
           BAF Forecast
         </button>
+        <button class="nav-item" data-section="bafguide" onclick="navigateTo('bafguide', this)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h6"/></svg>
+          Giải thích BAF
+        </button>
         <button class="nav-item" data-section="models" onclick="navigateTo('models', this)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19h16"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-4"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="12" cy="3.5" r="1.2" fill="currentColor"/><circle cx="17" cy="10" r="1.2" fill="currentColor"/></svg>
           Quant Models
@@ -2287,6 +2291,347 @@
               <li>VLSFO live thay đổi → bấm lại <em>Chạy forecast</em> (hoặc mở lại tab) để refresh.</li>
               <li>Dùng cho planning, budget band, stress-test — không thay tariff đã công bố.</li>
             </ul>
+          </div>
+        </section>
+
+        <!-- BAF GUIDE — detailed explanation handbook -->
+        <section id="section-bafguide" class="section">
+          <div style="margin-bottom:1rem;">
+            <h2 style="margin:0;font-size:1.2rem;font-weight:800;">Giải thích BAF — cẩm nang chi tiết</h2>
+            <p class="t3" style="margin:0.45rem 0 0;font-size:13px;line-height:1.65;max-width:960px;">
+              Mục này giải thích <strong style="color:var(--text);">toàn bộ BAF</strong> trên dashboard:
+              khái niệm, đơn vị, công thức, bảng Rates 2026, Calculator, Forecast, audit
+              “vì sao BAF và VLSFO có thể lệch hướng”, và cách dùng số cho BA/pricing.
+              Phần <strong style="color:var(--text);">số liệu live</strong> tự cập nhật khi market / forecast đổi.
+            </p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.75rem;">
+              <button type="button" class="btn btn-primary" onclick="refreshBafGuideReport()">Làm mới số liệu live</button>
+              <button type="button" class="btn" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]'))">BAF Rates</button>
+              <button type="button" class="btn" onclick="navigateTo('bafcalc', document.querySelector('[data-section=bafcalc]'))">Calculator</button>
+              <button type="button" class="btn" onclick="navigateTo('bafforecast', document.querySelector('[data-section=bafforecast]'))">Forecast</button>
+              <button type="button" class="btn" onclick="navigateTo('baf', document.querySelector('[data-section=baf]'))">BAF Impact</button>
+            </div>
+          </div>
+
+          <!-- Live snapshot -->
+          <div class="report-box" style="margin-bottom:1rem;" id="bafguide-live">
+            <h4>0. Snapshot live (auto-update)</h4>
+            <div class="report-meta" id="bafguide-meta">Đang nạp…</div>
+            <div id="bafguide-live-body"><p class="t3">Số liệu VLSFO + BAF differential + Rates + FC sẽ hiện sau boot.</p></div>
+          </div>
+
+          <!-- 1. What is BAF -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">1. BAF là gì?</h3>
+            <p class="t2" style="margin:0;font-size:13px;line-height:1.7;">
+              <strong>BAF (Bunker Adjustment Factor)</strong> là <em>phụ thu điều chỉnh nhiên liệu</em> mà hãng tàu
+              (liner) thu thêm trên cước biển để bù biến động giá bunker (thường VLSFO 0.5%).
+              Khi bunker đắt hơn mốc, BAF thường tăng; khi bunker rẻ, BAF có thể giảm — nhưng
+              <strong>không phải lúc nào cũng 1:1 và không phải tức thì</strong> (có lag, band, policy hãng).
+            </p>
+            <ul class="t2" style="margin:0.65rem 0 0;padding-left:1.2rem;font-size:13px;line-height:1.7;">
+              <li><strong>Ai trả?</strong> Shipper / NVOCC theo HBL hoặc contract.</li>
+              <li><strong>Đơn vị phổ biến:</strong> USD / container (20DC, 40HC) hoặc USD / TEU.</li>
+              <li><strong>Khác GRI / PSS:</strong> BAF neo fuel; GRI là general rate increase; PSS peak season.</li>
+              <li><strong>Trên dashboard:</strong> có 3 lớp BAF — (A) tariff Rates 2026, (B) model differential $/TEU, (C) forecast kỳ tới.</li>
+            </ul>
+          </div>
+
+          <!-- 2. Units & what is NOT all-in -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">2. Đơn vị &amp; những gì app <em>không</em> tính</h3>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:640px;">
+                <thead>
+                  <tr><th>Khái niệm</th><th>Đơn vị</th><th>Trên app?</th><th>Ghi chú</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="cell-label">VLSFO (SG / RTM / G20)</td>
+                    <td>USD/mt</td>
+                    <td class="c-up">Có</td>
+                    <td>Giá bunker — input fuel</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">BAF Rates 2026</td>
+                    <td>USD / container</td>
+                    <td class="c-up">Có</td>
+                    <td>Tariff theo region + kỳ + 20DC/40HC</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">BAF differential (Impact / model)</td>
+                    <td>USD / TEU</td>
+                    <td class="c-up">Có</td>
+                    <td>Δ so ref × PassThrough × Cons/TEU</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">BAF Forecast kỳ tới</td>
+                    <td>USD / container</td>
+                    <td class="c-up">Có</td>
+                    <td>Model planning — không phải circular</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Ocean freight base</td>
+                    <td>USD / container</td>
+                    <td class="c-down">Không</td>
+                    <td>Ngoài scope app</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">All-in = Base + BAF + THC…</td>
+                    <td>USD / container</td>
+                    <td class="c-down">Không</td>
+                    <td>Ghép ngoài (Excel / TMS) nếu cần</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="t3" style="margin:0.75rem 0 0;font-size:12px;line-height:1.6;">
+              <strong style="color:var(--amber);">Hệ quả:</strong> Có thể VLSFO (mt) giảm trong khi BAF forecast (container) tăng —
+              vì đó là <em>hai model / hai đơn vị</em>, không phải một công thức all-in duy nhất.
+            </p>
+          </div>
+
+          <!-- 3. Three BAF layers formulas -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">3. Ba lớp BAF trên dashboard — công thức</h3>
+
+            <h4 style="margin:0.85rem 0 0.4rem;font-size:0.88rem;font-weight:700;">3A. Tariff — BAF Rates 2026</h4>
+            <div class="code-box">BAF_tariff(region, period, equip) = schedule published
+
+Region C (via Rotterdam) / I (Via Singapore)
+Equip: 20DC | 40HC
+Periods: Feb'26~Apr'26 | 103Ki May~Jul'26 | 103Ki Aug~Oct'26
+
+C: 240/480 · 345/690 · 450/900
+I:  30/60  ·  66/132 ·  90/180   (USD/container)
+
+Calculator matrix:
+  cell = base_schedule × uplift × (qty nếu mode Total)</div>
+            <p class="t3" style="margin:0.5rem 0 0;font-size:12px;">Dấu trong all-in (nếu ghép ngoài): <strong class="c-up">+BAF</strong> (phụ thu).</p>
+
+            <h4 style="margin:1rem 0 0.4rem;font-size:0.88rem;font-weight:700;">3B. Differential model — BAF Impact / Calculator mode G20</h4>
+            <div class="code-box">BAF_t ($/TEU) = BAF_base + (VLSFO_global_t − VLSFO_ref) × PassThrough × (Cons/TEU)
+
+ΔBAF_USD/TEU = ΔVLSFO_USD/mt × 0.85 × 0.012
+
+Mặc định:
+  PassThrough = 0.85
+  Cons/TEU    = 0.012 mt/TEU
+  VLSFO_ref   = 800 USD/mt (hoặc Jun G20 avg cho MoM)
+  VLSFO_t     = S&amp;B G20 live / print
+
+Total shipment ≈ BAF_t × số_TEU
+  (20DC ≈ 1 TEU, 40HC ≈ 2 TEU)</div>
+            <p class="t3" style="margin:0.5rem 0 0;font-size:12px;">
+              Nếu VLSFO_t &lt; VLSFO_ref → ΔBAF <span class="c-down">âm</span> (áp lực giảm surcharge minh họa).
+              Đây là <em>độ nhạy</em>, không phải mức BAF circular hãng.
+            </p>
+
+            <h4 style="margin:1rem 0 0.4rem;font-size:0.88rem;font-weight:700;">3C. Forecast kỳ tới — BAF Forecast</h4>
+            <div class="code-box">Input actual: 3 điểm schedule (P0, P1, P2) cho mỗi (region, equip)
+
+Growth_h  = P2 × Π g_eff(k)     // momentum QoQ, có dampen
+Linear_h  = OLS(t=0,1,2) → t=2+h
+VLSFO_h   = P2 × scale_fuel^h   // pure fuel (không nhân gAvg)
+scale_fuel = 1 + ((P_fuel − P_base)/P_base) × 0.85 × 0.55
+
+Ensemble fuel-coherent (default):
+  E = P2 + wG·ΔG' + wL·ΔL' + wV·ΔV
+  ΔG',ΔL' bị damp khi scale_fuel &lt; 1 (oil soft)
+
+Ensemble raw (cũ):
+  E_raw = wG·Growth + wL·Linear + wV·VLSFO
+  // ~70% weight momentum schedule → dễ tăng dù oil giảm</div>
+          </div>
+
+          <!-- 4. Rates table explain -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">4. Đọc bảng BAF Rates 2026</h3>
+            <ul class="t2" style="margin:0;padding-left:1.2rem;font-size:13px;line-height:1.7;">
+              <li><strong>C (via Rotterdam)</strong> — lane / policy neo hub châu Âu (ARA). Mức tuyệt đối cao hơn I.</li>
+              <li><strong>I (Via Singapore)</strong> — hub châu Á. Mức thấp hơn nhiều trên schedule mẫu.</li>
+              <li><strong>20DC / 40HC</strong> — trên bảng này 40HC = 2 × 20DC (tỷ lệ 2:1).</li>
+              <li><strong>103Ki 1Q</strong> — mã tham chiếu kỳ May–Jul và Aug–Oct trên schedule (không phải API S&amp;B).</li>
+              <li>Từ P0→P2, C 40HC: 480 → 690 → 900 (+30% rồi +30%) — đây là <em>lý do chính</em> forecast ensemble dễ tiếp tục tăng.</li>
+            </ul>
+            <div class="bafrates-wrap" style="margin-top:0.85rem;">
+              <table class="bafrates">
+                <thead>
+                  <tr>
+                    <th class="bafrates-corner" rowspan="2">Region</th>
+                    <th class="period-a" colspan="2">Feb'26~Apr'26</th>
+                    <th class="period-b" colspan="2">May~Jul'26</th>
+                    <th class="period-c" colspan="2">Aug~Oct'26</th>
+                  </tr>
+                  <tr>
+                    <th class="sub-a">20DC</th><th class="sub-a">40HC</th>
+                    <th class="sub-b">20DC</th><th class="sub-b">40HC</th>
+                    <th class="sub-c">20DC</th><th class="sub-c">40HC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="region">C (via Rotterdam)</td>
+                    <td class="col-a">240</td><td class="col-a">480</td>
+                    <td class="col-b">345</td><td class="col-b">690</td>
+                    <td class="col-c">450</td><td class="col-c">900</td>
+                  </tr>
+                  <tr>
+                    <td class="region">I (Via Singapore)</td>
+                    <td class="col-a">30</td><td class="col-a">60</td>
+                    <td class="col-b">66</td><td class="col-b">132</td>
+                    <td class="col-c">90</td><td class="col-c">180</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 5. Oil vs BAF divergence -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;border-color:rgba(251,191,36,0.3);">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--amber);">5. Vì sao VLSFO giảm mà BAF forecast vẫn có thể tăng?</h3>
+            <p class="t2" style="margin:0;font-size:13px;line-height:1.7;">
+              Đây là điểm hay gây hiểu nhầm. <strong>Không phải bug index</strong> trong đa số trường hợp.
+            </p>
+            <ol class="t2" style="margin:0.65rem 0 0;padding-left:1.25rem;font-size:13px;line-height:1.7;">
+              <li><strong>Schedule momentum:</strong> 3 kỳ actual C 40HC tăng mạnh (480→900). Growth/Linear chiếm ~70% weight ensemble → tiếp tục đẩy FC lên.</li>
+              <li><strong>Fuel chỉ là 1 nhánh:</strong> VLSFO pure = last × scale. Oil soft → nhánh này âm, nhưng |Δ growth+linear| thường lớn hơn.</li>
+              <li><strong>Bug cũ (đã sửa):</strong> nhánh VLSFO từng nhân thêm <code>gAvg</code> (momentum schedule) → oil soft vẫn có thể ra arm dương. Hiện: pure <code>last × scale^h</code>.</li>
+              <li><strong>Hai đơn vị:</strong> VLSFO (USD/mt) ≠ BAF container (USD/box). Không cộng trực tiếp.</li>
+              <li><strong>Differential model</strong> (Impact) <em>có</em> giảm khi oil &lt; ref — đúng hướng pass-through; khác với Rates FC.</li>
+            </ol>
+            <p class="t3" style="margin:0.75rem 0 0;font-size:12px;">
+              Muốn BAF FC đi cùng chiều oil: chọn method <strong>VLSFO pure</strong>, hoặc tăng Weight VLSFO, hoặc dùng
+              <strong>Ensemble fuel-coherent</strong> (default) + xem bảng Audit trên tab Forecast.
+            </p>
+          </div>
+
+          <!-- 6. How to use tools -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">6. Khi nào dùng tool nào?</h3>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:680px;">
+                <thead>
+                  <tr><th>Nhu cầu</th><th>Tool</th><th>Output</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="cell-label">Quote theo schedule đã biết</td>
+                    <td>BAF Rates 2026 / Calculator matrix</td>
+                    <td>USD/container đúng region·kỳ·equip</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Shipment × qty / uplift</td>
+                    <td>BAF Calculator (bảng full)</td>
+                    <td>Ma trận unit hoặc total</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Độ nhạy khi VLSFO nhảy</td>
+                    <td>BAF Impact + Calculator mode G20</td>
+                    <td>ΔBAF $/TEU, signal HOLD/RAISE</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Budget / stress kỳ tới</td>
+                    <td>BAF Forecast</td>
+                    <td>FC point + Low/High + Bear/Bull</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Hiểu “vì sao số lệch”</td>
+                    <td>Giải thích BAF (tab này) + Forecast A0 Audit</td>
+                    <td>Contribution từng nhánh</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 7. Provenance -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">7. Nguồn từng tham số</h3>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:700px;">
+                <thead>
+                  <tr><th>Tham số</th><th>Giá trị</th><th>Nguồn</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="cell-label">VLSFO_global_t</td>
+                    <td>G20 series</td>
+                    <td><a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">Ship &amp; Bunker G20 ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">SG / RTM spots</td>
+                    <td>Daily mid</td>
+                    <td><a class="src-link" href="https://shipandbunker.com/prices" target="_blank" rel="noopener">Ship &amp; Bunker Prices ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">PassThrough 0.85</td>
+                    <td>0.85</td>
+                    <td>Dashboard default · range 0.75–1.0 · method notes public BAF</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Cons/TEU 0.012</td>
+                    <td>0.012 mt/TEU</td>
+                    <td>Scale minh họa (burn×days)/laden TEU — đổi theo tuyến</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">BAF Rates 2026</td>
+                    <td>Bảng C/I</td>
+                    <td>Schedule trên dashboard (tariff sample) — không phải feed hãng real-time</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Forecast weights</td>
+                    <td>wV / dampen…</td>
+                    <td>User-editable trên tab BAF Forecast</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 8. Glossary -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">8. Thuật ngữ BAF</h3>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:620px;">
+                <thead><tr><th>Thuật ngữ</th><th>Giải thích</th></tr></thead>
+                <tbody>
+                  <tr><td class="cell-label">BAF</td><td>Bunker Adjustment Factor — phụ thu nhiên liệu.</td></tr>
+                  <tr><td class="cell-label">VLSFO 0.5%</td><td>Very Low Sulphur Fuel Oil — grade bunker IMO 2020 phổ biến.</td></tr>
+                  <tr><td class="cell-label">PassThrough</td><td>% biến động fuel hãng chuyển sang khách (app: 0.85).</td></tr>
+                  <tr><td class="cell-label">Cons/TEU</td><td>mt bunker phân bổ / TEU (trade exposure).</td></tr>
+                  <tr><td class="cell-label">103Ki 1Q</td><td>Mã kỳ trên schedule Rates (May–Jul / Aug–Oct).</td></tr>
+                  <tr><td class="cell-label">FC-1…FC-4</td><td>Horizon forecast 1–4 kỳ sau Aug–Oct'26.</td></tr>
+                  <tr><td class="cell-label">Fuel-coherent</td><td>Ensemble damp momentum schedule khi oil soft.</td></tr>
+                  <tr><td class="cell-label">Ensemble raw</td><td>Blend cũ, momentum-heavy (~70% growth+linear).</td></tr>
+                  <tr><td class="cell-label">Bear / Bull</td><td>Shock ±% quanh point forecast (scenario).</td></tr>
+                  <tr><td class="cell-label">Circular</td><td>Thông báo BAF chính thức của hãng — ưu tiên hơn model app.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 9. FAQ -->
+          <div class="card" style="padding:1.15rem 1.2rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.95rem;font-weight:700;color:var(--cyan);">9. FAQ nhanh</h3>
+            <div class="t2" style="font-size:13px;line-height:1.75;">
+              <p style="margin:0 0 0.65rem;"><strong>Q: BAF app có phải giá hãng?</strong><br>
+              A: Rates 2026 = schedule trên dashboard. Forecast = model. Luôn đối chiếu circular Maersk/MSC/CMA/ONE…</p>
+              <p style="margin:0 0 0.65rem;"><strong>Q: Oil giảm, BAF Impact giảm nhưng Forecast tăng — lỗi?</strong><br>
+              A: Thường không. Impact = differential $/TEU theo VLSFO; Forecast = momentum bảng container. Xem mục 5 + Audit A0.</p>
+              <p style="margin:0 0 0.65rem;"><strong>Q: 40HC luôn gấp đôi 20DC?</strong><br>
+              A: Trên schedule mẫu này là có (2:1). Circular thực tế có thể khác (FEU factor).</p>
+              <p style="margin:0;"><strong>Q: All-in shipment bao nhiêu?</strong><br>
+              A: App không có ocean base. All-in = base freight (hệ thống khác) + BAF (Rates/Calculator) + surcharge khác.</p>
+            </div>
+          </div>
+
+          <div class="card" style="padding:1rem 1.1rem;border-color:rgba(251,191,36,0.28);">
+            <h3 style="margin:0 0 0.4rem;font-size:0.85rem;font-weight:700;color:var(--amber);">Disclaimer</h3>
+            <p class="t3" style="margin:0;font-size:12px;line-height:1.65;">
+              Toàn bộ giải thích phục vụ đào tạo / phân tích nội bộ. Không thay thế tariff hãng, hợp đồng, hay tư vấn thương mại có ràng buộc pháp lý.
+              Hệ số 0.85 / 0.012 và schedule Rates là default dashboard — chỉnh được trên Calculator / Forecast.
+            </p>
           </div>
         </section>
 
@@ -4318,6 +4663,81 @@
         alert('Đã copy báo cáo forecast chi tiết.');
       }).catch(function () { window.prompt('Copy:', plain); });
     } else window.prompt('Copy:', plain);
+  }
+
+  /** Live numbers for Giải thích BAF handbook */
+  function refreshBafGuideReport() {
+    const meta = document.getElementById('bafguide-meta');
+    const body = document.getElementById('bafguide-live-body');
+    if (!body) return;
+    const now = new Date();
+    const off = state.marketAnchor || latestOfficial();
+    const live = state.live || { sg: off.sg, rtm: off.rtm, glb: off.glb };
+    let junAvg = null;
+    try {
+      const stats = monthlyStats(state.history || []);
+      const jun = stats.find(function (s) { return s.month === '2026-06' && s.port === 'glb'; });
+      if (jun) junAvg = jun.avg;
+    } catch (e) {}
+    const ref = junAvg != null ? junAvg : BAF_PARAMS.VLSFO_REF;
+    const dP = live.glb - ref;
+    const dTeu = deltaBafPerTeu(dP);
+    const bafT = bafLevelPerTeu(live.glb, BAF_PARAMS.VLSFO_REF, BAF_PARAMS.BAF_BASE);
+    const c40 = [480, 690, 900];
+    const i40 = [60, 132, 180];
+
+    // Ensure forecast exists for snapshot
+    let fc = bafFcState.last;
+    if (!fc) {
+      try { fc = runBafForecast(); } catch (e) {}
+    }
+    let fcLine = 'Chưa chạy Forecast — mở tab BAF Forecast hoặc bấm Làm mới.';
+    if (fc && fc.future && fc.future[0]) {
+      const f0 = fc.future[0];
+      const c = fc.cells.C[f0.id]['40HC'];
+      const i = fc.cells.I[f0.id]['40HC'];
+      fcLine = f0.label + ' · method <span class="hl">' + fc.method + '</span> · ' +
+        'C 40HC <span class="mono-inline">' + formatMatrixCell(c.point, fc.dig) +
+        '</span> (last 900, Δ ' + (c.point - 900 >= 0 ? '+' : '') + formatMatrixCell(c.point - 900, fc.dig) +
+        ', band ' + c.low + '–' + c.high + ') · ' +
+        'I 40HC <span class="mono-inline">' + formatMatrixCell(i.point, fc.dig) + '</span>';
+    }
+
+    if (meta) {
+      meta.textContent = 'Cập nhật ' + now.toLocaleString('vi-VN') +
+        ' · S&B print ' + (off.date || '—') +
+        (state.lastWebOk ? ' · web scrape OK' : ' · hardcode/print') +
+        ' · 1s tick · PT=' + BAF_PARAMS.PASS_THROUGH + ' · CF=' + BAF_PARAMS.CONS_PER_TEU;
+    }
+
+    body.innerHTML =
+      '<h5>A. VLSFO live (USD/mt)</h5>' +
+      '<ul>' +
+      '<li>Singapore: <span class="mono-inline">' + money(live.sg) + '</span></li>' +
+      '<li>Rotterdam: <span class="mono-inline">' + money(live.rtm) + '</span></li>' +
+      '<li>G20: <span class="mono-inline">' + money(live.glb) + '</span> · print date <span class="hl">' + (off.date || '—') + '</span></li>' +
+      '<li>Spread SG−RTM: <span class="mono-inline">' + money(live.sg - live.rtm) + '</span></li>' +
+      '</ul>' +
+      '<h5>B. Differential BAF (Impact model · $/TEU)</h5>' +
+      '<p>Ref = ' + (junAvg != null ? 'Jun G20 avg ' : 'fixed ') +
+      '<span class="mono-inline">' + money(ref) + '</span> · ΔVLSFO = <span class="mono-inline">' + money(dP) +
+      '</span> · ΔBAF = ΔP×0.85×0.012 = <span class="mono-inline">' + money(dTeu, 4) + '/TEU</span> · ' +
+      'BAF_t vs $800 = <span class="mono-inline">' + money(bafT, 4) + '/TEU</span>.</p>' +
+      '<p class="t3">Hướng differential: ' +
+      (dTeu > 0.01 ? '<span class="c-up">dương (áp lực tăng surcharge minh họa)</span>' :
+        dTeu < -0.01 ? '<span class="c-down">âm (áp lực giảm surcharge minh họa)</span>' :
+        '<span class="c-cyan">gần 0 (HOLD)</span>') + '.</p>' +
+      '<h5>C. Tariff Rates 2026 — C/I 40HC actual</h5>' +
+      '<p class="mono-inline">C: ' + c40.join(' → ') + ' · I: ' + i40.join(' → ') + ' (USD/container)</p>' +
+      '<h5>D. Forecast snapshot</h5>' +
+      '<p>' + fcLine + '</p>' +
+      '<h5>E. Nhắc nhanh 3 lớp</h5>' +
+      '<ul>' +
+      '<li><strong>Rates</strong> = quote schedule (USD/box).</li>' +
+      '<li><strong>Impact/G20 model</strong> = độ nhạy theo VLSFO (USD/TEU).</li>' +
+      '<li><strong>Forecast</strong> = planning kỳ tới từ schedule + fuel (USD/box) — không circular.</li>' +
+      '</ul>' +
+      '<p class="report-meta" style="margin-top:0.5rem;">Chi tiết công thức: mục 3 bên dưới · Audit contribution: tab BAF Forecast → A0.</p>';
   }
 
   function syncCalcFromMarket() {
@@ -6709,6 +7129,7 @@
             } catch (e) {}
           }, 80);
         }
+        if (section === 'bafguide') refreshBafGuideReport();
         if (section === 'guide') refreshGuideReport();
         if (section === 'bafrates') { /* static table */ }
       }, 30);
@@ -6932,6 +7353,7 @@
       safeRun('runBafForecast', function () {
         try { runBafForecast(); } catch (e) {}
       });
+      safeRun('refreshBafGuideReport', refreshBafGuideReport);
 
       hideLoading();
 
@@ -6977,6 +7399,7 @@
   window.runBafForecast = runBafForecast;
   window.exportBafForecastCSV = exportBafForecastCSV;
   window.exportBafForecastReport = exportBafForecastReport;
+  window.refreshBafGuideReport = refreshBafGuideReport;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
