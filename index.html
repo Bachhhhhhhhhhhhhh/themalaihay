@@ -1187,6 +1187,10 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>
           BAF Calculator
         </button>
+        <button class="nav-item" data-section="bafforecast" onclick="navigateTo('bafforecast', this)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 7-8"/><path d="M14 7h6v6"/></svg>
+          BAF Forecast
+        </button>
         <button class="nav-item" data-section="models" onclick="navigateTo('models', this)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19h16"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-4"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="12" cy="3.5" r="1.2" fill="currentColor"/><circle cx="17" cy="10" r="1.2" fill="currentColor"/></svg>
           Quant Models
@@ -1227,7 +1231,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.5.0 · BAF matrix table</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.6.0 · BAF Forecast</div>
       </div>
     </aside>
 
@@ -1984,6 +1988,184 @@
           </div>
         </section>
 
+        <!-- BAF FORECAST — next periods from schedule + VLSFO -->
+        <section id="section-bafforecast" class="section">
+          <div style="margin-bottom:0.9rem;">
+            <h2 style="margin:0;font-size:1.15rem;font-weight:800;">BAF Forecast — kỳ tiếp theo</h2>
+            <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.6;max-width:920px;">
+              Dự báo BAF các kỳ sau <strong style="color:var(--text);">Aug'26–Oct'26</strong> dựa trên
+              <strong style="color:var(--text);">BAF Rates 2026</strong> (3 kỳ đã biết) + xu hướng
+              <strong style="color:var(--text);">VLSFO S&amp;B</strong> (G20 / SG / RTM).
+              Kết quả dạng bảng giống Rates (Region × kỳ × 20DC/40HC) + dải thấp/cao.
+            </p>
+          </div>
+
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.75rem;font-size:0.9rem;font-weight:700;">Tham số forecast</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem 1rem;">
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-method">Phương pháp</label>
+                <select id="fc-method" onchange="runBafForecast()">
+                  <option value="ensemble" selected>Ensemble (growth + linear + VLSFO)</option>
+                  <option value="growth">Chain growth (QoQ)</option>
+                  <option value="linear">Linear trend (OLS)</option>
+                  <option value="vlsfo">VLSFO-linked scale</option>
+                </select>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-horizons">Số kỳ forecast</label>
+                <select id="fc-horizons" onchange="runBafForecast()">
+                  <option value="1">1 kỳ (Nov'26–Jan'27)</option>
+                  <option value="2" selected>2 kỳ (+ Feb'27–Apr'27)</option>
+                  <option value="3">3 kỳ (+ May'27–Jul'27)</option>
+                  <option value="4">4 kỳ (+ Aug'27–Oct'27)</option>
+                </select>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-dampen">Damping growth (0.5–1)</label>
+                <input id="fc-dampen" type="number" min="0.5" max="1" step="0.05" value="0.85" oninput="runBafForecast()" />
+                <span class="hint">Giảm tốc growth xa horizon (1 = không damp)</span>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-vlsfo-w">Trọng số VLSFO (ensemble)</label>
+                <input id="fc-vlsfo-w" type="number" min="0" max="1" step="0.05" value="0.30" oninput="runBafForecast()" />
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-fuel-hub">Hub fuel cho scale</label>
+                <select id="fc-fuel-hub" onchange="runBafForecast()">
+                  <option value="glb" selected>G20 (global)</option>
+                  <option value="region">Theo region (C→RTM, I→SG)</option>
+                </select>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-round">Làm tròn</label>
+                <select id="fc-round" onchange="runBafForecast()">
+                  <option value="0" selected>Số nguyên USD</option>
+                  <option value="2">2 chữ số</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:1rem;">
+              <button type="button" class="btn btn-primary" onclick="runBafForecast()">Chạy forecast</button>
+              <button type="button" class="btn" onclick="exportBafForecastCSV()">Export CSV</button>
+              <button type="button" class="btn" onclick="exportBafForecastReport()">Copy báo cáo</button>
+              <button type="button" class="btn" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]'))">Xem Rates gốc</button>
+            </div>
+          </div>
+
+          <!-- KPI growth drivers -->
+          <div class="calc-kpi-row" style="margin-bottom:0.9rem;">
+            <div class="calc-kpi">
+              <div class="k">C 40HC QoQ growth</div>
+              <div class="v c-cyan" id="fc-kpi-c-g">—</div>
+              <div class="s" id="fc-kpi-c-g-sub">May–Jul → Aug–Oct</div>
+            </div>
+            <div class="calc-kpi">
+              <div class="k">I 40HC QoQ growth</div>
+              <div class="v c-emerald" id="fc-kpi-i-g">—</div>
+              <div class="s" id="fc-kpi-i-g-sub">May–Jul → Aug–Oct</div>
+            </div>
+            <div class="calc-kpi">
+              <div class="k">VLSFO fuel signal</div>
+              <div class="v" id="fc-kpi-fuel">—</div>
+              <div class="s" id="fc-kpi-fuel-sub">vs ref</div>
+            </div>
+            <div class="calc-kpi">
+              <div class="k">Method</div>
+              <div class="v" style="font-size:0.95rem;" id="fc-kpi-method">—</div>
+              <div class="s" id="fc-kpi-stamp">—</div>
+            </div>
+          </div>
+
+          <!-- History table -->
+          <div class="card" style="padding:1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">1. Lịch sử (actual) — BAF Rates 2026</h3>
+            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Input forecast — không chỉnh sửa</p>
+            <div class="bafrates-wrap">
+              <table class="bafrates" id="fc-hist-table">
+                <thead>
+                  <tr>
+                    <th class="bafrates-corner" rowspan="2">Region</th>
+                    <th class="period-a" colspan="2">BAF Feb'26 ~ Apr'26</th>
+                    <th class="period-b" colspan="2">BAF 103Ki 1Q<br>May'26 ~ Jul'26</th>
+                    <th class="period-c" colspan="2">BAF 103Ki 1Q<br>Aug'26 ~ Oct'26</th>
+                  </tr>
+                  <tr>
+                    <th class="sub-a">20DC</th><th class="sub-a">40HC</th>
+                    <th class="sub-b">20DC</th><th class="sub-b">40HC</th>
+                    <th class="sub-c">20DC</th><th class="sub-c">40HC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="region">C (via Rotterdam)</td>
+                    <td class="col-a">240</td><td class="col-a">480</td>
+                    <td class="col-b">345</td><td class="col-b">690</td>
+                    <td class="col-c">450</td><td class="col-c">900</td>
+                  </tr>
+                  <tr>
+                    <td class="region">I (Via Singapore)</td>
+                    <td class="col-a">30</td><td class="col-a">60</td>
+                    <td class="col-b">66</td><td class="col-b">132</td>
+                    <td class="col-c">90</td><td class="col-c">180</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Forecast table -->
+          <div class="card" style="padding:1rem;margin-bottom:0.9rem;">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;margin-bottom:0.55rem;">
+              <div>
+                <h3 style="margin:0;font-size:0.95rem;font-weight:700;" id="fc-table-title">2. Forecast — kỳ tiếp theo</h3>
+                <p class="t3" style="margin:0.3rem 0 0;font-size:12px;" id="fc-table-sub">Điểm dự báo (ensemble) · USD/container</p>
+              </div>
+              <span class="badge badge-sim" style="align-self:flex-start;">FORECAST · not tariff</span>
+            </div>
+            <div class="bafrates-chips" id="fc-period-chips"></div>
+            <div class="bafrates-wrap" role="region" aria-label="BAF forecast table">
+              <table class="bafrates" id="fc-forecast-table">
+                <thead id="fc-forecast-thead"></thead>
+                <tbody id="fc-forecast-tbody"></tbody>
+              </table>
+            </div>
+            <div class="bafrates-note" id="fc-table-note" style="margin-top:0.75rem;">
+              Ô forecast = model · dải Low–High = residual lịch sử ± band.
+            </div>
+          </div>
+
+          <!-- Combined full timeline optional wide table -->
+          <div class="card" style="padding:1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">3. Timeline full (actual + forecast)</h3>
+            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Cột actual nền chuẩn · cột forecast nền cyan nhạt</p>
+            <div class="bafrates-wrap">
+              <table class="bafrates" id="fc-full-table" style="min-width:900px;">
+                <thead id="fc-full-thead"></thead>
+                <tbody id="fc-full-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:700;">4. Đường 40HC (C &amp; I) — actual → forecast</h3>
+            <div class="chart-box" id="fc-chart" style="height:300px;"></div>
+          </div>
+
+          <div class="report-box" id="fc-report">
+            <h4>Báo cáo giải thích forecast (cập nhật theo số liệu)</h4>
+            <div class="report-meta" id="fc-report-meta">Bấm Chạy forecast…</div>
+            <div id="fc-report-body"><p>Báo cáo sẽ mô tả growth lịch sử, signal VLSFO, phương pháp và bảng kỳ tiếp theo.</p></div>
+          </div>
+
+          <div class="card" style="padding:1rem 1.1rem;margin-top:0.9rem;border-color:rgba(251,191,36,0.25);">
+            <p class="t3" style="margin:0;font-size:12px;line-height:1.6;">
+              <strong style="color:var(--amber);">Disclaimer:</strong> Forecast minh họa từ schedule + VLSFO public — <strong>không</strong> phải circular BAF hãng cho kỳ tương lai.
+              Dùng cho planning / stress-test; quote formal chờ tariff chính thức.
+            </p>
+          </div>
+        </section>
+
         <!-- MODELS -->
         <section id="section-models" class="section">
           <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:0.75rem;margin-bottom:1rem;">
@@ -2644,6 +2826,7 @@
               <li><strong>Monthly</strong> — so avg tháng (MoM %); ghi chú high/low để hiểu biên độ.</li>
               <li><strong>BAF Rates 2026</strong> — xem tariff region/kỳ (C Rotterdam / I Singapore).</li>
               <li><strong>BAF Calculator</strong> — tính chi tiết + đọc báo cáo giải thích theo số vừa tính.</li>
+              <li><strong>BAF Forecast</strong> — dự báo kỳ tiếp theo từ Rates 2026 + VLSFO (ensemble/growth/linear).</li>
               <li><strong>BAF Impact</strong> — đọc Δ fuel và tín hiệu minh họa; so với policy hãng.</li>
               <li><strong>Data Table / CSV</strong> — xuất số vào memo / model nội bộ.</li>
               <li><strong>Data Sources</strong> — verify print trên Ship &amp; Bunker trước khi đưa vào quyết định formal.</li>
@@ -2708,6 +2891,7 @@
             <a class="src-link" href="#" onclick="navigateTo('sources', document.querySelector('[data-section=sources]')); return false;">Sources</a> ·
             <a class="src-link" href="#" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]')); return false;">BAF Rates</a> ·
             <a class="src-link" href="#" onclick="navigateTo('bafcalc', document.querySelector('[data-section=bafcalc]')); return false;">BAF Calc</a> ·
+            <a class="src-link" href="#" onclick="navigateTo('bafforecast', document.querySelector('[data-section=bafforecast]')); return false;">BAF FC</a> ·
             <a class="src-link" href="#" onclick="navigateTo('guide', document.querySelector('[data-section=guide]')); return false;">Giải thích</a>
           </div>
           <div class="mono" style="flex-shrink:0;">VLSFO Monitor · BAF Tracker © 2026</div>
@@ -3167,6 +3351,502 @@
     a.download = 'BAF_Rates_2026_calculated.csv';
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  /* ========== BAF Period Forecast ========== */
+  const BAF_FC_FUTURE = [
+    { id: 'nov_jan', label: "Nov'26 ~ Jan'27", short: "Nov–Jan'27", code: 'FC-1' },
+    { id: 'feb_apr_27', label: "Feb'27 ~ Apr'27", short: "Feb–Apr'27", code: 'FC-2' },
+    { id: 'may_jul_27', label: "May'27 ~ Jul'27", short: "May–Jul'27", code: 'FC-3' },
+    { id: 'aug_oct_27', label: "Aug'27 ~ Oct'27", short: "Aug–Oct'27", code: 'FC-4' },
+  ];
+
+  let bafFcState = { last: null, stamp: null };
+
+  function seriesFromSchedule(region, equip) {
+    return BAF_MATRIX_PERIODS.map(function (p) {
+      return lookupTariffRate(region, p, equip);
+    });
+  }
+
+  function olsNext(ys, tNew) {
+    const n = ys.length;
+    if (n < 2) return ys[n - 1] || 0;
+    let sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (let i = 0; i < n; i++) {
+      sx += i; sy += ys[i]; sxx += i * i; sxy += i * ys[i];
+    }
+    const den = n * sxx - sx * sx;
+    const b = den ? (n * sxy - sx * sy) / den : 0;
+    const a = (sy - b * sx) / n;
+    return a + b * tNew;
+  }
+
+  function geoMeanGrowth(ys) {
+    const gs = [];
+    for (let i = 1; i < ys.length; i++) {
+      if (ys[i - 1] > 0) gs.push(ys[i] / ys[i - 1]);
+    }
+    if (!gs.length) return 1;
+    const logSum = gs.reduce(function (s, g) { return s + Math.log(g); }, 0);
+    return Math.exp(logSum / gs.length);
+  }
+
+  function lastGrowth(ys) {
+    if (ys.length < 2 || ys[ys.length - 2] <= 0) return 1;
+    return ys[ys.length - 1] / ys[ys.length - 2];
+  }
+
+  function vlsfoFuelFactor(region, hubMode) {
+    const live = state.live || {};
+    const off = state.marketAnchor || latestOfficial();
+    let px = live.glb != null ? live.glb : off.glb;
+    if (hubMode === 'region') {
+      if (region === 'C') px = live.rtm != null ? live.rtm : off.rtm;
+      if (region === 'I') px = live.sg != null ? live.sg : off.sg;
+    }
+    // Anchor: average of last ~30 history points or VLSFO_REF
+    let base = BAF_PARAMS.VLSFO_REF;
+    try {
+      const hist = (state.history || []).map(function (r) {
+        if (hubMode === 'region') {
+          if (region === 'C') return r.rtm;
+          if (region === 'I') return r.sg;
+        }
+        return r.glb;
+      }).filter(isFinite);
+      if (hist.length >= 10) {
+        const slice = hist.slice(-45, -15);
+        if (slice.length >= 5) {
+          base = slice.reduce(function (a, b) { return a + b; }, 0) / slice.length;
+        }
+      }
+    } catch (e) {}
+    const dPct = base > 0 ? (px - base) / base : 0;
+    // Pass-through soft: fuel up 10% → BAF scale ~ +10% * PT * 0.5 (damped link)
+    const scale = 1 + dPct * BAF_PARAMS.PASS_THROUGH * 0.55;
+    return {
+      px: px,
+      base: base,
+      dPct: dPct,
+      scale: Math.max(0.5, Math.min(1.8, scale)),
+    };
+  }
+
+  function forecastSeries(ys, horizons, method, dampen, vlsfoScale) {
+    const out = [];
+    const gLast = lastGrowth(ys);
+    const gAvg = geoMeanGrowth(ys);
+    const last = ys[ys.length - 1];
+    // residual for band: compare linear fit in-sample
+    const residuals = [];
+    for (let i = 0; i < ys.length; i++) {
+      residuals.push(ys[i] - olsNext(ys, i));
+    }
+    const mse = residuals.reduce(function (s, r) { return s + r * r; }, 0) / Math.max(1, residuals.length);
+    const sigma = Math.sqrt(mse) || last * 0.05;
+
+    for (let h = 1; h <= horizons; h++) {
+      const tNew = ys.length - 1 + h;
+      const damp = Math.pow(dampen, h);
+      const gEff = 1 + (gLast - 1) * damp * 0.55 + (gAvg - 1) * damp * 0.45;
+      const growthPath = last * Math.pow(gEff, h);
+      // recompute path step by step for growth
+      let gPoint = last;
+      for (let k = 0; k < h; k++) {
+        const dk = Math.pow(dampen, k + 1);
+        const gk = 1 + (gLast - 1) * dk * 0.55 + (gAvg - 1) * dk * 0.45;
+        gPoint = gPoint * gk;
+      }
+      const linPoint = olsNext(ys, tNew);
+      const vlsfoPoint = last * Math.pow(vlsfoScale, h * 0.35) * Math.pow(gAvg, h * 0.25);
+
+      let point;
+      if (method === 'growth') point = gPoint;
+      else if (method === 'linear') point = linPoint;
+      else if (method === 'vlsfo') point = vlsfoPoint;
+      else {
+        // ensemble weights
+        const wV = Math.max(0, Math.min(1, numInput('fc-vlsfo-w', 0.3)));
+        const wG = (1 - wV) * 0.55;
+        const wL = (1 - wV) * 0.45;
+        point = wG * gPoint + wL * linPoint + wV * vlsfoPoint;
+      }
+      point = Math.max(0, point);
+      const band = sigma * Math.sqrt(h) * 1.25;
+      out.push({
+        point: point,
+        low: Math.max(0, point - band),
+        high: point + band,
+        growth: gPoint,
+        linear: linPoint,
+        vlsfo: vlsfoPoint,
+      });
+    }
+    return { points: out, sigma: sigma, gLast: gLast, gAvg: gAvg };
+  }
+
+  function runBafForecast() {
+    const method = strInput('fc-method', 'ensemble');
+    const horizons = Math.max(1, Math.min(4, parseInt(strInput('fc-horizons', '2'), 10) || 2));
+    const dampen = Math.max(0.5, Math.min(1, numInput('fc-dampen', 0.85)));
+    const hubMode = strInput('fc-fuel-hub', 'glb');
+    const dig = parseInt(strInput('fc-round', '0'), 10) || 0;
+    const future = BAF_FC_FUTURE.slice(0, horizons);
+    const stamp = new Date();
+
+    const result = {
+      method: method,
+      horizons: horizons,
+      dampen: dampen,
+      hubMode: hubMode,
+      dig: dig,
+      future: future,
+      stamp: stamp,
+      cells: {}, // region -> periodId -> equip -> {point,low,high}
+      drivers: {},
+    };
+
+    BAF_MATRIX_REGIONS.forEach(function (region) {
+      result.cells[region] = {};
+      result.drivers[region] = {};
+      const fuel = vlsfoFuelFactor(region, hubMode);
+      result.drivers[region].fuel = fuel;
+      BAF_MATRIX_EQUIP.forEach(function (equip) {
+        const ys = seriesFromSchedule(region, equip);
+        const fc = forecastSeries(ys, horizons, method, dampen, fuel.scale);
+        result.drivers[region][equip] = {
+          series: ys,
+          gLast: fc.gLast,
+          gAvg: fc.gAvg,
+          sigma: fc.sigma,
+        };
+        future.forEach(function (fp, hi) {
+          if (!result.cells[region][fp.id]) result.cells[region][fp.id] = {};
+          const p = fc.points[hi];
+          const rnd = function (x) {
+            if (dig === 0) return Math.round(x);
+            return Math.round(x * Math.pow(10, dig)) / Math.pow(10, dig);
+          };
+          result.cells[region][fp.id][equip] = {
+            point: rnd(p.point),
+            low: rnd(p.low),
+            high: rnd(p.high),
+            raw: p.point,
+          };
+        });
+      });
+    });
+
+    bafFcState.last = result;
+    bafFcState.stamp = stamp;
+    renderBafForecastUI(result);
+    try { refreshGuideReport(); } catch (e) {}
+    return result;
+  }
+
+  function renderBafForecastUI(result) {
+    if (!result) return;
+    const dig = result.dig;
+    const future = result.future;
+
+    // KPIs
+    const c40 = result.drivers.C && result.drivers.C['40HC'];
+    const i40 = result.drivers.I && result.drivers.I['40HC'];
+    if (c40) {
+      setTextSafe('fc-kpi-c-g', ((c40.gLast - 1) * 100).toFixed(1) + '%');
+      setTextSafe('fc-kpi-c-g-sub', 'geoAvg ' + ((c40.gAvg - 1) * 100).toFixed(1) + '%/kỳ');
+    }
+    if (i40) {
+      setTextSafe('fc-kpi-i-g', ((i40.gLast - 1) * 100).toFixed(1) + '%');
+      setTextSafe('fc-kpi-i-g-sub', 'geoAvg ' + ((i40.gAvg - 1) * 100).toFixed(1) + '%/kỳ');
+    }
+    const fuelG = result.drivers.C && result.drivers.C.fuel;
+    if (fuelG) {
+      setTextSafe('fc-kpi-fuel', (fuelG.dPct >= 0 ? '+' : '') + (fuelG.dPct * 100).toFixed(1) + '%');
+      setTextSafe('fc-kpi-fuel-sub', 'P=' + money(fuelG.px) + ' vs base ' + money(fuelG.base) + ' · scale×' + fuelG.scale.toFixed(3));
+    }
+    const methodLabels = {
+      ensemble: 'Ensemble',
+      growth: 'Chain growth',
+      linear: 'Linear OLS',
+      vlsfo: 'VLSFO-linked',
+    };
+    setTextSafe('fc-kpi-method', methodLabels[result.method] || result.method);
+    setTextSafe('fc-kpi-stamp', result.stamp ? result.stamp.toLocaleString('vi-VN') : '—');
+
+    // Chips
+    const chips = document.getElementById('fc-period-chips');
+    if (chips) {
+      chips.innerHTML = future.map(function (f, i) {
+        const cls = i === 0 ? 'b' : (i === 1 ? 'c' : 'a');
+        return '<span class="bafrates-chip"><i class="' + cls + '"></i> ' + f.label + ' · ' + f.code + '</span>';
+      }).join('');
+    }
+    setTextSafe('fc-table-title', '2. Forecast — ' + future.map(function (f) { return f.short; }).join(' · '));
+    setTextSafe('fc-table-sub', methodLabels[result.method] + ' · USD/container · dampen ' + result.dampen);
+
+    // Forecast-only table header
+    const thead = document.getElementById('fc-forecast-thead');
+    const tbody = document.getElementById('fc-forecast-tbody');
+    if (thead && tbody) {
+      let h1 = '<tr><th class="bafrates-corner" rowspan="2">Region</th>';
+      let h2 = '<tr>';
+      future.forEach(function (f, i) {
+        const pc = i % 3 === 0 ? 'period-b' : (i % 3 === 1 ? 'period-c' : 'period-a');
+        const sc = i % 3 === 0 ? 'sub-b' : (i % 3 === 1 ? 'sub-c' : 'sub-a');
+        h1 += '<th class="' + pc + '" colspan="2">' + f.label + '<br><span style="font-weight:500;opacity:0.85;">' + f.code + '</span></th>';
+        h2 += '<th class="' + sc + '">20DC</th><th class="' + sc + '">40HC</th>';
+      });
+      h1 += '</tr>';
+      h2 += '</tr>';
+      thead.innerHTML = h1 + h2;
+
+      tbody.innerHTML = BAF_MATRIX_REGIONS.map(function (region) {
+        const reg = BAF_RATES_2026.regions[region];
+        let cells = '';
+        future.forEach(function (f, i) {
+          const cc = i % 3 === 0 ? 'col-b' : (i % 3 === 1 ? 'col-c' : 'col-a');
+          BAF_MATRIX_EQUIP.forEach(function (equip) {
+            const cell = result.cells[region][f.id][equip];
+            cells += '<td class="' + cc + ' calc-hit" title="Low ' + formatMatrixCell(cell.low, dig) +
+              ' – High ' + formatMatrixCell(cell.high, dig) + '">' +
+              formatMatrixCell(cell.point, dig) + '</td>';
+          });
+        });
+        return '<tr><td class="region">' + (reg ? reg.name : region) + '</td>' + cells + '</tr>';
+      }).join('');
+    }
+
+    // Full timeline table: 3 actual + N forecast
+    const fthead = document.getElementById('fc-full-thead');
+    const ftbody = document.getElementById('fc-full-tbody');
+    if (fthead && ftbody) {
+      const allPeriods = [
+        { id: 'feb_apr', label: "Feb'26~Apr'26", actual: true },
+        { id: 'may_jul', label: "May'26~Jul'26", actual: true },
+        { id: 'aug_oct', label: "Aug'26~Oct'26", actual: true },
+      ].concat(future.map(function (f) {
+        return { id: f.id, label: f.short, actual: false };
+      }));
+      let h1 = '<tr><th class="bafrates-corner" rowspan="2">Region</th>';
+      let h2 = '<tr>';
+      allPeriods.forEach(function (p, i) {
+        const pc = p.actual ? (i === 0 ? 'period-a' : i === 1 ? 'period-b' : 'period-c') : 'period-b';
+        const sc = p.actual ? (i === 0 ? 'sub-a' : i === 1 ? 'sub-b' : 'sub-c') : 'sub-b';
+        h1 += '<th class="' + pc + '" colspan="2">' + p.label + (p.actual ? '' : ' · FC') + '</th>';
+        h2 += '<th class="' + sc + '">20DC</th><th class="' + sc + '">40HC</th>';
+      });
+      h1 += '</tr>';
+      h2 += '</tr>';
+      fthead.innerHTML = h1 + h2;
+      ftbody.innerHTML = BAF_MATRIX_REGIONS.map(function (region) {
+        const reg = BAF_RATES_2026.regions[region];
+        let cells = '';
+        allPeriods.forEach(function (p, i) {
+          const cc = p.actual ? (i === 0 ? 'col-a' : i === 1 ? 'col-b' : 'col-c') : 'col-b';
+          BAF_MATRIX_EQUIP.forEach(function (equip) {
+            let val;
+            if (p.actual) val = lookupTariffRate(region, p.id, equip);
+            else val = result.cells[region][p.id][equip].point;
+            const hit = p.actual ? '' : ' calc-hit';
+            cells += '<td class="' + cc + hit + '">' + formatMatrixCell(val, dig) + '</td>';
+          });
+        });
+        return '<tr><td class="region">' + (reg ? reg.name : region) + '</td>' + cells + '</tr>';
+      }).join('');
+    }
+
+    const note = document.getElementById('fc-table-note');
+    if (note) {
+      note.innerHTML = '<strong>Cách đọc</strong> — Số trong bảng = <em>điểm forecast</em> (USD/container). ' +
+        'Hover ô để xem dải Low–High. Actual 3 kỳ trái (timeline full) là schedule; cột FC là model.';
+    }
+
+    renderBafForecastChart(result);
+    renderBafForecastReport(result);
+  }
+
+  function renderBafForecastChart(result) {
+    const el = document.getElementById('fc-chart');
+    if (!el || typeof ApexCharts === 'undefined') return;
+    const cats = BAF_MATRIX_PERIODS.map(function (p) {
+      return BAF_RATES_2026.periods[p].short;
+    }).concat(result.future.map(function (f) { return f.short; }));
+
+    function path(region) {
+      const hist = seriesFromSchedule(region, '40HC');
+      const fut = result.future.map(function (f) {
+        return result.cells[region][f.id]['40HC'].point;
+      });
+      return hist.concat(fut);
+    }
+    function band(region, key) {
+      const hist = seriesFromSchedule(region, '40HC');
+      // null band on actual
+      const fut = result.future.map(function (f) {
+        return result.cells[region][f.id]['40HC'][key];
+      });
+      return hist.map(function () { return null; }).concat(fut);
+    }
+
+    const opts = {
+      series: [
+        { name: 'C 40HC', data: path('C') },
+        { name: 'I 40HC', data: path('I') },
+        { name: 'C High', data: band('C', 'high') },
+        { name: 'C Low', data: band('C', 'low') },
+      ],
+      chart: {
+        type: 'line', height: 300, width: '100%',
+        background: 'transparent', foreColor: chartFore(),
+        toolbar: { show: false }, fontFamily: 'Inter, sans-serif',
+        animations: { enabled: true, speed: 400 },
+      },
+      colors: ['#22d3ee', '#34d399', 'rgba(34,211,238,0.35)', 'rgba(34,211,238,0.35)'],
+      stroke: { width: [3, 3, 1.2, 1.2], curve: 'smooth', dashArray: [0, 0, 4, 4] },
+      markers: { size: [4, 4, 0, 0] },
+      xaxis: {
+        categories: cats,
+        labels: { style: { fontSize: '11px', colors: chartFore() } },
+        axisBorder: { show: false }, axisTicks: { show: false },
+      },
+      yaxis: {
+        labels: {
+          formatter: function (v) { return v != null ? Math.round(v) : ''; },
+          style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() },
+        },
+      },
+      grid: { borderColor: gridColor(), strokeDashArray: 3 },
+      legend: { position: 'top', horizontalAlign: 'right', labels: { colors: chartFore() } },
+      tooltip: {
+        theme: tooltipTheme(),
+        y: { formatter: function (v) { return v != null ? '$' + Math.round(v) : '—'; } },
+      },
+      annotations: {
+        xaxis: [{
+          x: BAF_RATES_2026.periods.aug_oct.short,
+          borderColor: '#fbbf24',
+          label: { text: 'Last actual', style: { color: '#0a1524', background: '#fbbf24' } },
+        }],
+      },
+    };
+
+    try {
+      if (state.charts.bafFc) {
+        state.charts.bafFc.destroy();
+        state.charts.bafFc = null;
+      }
+    } catch (e) {}
+    el.innerHTML = '';
+    state.charts.bafFc = new ApexCharts(el, opts);
+    state.charts.bafFc.render();
+  }
+
+  function renderBafForecastReport(result) {
+    const meta = document.getElementById('fc-report-meta');
+    const body = document.getElementById('fc-report-body');
+    if (!body) return;
+    if (meta) {
+      meta.textContent = 'Cập nhật ' + (result.stamp ? result.stamp.toLocaleString('vi-VN') : '') +
+        ' · method ' + result.method + ' · ' + result.horizons + ' kỳ · based on BAF Rates 2026 + VLSFO live';
+    }
+
+    function line(region, equip) {
+      const d = result.drivers[region][equip];
+      const fut = result.future.map(function (f) {
+        return formatMatrixCell(result.cells[region][f.id][equip].point, result.dig);
+      }).join(' → ');
+      return '<li><span class="hl">' + region + ' ' + equip + '</span>: actual ' +
+        d.series.join(' → ') + ' → FC <span class="mono-inline">' + fut + '</span> ' +
+        '(gLast ' + ((d.gLast - 1) * 100).toFixed(1) + '%)</li>';
+    }
+
+    const fuelC = result.drivers.C.fuel;
+    const fuelI = result.drivers.I.fuel;
+
+    body.innerHTML =
+      '<h5>1. Dữ liệu đầu vào (updated)</h5>' +
+      '<ul>' +
+      '<li>Schedule actual: Feb–Apr / May–Jul / Aug–Oct 2026 (BAF Rates 2026).</li>' +
+      '<li>VLSFO C-side (RTM/G20): <span class="mono-inline">' + money(fuelC.px) + '</span> vs base ' +
+      '<span class="mono-inline">' + money(fuelC.base) + '</span> (Δ ' + (fuelC.dPct * 100).toFixed(1) + '% · scale×' + fuelC.scale.toFixed(3) + ').</li>' +
+      '<li>VLSFO I-side (SG/G20): <span class="mono-inline">' + money(fuelI.px) + '</span> vs base ' +
+      '<span class="mono-inline">' + money(fuelI.base) + '</span> (Δ ' + (fuelI.dPct * 100).toFixed(1) + '% · scale×' + fuelI.scale.toFixed(3) + ').</li>' +
+      '</ul>' +
+      '<h5>2. Phương pháp: ' + result.method + '</h5>' +
+      '<p><strong>Growth</strong> = chain QoQ dampened; <strong>Linear</strong> = OLS trên 3 kỳ actual; ' +
+      '<strong>VLSFO</strong> = scale last period theo fuel signal; <strong>Ensemble</strong> = blend 3 nhánh.</p>' +
+      '<p>Damping = <span class="mono-inline">' + result.dampen + '</span> (kìm growth ở horizon xa).</p>' +
+      '<h5>3. Kết quả kỳ tiếp theo</h5>' +
+      '<ul>' +
+      line('C', '20DC') + line('C', '40HC') + line('I', '20DC') + line('I', '40HC') +
+      '</ul>' +
+      '<h5>4. Ý nghĩa vận hành</h5>' +
+      '<p>Nếu growth actual C 40HC ~ +' + ((result.drivers.C['40HC'].gLast - 1) * 100).toFixed(0) +
+      '%/kỳ tiếp tục (có damp), BAF hub Rotterdam kỳ tới có xu hướng ' +
+      (result.drivers.C['40HC'].gLast >= 1 ? '<span class="hl">tăng</span>' : '<span class="hl">giảm</span>') +
+      '. Singapore (I) scale nhỏ hơn tuyệt đối nhưng growth % tương tự.</p>' +
+      '<p>So với model ΔVLSFO×0.85×0.012: forecast kỳ là <em>tariff-level</em> (USD/container), không phải $/TEU differential thuần.</p>' +
+      '<h5>5. Giới hạn</h5>' +
+      '<p>Chỉ 3 điểm actual → uncertainty cao; band Low–High là residual OLS ±√h. ' +
+      'Không thay circular hãng. Cập nhật lại khi có print BAF kỳ mới hoặc VLSFO đổi mạnh (Sync market trên Calculator / Overview).</p>';
+  }
+
+  function exportBafForecastCSV() {
+    const r = bafFcState.last;
+    if (!r) { alert('Chạy forecast trước.'); return; }
+    const header = ['Region', 'Type'];
+    BAF_MATRIX_PERIODS.forEach(function (p) {
+      header.push(p + '_20DC', p + '_40HC');
+    });
+    r.future.forEach(function (f) {
+      header.push(f.id + '_20DC', f.id + '_40HC');
+    });
+    const lines = [header.join(',')];
+    BAF_MATRIX_REGIONS.forEach(function (region) {
+      const row = [region, 'point'];
+      BAF_MATRIX_PERIODS.forEach(function (p) {
+        row.push(lookupTariffRate(region, p, '20DC'), lookupTariffRate(region, p, '40HC'));
+      });
+      r.future.forEach(function (f) {
+        row.push(r.cells[region][f.id]['20DC'].point, r.cells[region][f.id]['40HC'].point);
+      });
+      lines.push(row.join(','));
+      const rowL = [region, 'low'];
+      BAF_MATRIX_PERIODS.forEach(function () { rowL.push('', ''); });
+      r.future.forEach(function (f) {
+        rowL.push(r.cells[region][f.id]['20DC'].low, r.cells[region][f.id]['40HC'].low);
+      });
+      lines.push(rowL.join(','));
+      const rowH = [region, 'high'];
+      BAF_MATRIX_PERIODS.forEach(function () { rowH.push('', ''); });
+      r.future.forEach(function (f) {
+        rowH.push(r.cells[region][f.id]['20DC'].high, r.cells[region][f.id]['40HC'].high);
+      });
+      lines.push(rowH.join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'BAF_Forecast_next_periods.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportBafForecastReport() {
+    const el = document.getElementById('fc-report-body');
+    if (!el || !bafFcState.last) {
+      alert('Chạy forecast trước.');
+      return;
+    }
+    const plain = el.innerText || el.textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(plain).then(function () {
+        alert('Đã copy báo cáo forecast.');
+      }).catch(function () { window.prompt('Copy:', plain); });
+    } else window.prompt('Copy:', plain);
   }
 
   function syncCalcFromMarket() {
@@ -5549,6 +6229,12 @@
           try { syncCalcFromMarket(); } catch (e) {}
           runBafCalculator();
         }
+        if (section === 'bafforecast') {
+          runBafForecast();
+          setTimeout(function () {
+            try { state.charts.bafFc && state.charts.bafFc.resize && state.charts.bafFc.resize(); } catch (e) {}
+          }, 80);
+        }
         if (section === 'guide') refreshGuideReport();
         if (section === 'bafrates') { /* static table */ }
       }, 30);
@@ -5769,6 +6455,9 @@
         // Pre-fill calculator without forcing panel switch
         try { syncCalcFromMarket(); } catch (e) {}
       });
+      safeRun('runBafForecast', function () {
+        try { runBafForecast(); } catch (e) {}
+      });
 
       hideLoading();
 
@@ -5811,6 +6500,9 @@
   window.exportBafMatrixCSV = exportBafMatrixCSV;
   window.resetBafMatrixDefaults = resetBafMatrixDefaults;
   window.refreshGuideReport = refreshGuideReport;
+  window.runBafForecast = runBafForecast;
+  window.exportBafForecastCSV = exportBafForecastCSV;
+  window.exportBafForecastReport = exportBafForecastReport;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
