@@ -940,7 +940,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.1.0 · Guide · S&amp;B · 1s/60s</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.2.0 · BAF formula · S&amp;B</div>
       </div>
     </aside>
 
@@ -1108,15 +1108,16 @@
             <div class="card card-hover" style="padding:1.1rem;">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
                 <h3 style="margin:0;font-size:0.9rem;font-weight:600;">BAF Impact Preview</h3>
-                <span class="badge badge-sim">Model 0.85×</span>
+                <span class="badge badge-sim">ΔP×0.85×0.012</span>
               </div>
               <p class="t3" style="margin:0 0 0.85rem;font-size:11px;line-height:1.5;">
-                ΔBAF ≈ ΔVLSFO × 0.85 (pass-through). Ước tính dựa trên Global VLSFO.
+                ΔBAF_USD/TEU ≈ ΔVLSFO_G20 × <strong>0.85</strong> × <strong>0.012</strong> · nguồn hệ số trong tab BAF / Sources.
               </p>
-              <div class="row-line"><span class="t2" style="font-size:0.8rem;">Base (Jun avg)</span><span id="baf-base" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
-              <div class="row-line"><span class="t2" style="font-size:0.8rem;">Current (Jul MTD)</span><span id="baf-curr" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
+              <div class="row-line"><span class="t2" style="font-size:0.8rem;">VLSFO_ref (Jun G20 avg)</span><span id="baf-base" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
+              <div class="row-line"><span class="t2" style="font-size:0.8rem;">VLSFO_t (Jul–Aug MTD)</span><span id="baf-curr" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
               <div class="row-line"><span class="t2" style="font-size:0.8rem;">Δ VLSFO</span><span id="baf-delta-fuel" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
-              <div class="row-line"><span class="t2" style="font-size:0.8rem;">Est. BAF Impact</span><span id="baf-impact" class="mono c-emerald" style="font-size:1rem;font-weight:700;">—</span></div>
+              <div class="row-line"><span class="t2" style="font-size:0.8rem;">Pass-through (×0.85)</span><span id="baf-pass-mt" class="mono" style="font-size:0.85rem;font-weight:600;">—</span></div>
+              <div class="row-line"><span class="t2" style="font-size:0.8rem;">ΔBAF (×0.85×0.012)</span><span id="baf-impact" class="mono c-emerald" style="font-size:1rem;font-weight:700;">—</span></div>
               <div class="signal-box">
                 <div class="t3" style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.2rem;">Signal</div>
                 <div id="baf-signal" class="c-cyan" style="font-size:0.85rem;font-weight:600;">—</div>
@@ -1217,11 +1218,24 @@
 
         <!-- BAF -->
         <section id="section-baf" class="section">
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.75rem;margin-bottom:1rem;">
+          <div style="margin-bottom:0.9rem;">
+            <h2 style="margin:0;font-size:1.05rem;font-weight:700;">BAF Impact — công thức chuẩn</h2>
+            <p class="t3" style="margin:0.35rem 0 0;font-size:12.5px;line-height:1.55;max-width:900px;">
+              Mọi số BAF trên app đi qua <span class="mono c-cyan">BAF_PARAMS</span> duy nhất.
+              Input giá = <strong>Ship &amp; Bunker G20 VLSFO</strong>. Hệ số 0.85 / 0.012 có nguồn ghi rõ bên dưới (minh họa ngành — không phải circular hãng).
+            </p>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1rem;">
             <div class="card card-hover" style="padding:1.1rem;">
               <div class="t3" style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;">BAF Index</div>
               <div id="baf-index" class="logo-mark mono" style="font-size:1.75rem;font-weight:700;">—</div>
-              <div class="t3" style="font-size:0.75rem;margin-top:0.35rem;">Base 100 = Jan 2026 ref</div>
+              <div class="t3" style="font-size:0.75rem;margin-top:0.35rem;">100 @ VLSFO_ref = $800/mt</div>
+            </div>
+            <div class="card card-hover" style="padding:1.1rem;">
+              <div class="t3" style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;">BAF_t (live)</div>
+              <div id="baf-level-teu" class="mono c-amber" style="font-size:1.5rem;font-weight:700;">—</div>
+              <div id="baf-level-sub" class="t3" style="font-size:0.75rem;margin-top:0.35rem;">—</div>
             </div>
             <div class="card card-hover" style="padding:1.1rem;">
               <div class="t3" style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;">Recommended Action</div>
@@ -1229,22 +1243,116 @@
               <div id="baf-action-sub" class="t3" style="font-size:0.75rem;margin-top:0.35rem;">—</div>
             </div>
             <div class="card card-hover" style="padding:1.1rem;">
-              <div class="t3" style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;">Pass-through</div>
-              <div class="mono c-emerald" style="font-size:1.75rem;font-weight:700;">0.85×</div>
-              <div class="t3" style="font-size:0.75rem;margin-top:0.35rem;">Typical liner BAF factor</div>
+              <div class="t3" style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;">PassThrough</div>
+              <div id="baf-pt-label" class="mono c-emerald" style="font-size:1.75rem;font-weight:700;">0.85×</div>
+              <div class="t3" style="font-size:0.75rem;margin-top:0.35rem;">fraction of Δ fuel → shipper</div>
+            </div>
+            <div class="card card-hover" style="padding:1.1rem;">
+              <div class="t3" style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;">Cons / TEU</div>
+              <div id="baf-cf-label" class="mono c-blue" style="font-size:1.5rem;font-weight:700;">0.012</div>
+              <div class="t3" style="font-size:0.75rem;margin-top:0.35rem;">mt bunker per TEU (exposure)</div>
+            </div>
+            <div class="card card-hover" style="padding:1.1rem;">
+              <div class="t3" style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;">VLSFO_ref (fixed)</div>
+              <div id="baf-ref-fixed" class="mono" style="font-size:1.4rem;font-weight:700;">$800.00/mt</div>
+              <div class="t3" style="font-size:0.75rem;margin-top:0.35rem;">index / absolute BAF_t</div>
             </div>
           </div>
+
           <div class="card" style="padding:1.1rem;margin-bottom:1rem;">
-            <h2 style="margin:0;font-size:0.9rem;font-weight:600;">BAF vs VLSFO</h2>
-            <p class="t3" style="margin:0.2rem 0 0.75rem;font-size:11px;">Est. BAF component tracks Global VLSFO × 0.85</p>
+            <h2 style="margin:0;font-size:0.9rem;font-weight:600;">G20 VLSFO vs Est. BAF_t</h2>
+            <p class="t3" style="margin:0.2rem 0 0.75rem;font-size:11px;">
+              Trái: G20 USD/mt (S&amp;B) · Phải: BAF_t = BAF_base + (P_t − $800) × 0.85 × 0.012 &nbsp;(USD/TEU)
+            </p>
             <div class="chart-box baf" id="baf-chart"></div>
           </div>
-          <div class="card" style="padding:1.1rem;">
-            <h3 style="margin:0 0 0.65rem;font-size:0.9rem;font-weight:600;">BAF Formula (illustrative)</h3>
+
+          <div class="card" style="padding:1.1rem;margin-bottom:1rem;">
+            <h3 style="margin:0 0 0.55rem;font-size:0.9rem;font-weight:600;">Công thức (canonical)</h3>
             <div class="code-box">BAF_t = BAF_base + (VLSFO_global_t − VLSFO_ref) × PassThrough × (ConsumptionFactor / TEU)
 
-ΔBAF_USD/TEU ≈ ΔVLSFO_USD/mt × 0.85 × 0.012</div>
-            <p class="t3" style="margin:0.65rem 0 0;font-size:11px;line-height:1.5;">* Demo only. Actual BAF formulas differ by carrier and are not fully public.</p>
+ΔBAF_USD/TEU ≈ ΔVLSFO_USD/mt × 0.85 × 0.012
+
+// Live MoM plug-in:
+// VLSFO_global_t  = G20 avg Jul–Aug MTD (Ship &amp; Bunker)
+// VLSFO_ref (MoM) = G20 avg Jun (period base)
+// PassThrough     = 0.85
+// ConsPerTEU      = 0.012 mt/TEU</div>
+            <p id="baf-formula-live" class="mono c-cyan" style="margin:0.75rem 0 0;font-size:12px;line-height:1.5;">—</p>
+            <p class="t3" style="margin:0.55rem 0 0;font-size:11px;line-height:1.55;">
+              * Minh họa phân tích. Circular BAF thực tế (Maersk / MSC / CMA CGM / ONE…) khác nhau theo tuyến, equipment, lag tháng — luôn đối chiếu tariff hãng.
+            </p>
+          </div>
+
+          <!-- Parameter provenance table -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.5rem;overflow:hidden;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.9rem;font-weight:600;">Nguồn từng tham số trong công thức</h3>
+            <p class="t3" style="margin:0 0 0.75rem;font-size:12px;">Click Source để mở tài liệu / database. Hệ số 0.85 &amp; 0.012 <strong>không</strong> phải print S&amp;B — là default model dashboard.</p>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:720px;">
+                <thead>
+                  <tr>
+                    <th>Tham số</th>
+                    <th>Giá trị app</th>
+                    <th>Ý nghĩa</th>
+                    <th>Nguồn / provenance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="cell-label">VLSFO_global_t</td>
+                    <td class="mono">G20 series</td>
+                    <td>Giá bunker index toàn cầu (USD/mt)</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">Ship &amp; Bunker G20-VLSFO ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">VLSFO_ref (fixed)</td>
+                    <td class="mono">800 USD/mt</td>
+                    <td>Mốc differential cho BAF_t &amp; index 100</td>
+                    <td class="cell-label">Dashboard default (round industry demo) · đối chiếu mức G20 lịch sử trên <a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">S&amp;B ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">VLSFO_ref (MoM panel)</td>
+                    <td class="mono">Jun G20 avg</td>
+                    <td>Base tháng trước để tính ΔBAF MoM</td>
+                    <td class="cell-label">Tính từ history G20 (neo S&amp;B daily / monthly)</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">BAF_base</td>
+                    <td class="mono">0 USD/TEU</td>
+                    <td>Surcharge tại ref (mô hình thuần differential)</td>
+                    <td class="cell-label">Dashboard default — thay bằng BAF circular hãng nếu có</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">PassThrough</td>
+                    <td class="mono">0.85</td>
+                    <td>% Δ fuel chuyển sang shipper (không 100%)</td>
+                    <td class="cell-label">
+                      Minh họa liner 0.75–1.0 · tham chiếu phương pháp BAF công (risk / input substitution ~0.75–0.85) —
+                      <a class="src-link" href="https://rosap.ntl.bts.gov/view/dot/12116" target="_blank" rel="noopener">USTRANSCOM / DOT BAF study ↗</a>
+                      · <em>không</em> phải circular Maersk/MSC
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">ConsumptionFactor / TEU</td>
+                    <td class="mono">0.012 mt/TEU</td>
+                    <td>Lượng bunker phân bổ / 1 TEU (trade factor rút gọn)</td>
+                    <td class="cell-label">
+                      Scale minh họa: (burn mt/day × sea days) / laden TEU ≈ 0.012 · logic BAF =
+                      index × consumption × distance / capacity —
+                      <a class="src-link" href="https://www.freightamigo.com/en/blog/logistics/understanding-the-bunker-adjustment-factor-a-key-component-in-freight-costs/" target="_blank" rel="noopener">FreightAmigo BAF explainer ↗</a>
+                      · số 0.012 = <strong>dashboard default</strong>, đổi theo tuyến
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">ΔBAF_USD/TEU</td>
+                    <td class="mono">ΔP × 0.85 × 0.012</td>
+                    <td>Độ nhạy BAF theo biến động G20</td>
+                    <td class="cell-label">Suy ra từ 2 hệ số trên + ΔVLSFO (S&amp;B G20)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
@@ -1428,7 +1536,7 @@
               <h3 style="margin:0;font-size:0.9rem;font-weight:600;">Monte Carlo BAF Stress (5,000 paths · 30d)</h3>
             </div>
             <p class="t3" style="margin:0 0 0.65rem;font-size:11px;">
-              GBM on G20 VLSFO · ΔBAF/TEU = ΔP × 0.85 × 0.012 · VaR 95% / CVaR 95% / P50 / P90
+              GBM on G20 (S&amp;B) · ΔBAF/TEU = ΔP × PassThrough(0.85) × Cons/TEU(0.012) · VaR/CVaR/P50/P90
             </p>
             <div style="display:grid;grid-template-columns:1fr;gap:1rem;" class="models-2col">
               <div class="chart-box model-lg" id="chart-mc"></div>
@@ -1669,10 +1777,28 @@
                     <td class="cell-label">Mean-revert về S&amp;B close — <em>không</em> phải Platts tick feed</td>
                   </tr>
                   <tr>
-                    <td class="cell-label">BAF Impact / pass-through 0.85</td>
-                    <td class="cell-label">Illustrative model</td>
-                    <td>ΔBAF ≈ ΔVLSFO × 0.85</td>
-                    <td class="cell-label">Công thức demo liner — không công bố full bởi hãng tàu</td>
+                    <td class="cell-label">VLSFO_global_t (BAF input)</td>
+                    <td class="cell-label">Daily / MTD index</td>
+                    <td>G20 VLSFO USD/mt</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">S&amp;B G20-VLSFO ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">PassThrough = 0.85</td>
+                    <td class="cell-label">Model coefficient</td>
+                    <td>0.85 (unitless)</td>
+                    <td class="cell-label">Dashboard default · range 0.75–1.0 · <a class="src-link" href="https://rosap.ntl.bts.gov/view/dot/12116" target="_blank" rel="noopener">USTRANSCOM BAF method notes ↗</a> (risk/input factors) — <em>not</em> carrier circular</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Cons/TEU = 0.012</td>
+                    <td class="cell-label">Model coefficient</td>
+                    <td>0.012 mt/TEU</td>
+                    <td class="cell-label">Dashboard default trade exposure · logic (burn×days)/TEU · <a class="src-link" href="https://www.freightamigo.com/en/blog/logistics/understanding-the-bunker-adjustment-factor-a-key-component-in-freight-costs/" target="_blank" rel="noopener">BAF formula explainer ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">ΔBAF_USD/TEU</td>
+                    <td class="cell-label">Derived</td>
+                    <td>ΔVLSFO × 0.85 × 0.012</td>
+                    <td class="cell-label">Canonical in <span class="mono">BAF_PARAMS</span> · tab BAF Impact</td>
                   </tr>
                   <tr>
                     <td class="cell-label">Quant models (RSI, MACD, MC…)</td>
@@ -1783,8 +1909,8 @@
                   </tr>
                   <tr>
                     <td class="cell-label">Est. BAF Δ (MoM)</td>
-                    <td>Ước lượng thay đổi BAF minh họa: ΔVLSFO (G20 Jul vs Jun) × pass-through 0.85, quy ra $/TEU minh họa.</td>
-                    <td><strong>Không</strong> phải BAF chính thức của hãng. Dùng để cảm nhận độ lớn biến động fuel → surcharge.</td>
+                    <td>ΔBAF_USD/TEU = (G20_t − G20_Jun) × 0.85 × 0.012. Input G20 = S&amp;B; hệ số = BAF_PARAMS (có provenance).</td>
+                    <td><strong>Không</strong> phải BAF hãng. Đối chiếu circular carrier trước quyết định formal.</td>
                   </tr>
                   <tr>
                     <td class="cell-label">VLSFO Daily Price Trend</td>
@@ -1855,9 +1981,10 @@
               <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:700;color:var(--blue);">5. Liên hệ BAF</h3>
               <ul class="t2" style="margin:0;padding-left:1.1rem;font-size:12.5px;line-height:1.65;">
                 <li><strong>BAF</strong> = phụ thu điều chỉnh nhiên liệu hãng tàu thu từ shipper để bù biến động bunker.</li>
-                <li>Nhiều hãng neo theo basket (Platts/Argus/S&amp;B), formula + lag (ví dụ M-1), pass-through ≠ 100%.</li>
-                <li>App dùng G20 + pass-through <span class="mono">0.85</span> chỉ để <strong>minh họa độ lớn</strong>.</li>
-                <li>Luôn đối chiếu <strong>circular / tariff BAF</strong> của carrier (Maersk, MSC, CMA CGM, ONE…).</li>
+                <li>Công thức app: <span class="mono">BAF_t = BAF_base + (P_t − P_ref) × 0.85 × 0.012</span>.</li>
+                <li><strong>0.85</strong> = PassThrough (minh họa; USTRANSCOM-style risk/input factors ~0.75–0.85).</li>
+                <li><strong>0.012</strong> = mt bunker / TEU (trade factor rút gọn; (burn×days)/capacity).</li>
+                <li><strong>P_t</strong> = S&amp;B G20 VLSFO. Luôn đối chiếu circular hãng (Maersk, MSC, CMA CGM, ONE…).</li>
               </ul>
             </div>
           </div>
@@ -1889,7 +2016,9 @@
                   <tr><td class="cell-label">Daily mid / assessment</td><td>Mức giá đánh giá trong ngày (thường mid range bid/offer) do price agency / platform công bố.</td></tr>
                   <tr><td class="cell-label">G20-VLSFO Index</td><td>Trung bình tuyến tính VLSFO tại 20 cảng bunker chính theo Ship &amp; Bunker.</td></tr>
                   <tr><td class="cell-label">BAF</td><td>Bunker Adjustment Factor — phụ thu nhiên liệu trên cước container / bulk (tùy hãng).</td></tr>
-                  <tr><td class="cell-label">Pass-through</td><td>Tỷ lệ chi phí fuel được chuyển sang khách (app demo = 0.85).</td></tr>
+                  <tr><td class="cell-label">PassThrough 0.85</td><td>Tỷ lệ Δ fuel chuyển sang shipper. Nguồn: dashboard default; tham chiếu method public BAF (0.75–0.85), không phải circular hãng.</td></tr>
+                  <tr><td class="cell-label">Cons/TEU 0.012</td><td>mt bunker phân bổ / TEU. Nguồn: scale minh họa (burn×days)/laden TEU; đổi theo tuyến.</td></tr>
+                  <tr><td class="cell-label">ΔBAF $/TEU</td><td>ΔVLSFO_G20 × 0.85 × 0.012 — input giá từ S&amp;B G20.</td></tr>
                   <tr><td class="cell-label">Spread SG−RTM</td><td>SG minus RTM; đo chênh hub Á–Âu.</td></tr>
                   <tr><td class="cell-label">MoM</td><td>Month-over-month — so với tháng trước.</td></tr>
                   <tr><td class="cell-label">MTD</td><td>Month-to-date / period-to-date — lũy kế từ đầu kỳ đến hiện tại.</td></tr>
@@ -2094,7 +2223,81 @@
     glb: 'https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average',
     hub: 'https://shipandbunker.com/prices',
     bi: 'https://www.bunkerindex.com/',
+    bafMethod: 'https://www.freightamigo.com/en/blog/logistics/understanding-the-bunker-adjustment-factor-a-key-component-in-freight-costs/',
+    bafUstrans: 'https://rosap.ntl.bts.gov/view/dot/12116',
   };
+
+  /**
+   * ========== BAF FORMULA (canonical) ==========
+   *
+   *   BAF_t = BAF_base + (VLSFO_global_t − VLSFO_ref) × PassThrough × (ConsumptionFactor / TEU)
+   *
+   *   ΔBAF_USD/TEU ≈ ΔVLSFO_USD/mt × PassThrough × ConsPerTEU
+   *                = ΔVLSFO × 0.85 × 0.012
+   *
+   * All coefficients live here — UI + metrics + Monte Carlo must use these helpers.
+   * Sources for each term: see BAF_PARAMS.sources and Data Sources / BAF section tables.
+   */
+  const BAF_PARAMS = {
+    // --- Price inputs (USD/mt) ---
+    // VLSFO_global_t : Ship & Bunker G20 VLSFO Index (series "glb")
+    // VLSFO_ref      : reference fuel for differential; default round industry demo level
+    VLSFO_REF: 800,           // USD/mt — illustrative ref (BAF index base 100)
+    BAF_BASE: 0,              // USD/TEU — base surcharge at VLSFO_ref (differential model)
+
+    // --- Coefficients ---
+    PASS_THROUGH: 0.85,       // fraction of fuel Δ passed to shipper (unitless)
+    CONS_PER_TEU: 0.012,      // mt fuel allocated per TEU  (= ConsumptionFactor / TEU)
+
+    // --- Decision bands on ΔBAF $/TEU (illustrative ops thresholds) ---
+    SIGNAL_RAISE_TEU: 0.15,   // ~ +$0.15/TEU ≈ ΔVLSFO ~ +15 $/mt under default coeffs
+    SIGNAL_EASE_TEU: -0.15,
+
+    sources: {
+      vlsfoGlobal: {
+        name: 'VLSFO_global_t (G20)',
+        detail: 'Ship & Bunker Global 20 Ports Average VLSFO mid (USD/mt)',
+        url: 'https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average',
+      },
+      vlsfoRef: {
+        name: 'VLSFO_ref',
+        detail: 'Reference fuel for differential. Dashboard default $800/mt (round industry demo). MoM panel may also use prior-month G20 avg as period ref.',
+        url: 'https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average',
+      },
+      passThrough: {
+        name: 'PassThrough = 0.85',
+        detail: 'Illustrative liner pass-through / risk-share (not 100% of fuel Δ). Industry practice often 0.75–1.0; related to public BAF method notes on input substitution / risk distribution (~0.75–0.85). NOT a single carrier circular.',
+        url: 'https://rosap.ntl.bts.gov/view/dot/12116',
+      },
+      consPerTeu: {
+        name: 'ConsumptionFactor/TEU = 0.012 mt/TEU',
+        detail: 'Simplified trade exposure: mt bunker allocated per TEU for unit sensitivity. Conceptually (burn_mt/day × sea_days) / laden_TEU. Example scale: ~100 mt/d × ~20 d / ~16–17k TEU ≈ 0.012 mt/TEU. Route-specific factors differ widely (Asia–EU vs short-sea).',
+        url: 'https://www.freightamigo.com/en/blog/logistics/understanding-the-bunker-adjustment-factor-a-key-component-in-freight-costs/',
+      },
+      formulaShape: {
+        name: 'BAF formula shape',
+        detail: 'BAF_t = BAF_base + (P_t − P_ref) × PassThrough × (Cons/TEU). Industry descriptions: bunker index × consumption × distance / capacity (FreightAmigo et al.). Carriers (Maersk, MSC, CMA CGM, ONE) publish own BAF/ECA tables — always override with circular.',
+        url: 'https://www.freightamigo.com/en/blog/logistics/understanding-the-bunker-adjustment-factor-a-key-component-in-freight-costs/',
+      },
+    },
+  };
+
+  /** ΔBAF in USD/TEU from ΔVLSFO in USD/mt */
+  function deltaBafPerTeu(deltaVlsfoUsdPerMt) {
+    return deltaVlsfoUsdPerMt * BAF_PARAMS.PASS_THROUGH * BAF_PARAMS.CONS_PER_TEU;
+  }
+
+  /** Absolute BAF_t (USD/TEU) from level VLSFO_global_t */
+  function bafLevelPerTeu(vlsfoGlobalT, vlsfoRef, bafBase) {
+    const ref = vlsfoRef != null ? vlsfoRef : BAF_PARAMS.VLSFO_REF;
+    const base = bafBase != null ? bafBase : BAF_PARAMS.BAF_BASE;
+    return base + (vlsfoGlobalT - ref) * BAF_PARAMS.PASS_THROUGH * BAF_PARAMS.CONS_PER_TEU;
+  }
+
+  /** Pass-through of fuel move in USD/mt space (before /TEU allocation) */
+  function fuelPassThroughMt(deltaVlsfoUsdPerMt) {
+    return deltaVlsfoUsdPerMt * BAF_PARAMS.PASS_THROUGH;
+  }
 
   // Multi CORS proxy chain — browser cannot hit S&B directly (CORS)
   const CORS_PROXIES = [
@@ -2836,13 +3039,20 @@
   }
 
   function initBafChart() {
-    const ref = 800;
-    const data = state.history.map(r => ({ x: r.ts, fuel: r.glb, baf: ref + (r.glb - ref) * 0.85 }));
     const el = document.getElementById('baf-chart');
+    if (!el) return;
+    // Dual axis: G20 VLSFO ($/mt) vs Est. BAF_t ($/TEU) from canonical formula
+    const data = state.history.map(function (r) {
+      return {
+        x: r.ts,
+        fuel: r.glb,
+        baf: bafLevelPerTeu(r.glb, BAF_PARAMS.VLSFO_REF, BAF_PARAMS.BAF_BASE),
+      };
+    });
     const opts = {
       series: [
-        { name: 'Global VLSFO', type: 'area', data: data.map(d => ({ x: d.x, y: d.fuel })) },
-        { name: 'Est. BAF Component', type: 'line', data: data.map(d => ({ x: d.x, y: d.baf })) },
+        { name: 'G20 VLSFO (USD/mt)', type: 'area', data: data.map(function (d) { return { x: d.x, y: d.fuel }; }) },
+        { name: 'Est. BAF_t (USD/TEU)', type: 'line', data: data.map(function (d) { return { x: d.x, y: d.baf }; }) },
       ],
       chart: {
         height: el.clientHeight || 360, width: '100%', type: 'line',
@@ -2858,12 +3068,32 @@
         labels: { datetimeUTC: false, style: { fontSize: '11px', colors: chartFore() } },
         axisBorder: { show: false }, axisTicks: { show: false }
       },
-      yaxis: {
-        labels: { formatter: v => Math.round(v), style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() } }
-      },
+      yaxis: [
+        {
+          seriesName: 'G20 VLSFO (USD/mt)',
+          title: { text: 'USD/mt', style: { color: chartFore(), fontSize: '11px' } },
+          labels: { formatter: function (v) { return Math.round(v); }, style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() } }
+        },
+        {
+          opposite: true,
+          seriesName: 'Est. BAF_t (USD/TEU)',
+          title: { text: 'USD/TEU', style: { color: chartFore(), fontSize: '11px' } },
+          labels: { formatter: function (v) { return Number(v).toFixed(2); }, style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() } }
+        }
+      ],
       grid: { borderColor: gridColor(), strokeDashArray: 3 },
       legend: { position: 'top', horizontalAlign: 'right', labels: { colors: chartFore() } },
-      tooltip: { theme: tooltipTheme(), shared: true, x: { format: 'dd MMM yyyy' }, y: { formatter: v => '$' + Number(v).toFixed(2) } }
+      tooltip: {
+        theme: tooltipTheme(),
+        shared: true,
+        x: { format: 'dd MMM yyyy' },
+        y: {
+          formatter: function (v, opts) {
+            if (opts && opts.seriesIndex === 1) return '$' + Number(v).toFixed(3) + '/TEU';
+            return '$' + Number(v).toFixed(2) + '/mt';
+          }
+        }
+      }
     };
     renderOrUpdate('baf', el, opts);
     state.rendered.baf = true;
@@ -2904,69 +3134,123 @@
     state.rendered.data = true;
   }
 
-  /* ========== BAF metrics ========== */
+  /* ========== BAF metrics (canonical formula) ========== */
   function updateBafMetrics() {
-    const stats = monthlyStats(state.history);
-    const jun = stats.find(s => s.month === '2026-06' && s.port === 'glb');
-    const jul = stats.find(s => s.month === '2026-07' && s.port === 'glb');
-    if (!jun || !jul) return;
-    const base = jun.avg, curr = jul.avg;
-    const deltaFuel = curr - base;
-    const impact = deltaFuel * 0.85;
-    const teu = impact * 0.012;
+    const stats = monthlyStats(state.history || []);
+    const jun = stats.find(function (s) { return s.month === '2026-06' && s.port === 'glb'; });
+    // Current period: Jul+Aug MTD G20 avg (falls back to live if sparse)
+    const q3Rows = (state.history || []).filter(function (r) { return r.date >= '2026-07-01'; });
+    const currFromHist = q3Rows.length
+      ? q3Rows.reduce(function (s, r) { return s + r.glb; }, 0) / q3Rows.length
+      : (state.live && state.live.glb) || 0;
+    if (!jun && !currFromHist) return;
 
-    document.getElementById('baf-base').textContent = '$' + fmtPrice(base) + '/mt';
-    document.getElementById('baf-curr').textContent = '$' + fmtPrice(curr) + '/mt';
+    // MoM panel: VLSFO_ref_period = Jun G20 avg; VLSFO_t = Jul–Aug MTD G20 avg
+    const vlsfoRefPeriod = jun ? jun.avg : BAF_PARAMS.VLSFO_REF;
+    const vlsfoT = currFromHist || (state.live && state.live.glb) || BAF_PARAMS.VLSFO_REF;
+    const deltaFuel = vlsfoT - vlsfoRefPeriod;                 // ΔVLSFO USD/mt
+    const passMt = fuelPassThroughMt(deltaFuel);              // × PassThrough  (USD/mt space)
+    const deltaTeu = deltaBafPerTeu(deltaFuel);               // × PassThrough × ConsPerTEU  ($/TEU)
+
+    // Absolute BAF_t vs fixed dashboard ref ($800)
+    const bafT = bafLevelPerTeu(state.live.glb || vlsfoT, BAF_PARAMS.VLSFO_REF, BAF_PARAMS.BAF_BASE);
+    const bafAtRefPeriod = bafLevelPerTeu(vlsfoRefPeriod, BAF_PARAMS.VLSFO_REF, BAF_PARAMS.BAF_BASE);
+
+    const setTxt = function (id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+
+    setTxt('baf-base', '$' + fmtPrice(vlsfoRefPeriod) + '/mt');
+    setTxt('baf-curr', '$' + fmtPrice(vlsfoT) + '/mt');
+
     const dEl = document.getElementById('baf-delta-fuel');
-    dEl.textContent = (deltaFuel >= 0 ? '+' : '') + fmtPrice(deltaFuel) + ' USD';
-    dEl.className = 'mono ' + (deltaFuel >= 0 ? 'c-up' : 'c-down');
-    dEl.style.fontSize = '0.85rem';
-    dEl.style.fontWeight = '600';
+    if (dEl) {
+      dEl.textContent = (deltaFuel >= 0 ? '+' : '') + fmtPrice(deltaFuel) + ' USD/mt';
+      dEl.className = 'mono ' + (deltaFuel >= 0 ? 'c-up' : 'c-down');
+      dEl.style.fontSize = '0.85rem';
+      dEl.style.fontWeight = '600';
+    }
 
+    // Est. impact: show both pass-through mt and ΔBAF/TEU (canonical)
     const iEl = document.getElementById('baf-impact');
-    iEl.textContent = (impact >= 0 ? '+' : '') + fmtPrice(impact) + ' USD/mt';
-    iEl.className = 'mono ' + (impact >= 0 ? 'c-up' : 'c-down');
-    iEl.style.fontSize = '1rem';
-    iEl.style.fontWeight = '700';
+    if (iEl) {
+      iEl.textContent = (deltaTeu >= 0 ? '+' : '') + '$' + Math.abs(deltaTeu).toFixed(3) + '/TEU';
+      iEl.className = 'mono ' + (deltaTeu >= 0 ? 'c-up' : 'c-down');
+      iEl.style.fontSize = '1rem';
+      iEl.style.fontWeight = '700';
+    }
+    setTxt('baf-pass-mt', (passMt >= 0 ? '+' : '') + fmtPrice(passMt) + ' USD/mt');
+    const passEl = document.getElementById('baf-pass-mt');
+    if (passEl) passEl.className = 'mono ' + (passMt >= 0 ? 'c-up' : 'c-down');
+
+    const formulaEl = document.getElementById('baf-formula-live');
+    if (formulaEl) {
+      formulaEl.textContent =
+        'ΔBAF = (' + fmtPrice(vlsfoT) + ' − ' + fmtPrice(vlsfoRefPeriod) + ') × ' +
+        BAF_PARAMS.PASS_THROUGH + ' × ' + BAF_PARAMS.CONS_PER_TEU +
+        ' = ' + (deltaTeu >= 0 ? '+' : '') + deltaTeu.toFixed(4) + ' USD/TEU';
+    }
 
     const signal = document.getElementById('baf-signal');
-    if (impact > 15) {
-      signal.textContent = '↑ Consider BAF increase — fuel recovery strong';
-      signal.className = 'c-up';
-    } else if (impact < -15) {
-      signal.textContent = '↓ Room to ease BAF — fuel softened';
-      signal.className = 'c-down';
-    } else {
-      signal.textContent = '→ Hold BAF — modest fuel move';
-      signal.className = 'c-cyan';
+    if (signal) {
+      if (deltaTeu > BAF_PARAMS.SIGNAL_RAISE_TEU) {
+        signal.textContent = '↑ Consider BAF increase — ΔBAF/TEU above raise band';
+        signal.className = 'c-up';
+      } else if (deltaTeu < BAF_PARAMS.SIGNAL_EASE_TEU) {
+        signal.textContent = '↓ Room to ease BAF — fuel softened';
+        signal.className = 'c-down';
+      } else {
+        signal.textContent = '→ Hold BAF — within neutral ΔBAF/TEU band';
+        signal.className = 'c-cyan';
+      }
+      signal.style.fontSize = '0.85rem';
+      signal.style.fontWeight = '600';
     }
-    signal.style.fontSize = '0.85rem';
-    signal.style.fontWeight = '600';
 
     const kpiBaf = document.getElementById('kpi-baf');
-    kpiBaf.textContent = (teu >= 0 ? '+' : '') + '$' + Math.abs(teu).toFixed(2) + '/TEU';
-    kpiBaf.className = 'mono ' + (teu >= 0 ? 'c-up' : 'c-down');
-    kpiBaf.style.fontWeight = '700';
-    document.getElementById('kpi-baf-sub').textContent = 'Est. Δ BAF vs Jun · pass-through 0.85';
+    if (kpiBaf) {
+      kpiBaf.textContent = (deltaTeu >= 0 ? '+' : '−') + '$' + Math.abs(deltaTeu).toFixed(3) + '/TEU';
+      kpiBaf.className = 'mono ' + (deltaTeu >= 0 ? 'c-up' : 'c-down');
+      kpiBaf.style.fontWeight = '700';
+    }
+    setTxt('kpi-baf-sub',
+      'ΔVLSFO×' + BAF_PARAMS.PASS_THROUGH + '×' + BAF_PARAMS.CONS_PER_TEU + ' · vs Jun G20');
 
-    document.getElementById('baf-index').textContent = (100 + (state.live.glb - 800) / 8).toFixed(1);
+    // Index: 100 at VLSFO_ref; scale so ~$8/mt ≈ 1 index point (visual only)
+    const idxEl = document.getElementById('baf-index');
+    if (idxEl) {
+      const idx = 100 + (state.live.glb - BAF_PARAMS.VLSFO_REF) / 8;
+      idxEl.textContent = idx.toFixed(1);
+    }
+    setTxt('baf-level-teu', '$' + bafT.toFixed(3) + '/TEU');
+    setTxt('baf-level-sub',
+      'BAF_t @ live vs ref $' + BAF_PARAMS.VLSFO_REF + ' · base $' + BAF_PARAMS.BAF_BASE);
+
     const act = document.getElementById('baf-action');
     const actSub = document.getElementById('baf-action-sub');
-    if (impact > 15) {
-      act.textContent = 'RAISE BAF';
-      act.className = 'c-up';
-      actSub.textContent = 'Suggest +$' + fmtPrice(Math.abs(teu)) + '/TEU vs prior month';
-    } else if (impact < -15) {
-      act.textContent = 'REDUCE BAF';
-      act.className = 'c-down';
-      actSub.textContent = 'Suggest −$' + fmtPrice(Math.abs(teu)) + '/TEU vs prior month';
-    } else {
-      act.textContent = 'HOLD BAF';
-      act.className = 'c-cyan';
-      actSub.textContent = 'Within neutral band — no structural change';
+    if (act) {
+      if (deltaTeu > BAF_PARAMS.SIGNAL_RAISE_TEU) {
+        act.textContent = 'RAISE BAF';
+        act.className = 'c-up';
+        if (actSub) actSub.textContent = 'MoM ΔBAF ≈ +$' + Math.abs(deltaTeu).toFixed(3) + '/TEU (model)';
+      } else if (deltaTeu < BAF_PARAMS.SIGNAL_EASE_TEU) {
+        act.textContent = 'REDUCE BAF';
+        act.className = 'c-down';
+        if (actSub) actSub.textContent = 'MoM ΔBAF ≈ −$' + Math.abs(deltaTeu).toFixed(3) + '/TEU (model)';
+      } else {
+        act.textContent = 'HOLD BAF';
+        act.className = 'c-cyan';
+        if (actSub) actSub.textContent = 'ΔBAF/TEU within ±' + Math.abs(BAF_PARAMS.SIGNAL_RAISE_TEU).toFixed(2) + ' band';
+      }
+      act.style.fontSize = '1.2rem';
+      act.style.fontWeight = '700';
     }
-    act.style.fontSize = '1.2rem';
-    act.style.fontWeight = '700';
+
+    // Keep period ref visible for audit
+    setTxt('baf-ref-fixed', '$' + fmtPrice(BAF_PARAMS.VLSFO_REF) + '/mt');
+    setTxt('baf-pt-label', String(BAF_PARAMS.PASS_THROUGH) + '×');
+    setTxt('baf-cf-label', String(BAF_PARAMS.CONS_PER_TEU) + ' mt/TEU');
   }
 
   /* ========== Live ticker ========== */
@@ -3775,7 +4059,7 @@
       const S0 = g20[g20.length - 1];
       const mcRes = monteCarloGBM(S0, mu, sig, 30, 3000, 20260724);
       const terms = mcRes.terminals.slice().sort(function (a, b) { return a - b; });
-      const dBAF = terms.map(function (t) { return (t - S0) * 0.85 * 0.012; });
+      const dBAF = terms.map(function (t) { return deltaBafPerTeu(t - S0); });
       const dSorted = dBAF.slice().sort(function (a, b) { return a - b; });
       const p50 = percentile(dSorted, 0.5);
       const p90 = percentile(dSorted, 0.9);
