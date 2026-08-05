@@ -745,6 +745,138 @@
     .data-table tbody tr:last-child td { border-bottom: none; }
     .data-table tbody tr:hover { background: rgba(34, 211, 238, 0.04); }
 
+    /* BAF Rates 2026 multi-header tariff table */
+    .bafrates-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      max-width: 100%;
+    }
+    table.bafrates {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+      font-size: 0.875rem;
+    }
+    table.bafrates thead th {
+      text-align: center;
+      padding: 0.7rem 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border: 1px solid var(--border);
+      color: var(--text);
+      line-height: 1.35;
+    }
+    table.bafrates thead tr:first-child th {
+      background: linear-gradient(180deg, rgba(34, 211, 238, 0.14), rgba(34, 211, 238, 0.06));
+      font-size: 0.78rem;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    table.bafrates thead tr:nth-child(2) th {
+      background: rgba(148, 163, 184, 0.1);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-2);
+      font-weight: 700;
+    }
+    table.bafrates thead th.bafrates-corner {
+      background: rgba(148, 163, 184, 0.12);
+      text-align: left;
+      padding-left: 1rem;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-3);
+      position: sticky;
+      left: 0;
+      z-index: 3;
+    }
+    table.bafrates thead th.period-a { background: rgba(148, 163, 184, 0.12); }
+    table.bafrates thead th.period-b { background: rgba(34, 211, 238, 0.12); }
+    table.bafrates thead th.period-c { background: rgba(96, 165, 250, 0.14); }
+    table.bafrates thead th.sub-a { background: rgba(148, 163, 184, 0.08); }
+    table.bafrates thead th.sub-b { background: rgba(34, 211, 238, 0.08); }
+    table.bafrates thead th.sub-c { background: rgba(96, 165, 250, 0.1); }
+    table.bafrates tbody td {
+      text-align: center;
+      padding: 0.85rem 0.65rem;
+      border: 1px solid var(--border);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    table.bafrates tbody td.region {
+      text-align: left;
+      padding-left: 1rem;
+      font-family: Inter, system-ui, sans-serif;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--bg-elevated);
+      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.12);
+    }
+    table.bafrates tbody tr:hover td { background: rgba(34, 211, 238, 0.06); }
+    table.bafrates tbody tr:hover td.region { background: rgba(14, 28, 48, 0.95); }
+    html.light table.bafrates tbody tr:hover td.region { background: #f0f9ff; }
+    table.bafrates tbody td.col-a { background: rgba(148, 163, 184, 0.03); }
+    table.bafrates tbody td.col-b { background: rgba(34, 211, 238, 0.04); }
+    table.bafrates tbody td.col-c { background: rgba(96, 165, 250, 0.05); }
+    table.bafrates tbody tr:hover td.col-a,
+    table.bafrates tbody tr:hover td.col-b,
+    table.bafrates tbody tr:hover td.col-c { background: rgba(34, 211, 238, 0.08); }
+    .bafrates-note {
+      margin: 0.85rem 0 0;
+      padding: 0.75rem 0.9rem;
+      border-radius: 12px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--text-2);
+    }
+    .bafrates-note strong { color: var(--text); font-weight: 600; }
+    .bafrates-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.65rem 0 1rem;
+    }
+    .bafrates-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.28rem 0.65rem;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--text-2);
+    }
+    .bafrates-chip i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .bafrates-chip i.a { background: #94a3b8; }
+    .bafrates-chip i.b { background: #22d3ee; }
+    .bafrates-chip i.c { background: #60a5fa; }
+    @media (max-width: 640px) {
+      table.bafrates { min-width: 560px; font-size: 0.8rem; }
+      table.bafrates tbody td { padding: 0.7rem 0.45rem; font-size: 0.85rem; }
+      table.bafrates thead th { padding: 0.55rem 0.4rem; font-size: 0.7rem; }
+    }
+
     input[type="date"] {
       background: var(--bg-soft);
       border: 1px solid var(--border);
@@ -900,6 +1032,10 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
           BAF Impact
         </button>
+        <button class="nav-item" data-section="bafrates" onclick="navigateTo('bafrates', this)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 10h16M4 14h10M4 18h8"/><path d="M16 14l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          BAF Rates 2026
+        </button>
         <button class="nav-item" data-section="models" onclick="navigateTo('models', this)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19h16"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-4"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="12" cy="3.5" r="1.2" fill="currentColor"/><circle cx="17" cy="10" r="1.2" fill="currentColor"/></svg>
           Quant Models
@@ -940,7 +1076,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.2.0 · BAF formula · S&amp;B</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.3.0 · BAF Rates 2026</div>
       </div>
     </aside>
 
@@ -1221,8 +1357,9 @@
           <div style="margin-bottom:0.9rem;">
             <h2 style="margin:0;font-size:1.05rem;font-weight:700;">BAF Impact — công thức chuẩn</h2>
             <p class="t3" style="margin:0.35rem 0 0;font-size:12.5px;line-height:1.55;max-width:900px;">
-              Mọi số BAF trên app đi qua <span class="mono c-cyan">BAF_PARAMS</span> duy nhất.
+              Mọi số BAF model trên app đi qua <span class="mono c-cyan">BAF_PARAMS</span> duy nhất.
               Input giá = <strong>Ship &amp; Bunker G20 VLSFO</strong>. Hệ số 0.85 / 0.012 có nguồn ghi rõ bên dưới (minh họa ngành — không phải circular hãng).
+              Bảng giá BAF theo region/kỳ: <a class="src-link" href="#" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]')); return false;">BAF Rates 2026 →</a>
             </p>
           </div>
 
@@ -1352,6 +1489,142 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- BAF RATES 2026 — published tariff table -->
+        <section id="section-bafrates" class="section">
+          <div style="margin-bottom:0.85rem;">
+            <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
+              <div style="min-width:0;flex:1;">
+                <h2 style="margin:0;font-size:1.15rem;font-weight:800;letter-spacing:-0.01em;">BAF Rates 2026</h2>
+                <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.6;max-width:820px;">
+                  Bảng phụ thu BAF theo <strong style="color:var(--text);">region / hub routing</strong> và <strong style="color:var(--text);">kỳ hiệu lực</strong>,
+                  chia theo thiết bị <span class="mono c-cyan">20DC</span> và <span class="mono c-cyan">40HC</span> (USD / container).
+                </p>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+                <span class="badge badge-live" style="padding:0.35rem 0.7rem;font-size:11px;">USD / unit</span>
+                <span class="badge" style="padding:0.35rem 0.7rem;font-size:11px;">2026</span>
+              </div>
+            </div>
+            <div class="bafrates-chips">
+              <span class="bafrates-chip"><i class="a"></i> Feb'26 – Apr'26</span>
+              <span class="bafrates-chip"><i class="b"></i> BAF 103Ki 1Q · May'26 – Jul'26</span>
+              <span class="bafrates-chip"><i class="c"></i> BAF 103Ki 1Q · Aug'26 – Oct'26</span>
+            </div>
+          </div>
+
+          <div class="card" style="padding:1rem 1rem 1.1rem;margin-bottom:1rem;">
+            <div class="bafrates-wrap" role="region" aria-label="BAF Rates 2026 table">
+              <table class="bafrates">
+                <thead>
+                  <tr>
+                    <th class="bafrates-corner" rowspan="2" scope="col">Region</th>
+                    <th class="period-a" colspan="2" scope="colgroup">BAF Feb'26 ~ Apr'26</th>
+                    <th class="period-b" colspan="2" scope="colgroup">BAF 103Ki 1Q<br>May'26 ~ Jul'26</th>
+                    <th class="period-c" colspan="2" scope="colgroup">BAF 103Ki 1Q<br>Aug'26 ~ Oct'26</th>
+                  </tr>
+                  <tr>
+                    <th class="sub-a" scope="col">20DC</th>
+                    <th class="sub-a" scope="col">40HC</th>
+                    <th class="sub-b" scope="col">20DC</th>
+                    <th class="sub-b" scope="col">40HC</th>
+                    <th class="sub-c" scope="col">20DC</th>
+                    <th class="sub-c" scope="col">40HC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="region" scope="row">C (via Rotterdam)</td>
+                    <td class="col-a">240</td>
+                    <td class="col-a">480</td>
+                    <td class="col-b">345</td>
+                    <td class="col-b">690</td>
+                    <td class="col-c">450</td>
+                    <td class="col-c">900</td>
+                  </tr>
+                  <tr>
+                    <td class="region" scope="row">I (Via Singapore)</td>
+                    <td class="col-a">30</td>
+                    <td class="col-a">60</td>
+                    <td class="col-b">66</td>
+                    <td class="col-b">132</td>
+                    <td class="col-c">90</td>
+                    <td class="col-c">180</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="bafrates-note">
+              <strong>Ghi chú kỳ hạn</strong>
+              <ul style="margin:0.45rem 0 0;padding-left:1.15rem;">
+                <li><strong>BAF Feb'26 ~ Apr'26</strong> — kỳ BAF Q1 early / winter–spring 2026 (Feb, Mar, Apr).</li>
+                <li><strong>BAF 103Ki 1Q May'26 ~ Jul'26</strong> — kỳ hiệu lực May–Jul 2026 (mã tham chiếu 103Ki 1Q).</li>
+                <li><strong>BAF 103Ki 1Q Aug'26 ~ Oct'26</strong> — kỳ hiệu lực Aug–Oct 2026 (mã tham chiếu 103Ki 1Q).</li>
+                <li><strong>Region C (via Rotterdam)</strong> — routing hub châu Âu (ARA / Rotterdam).</li>
+                <li><strong>Region I (Via Singapore)</strong> — routing hub châu Á (Singapore).</li>
+                <li><strong>20DC / 40HC</strong> — 20′ Dry Container / 40′ High Cube. Đơn vị: <strong>USD / container</strong>.</li>
+                <li>40HC thường = 2 × 20DC trên bảng này (tỷ lệ 2:1) — kiểm tra lại circular nếu áp dụng FEU khác.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Quick period cards for mobile-friendly scan -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0.75rem;margin-bottom:1rem;">
+            <div class="card" style="padding:1rem;border-color:rgba(148,163,184,0.25);">
+              <div class="t3" style="font-size:10px;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;margin-bottom:0.45rem;">Feb'26 – Apr'26</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:12px;">
+                <div>
+                  <div class="t3" style="font-size:10px;">C · Rotterdam</div>
+                  <div class="mono" style="font-weight:700;">20DC 240 · 40HC 480</div>
+                </div>
+                <div>
+                  <div class="t3" style="font-size:10px;">I · Singapore</div>
+                  <div class="mono" style="font-weight:700;">20DC 30 · 40HC 60</div>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="padding:1rem;border-color:rgba(34,211,238,0.28);">
+              <div class="t3" style="font-size:10px;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;margin-bottom:0.45rem;color:var(--cyan);">103Ki 1Q · May–Jul'26</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:12px;">
+                <div>
+                  <div class="t3" style="font-size:10px;">C · Rotterdam</div>
+                  <div class="mono c-cyan" style="font-weight:700;">20DC 345 · 40HC 690</div>
+                </div>
+                <div>
+                  <div class="t3" style="font-size:10px;">I · Singapore</div>
+                  <div class="mono c-cyan" style="font-weight:700;">20DC 66 · 40HC 132</div>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="padding:1rem;border-color:rgba(96,165,250,0.3);">
+              <div class="t3" style="font-size:10px;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;margin-bottom:0.45rem;color:var(--blue);">103Ki 1Q · Aug–Oct'26</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:12px;">
+                <div>
+                  <div class="t3" style="font-size:10px;">C · Rotterdam</div>
+                  <div class="mono c-blue" style="font-weight:700;">20DC 450 · 40HC 900</div>
+                </div>
+                <div>
+                  <div class="t3" style="font-size:10px;">I · Singapore</div>
+                  <div class="mono c-blue" style="font-weight:700;">20DC 90 · 40HC 180</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:1rem 1.1rem;border-color:rgba(251,191,36,0.25);">
+            <h3 style="margin:0 0 0.4rem;font-size:0.85rem;font-weight:600;color:var(--amber);">Lưu ý áp dụng</h3>
+            <p class="t3" style="margin:0;font-size:12px;line-height:1.6;">
+              Bảng này là <strong style="color:var(--text-2);">tariff BAF theo region/kỳ</strong> hiển thị trên dashboard.
+              Khác với panel <em>BAF Impact</em> (mô hình ΔVLSFO × 0.85 × 0.012 từ S&amp;B G20).
+              Khi quote / invoice, ưu tiên circular / tariff chính thức của hãng hoặc contract đang hiệu lực.
+            </p>
+            <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.45rem;">
+              <button class="btn btn-primary" type="button" onclick="navigateTo('baf', document.querySelector('[data-section=baf]'))">Mở BAF Impact (model)</button>
+              <button class="btn" type="button" onclick="navigateTo('guide', document.querySelector('[data-section=guide]'))">Giải thích dữ liệu</button>
             </div>
           </div>
         </section>
@@ -1801,6 +2074,12 @@
                     <td class="cell-label">Canonical in <span class="mono">BAF_PARAMS</span> · tab BAF Impact</td>
                   </tr>
                   <tr>
+                    <td class="cell-label">BAF Rates 2026 (tariff table)</td>
+                    <td class="cell-label">Published schedule</td>
+                    <td>Region C/I · 20DC/40HC · 3 periods</td>
+                    <td class="cell-label"><a class="src-link" href="#" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]')); return false;">Section BAF Rates 2026 →</a> (USD/container by period)</td>
+                  </tr>
+                  <tr>
                     <td class="cell-label">Quant models (RSI, MACD, MC…)</td>
                     <td class="cell-label">Derived</td>
                     <td>Từ chuỗi VLSFO trên app</td>
@@ -2042,6 +2321,7 @@
               <button class="btn btn-primary" type="button" onclick="navigateTo('overview', document.querySelector('[data-section=overview]'))">Về Overview</button>
               <button class="btn" type="button" onclick="navigateTo('sources', document.querySelector('[data-section=sources]'))">Xem nguồn gốc số</button>
               <button class="btn" type="button" onclick="navigateTo('baf', document.querySelector('[data-section=baf]'))">Mở BAF Impact</button>
+              <button class="btn" type="button" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]'))">BAF Rates 2026</button>
             </div>
           </div>
         </section>
@@ -2056,6 +2336,7 @@
             <a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">S&amp;B G20</a> ·
             <a class="src-link" href="https://www.bunkerindex.com/" target="_blank" rel="noopener">Bunker Index</a> ·
             <a class="src-link" href="#" onclick="navigateTo('sources', document.querySelector('[data-section=sources]')); return false;">Sources</a> ·
+            <a class="src-link" href="#" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]')); return false;">BAF Rates 2026</a> ·
             <a class="src-link" href="#" onclick="navigateTo('guide', document.querySelector('[data-section=guide]')); return false;">Giải thích</a>
           </div>
           <div class="mono" style="flex-shrink:0;">VLSFO Monitor · BAF Tracker © 2026</div>
