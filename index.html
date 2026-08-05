@@ -877,6 +877,143 @@
       table.bafrates thead th { padding: 0.55rem 0.4rem; font-size: 0.7rem; }
     }
 
+    /* BAF Calculator */
+    .calc-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.15fr);
+      gap: 0.9rem;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .calc-grid { grid-template-columns: 1fr; }
+    }
+    .calc-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.28rem;
+      margin-bottom: 0.7rem;
+    }
+    .calc-field label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-3);
+    }
+    .calc-field .hint {
+      font-size: 10.5px;
+      color: var(--text-3);
+      line-height: 1.4;
+    }
+    .calc-field input,
+    .calc-field select {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 0.55rem 0.7rem;
+      font-size: 0.875rem;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .calc-field input:focus,
+    .calc-field select:focus {
+      outline: none;
+      border-color: rgba(34, 211, 238, 0.45);
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+    }
+    .calc-mode-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.9rem;
+    }
+    .calc-mode-tabs button {
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--text-2);
+      border-radius: 999px;
+      padding: 0.4rem 0.85rem;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    .calc-mode-tabs button.active {
+      background: rgba(34, 211, 238, 0.14);
+      border-color: rgba(34, 211, 238, 0.4);
+      color: var(--cyan);
+    }
+    .calc-mode-panel { display: none; }
+    .calc-mode-panel.active { display: block; }
+    .calc-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.55rem;
+      margin-bottom: 0.85rem;
+    }
+    .calc-kpi {
+      padding: 0.75rem 0.8rem;
+      border-radius: 12px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+    }
+    .calc-kpi .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); font-weight: 700; }
+    .calc-kpi .v { font-family: "JetBrains Mono", monospace; font-size: 1.15rem; font-weight: 700; margin-top: 0.25rem; color: var(--text); }
+    .calc-kpi .s { font-size: 10.5px; color: var(--text-3); margin-top: 0.2rem; }
+    .calc-steps {
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: var(--text-2);
+    }
+    .calc-steps ol { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+    .calc-steps li { margin-bottom: 0.35rem; }
+    .calc-steps code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11.5px;
+      color: var(--cyan-2);
+      background: rgba(34, 211, 238, 0.08);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+    .report-box {
+      border-radius: 14px;
+      border: 1px solid rgba(34, 211, 238, 0.22);
+      background: linear-gradient(145deg, rgba(34, 211, 238, 0.07), rgba(14, 28, 48, 0.4));
+      padding: 1rem 1.1rem;
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text-2);
+    }
+    html.light .report-box {
+      background: linear-gradient(145deg, rgba(8, 145, 178, 0.06), rgba(255, 255, 255, 0.9));
+    }
+    .report-box h4 {
+      margin: 0 0 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .report-box h5 {
+      margin: 0.75rem 0 0.35rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .report-meta {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-bottom: 0.55rem;
+    }
+    .report-box ul { margin: 0.3rem 0 0; padding-left: 1.15rem; }
+    .report-box .hl { color: var(--text); font-weight: 600; }
+    .report-box .mono-inline {
+      font-family: "JetBrains Mono", monospace;
+      color: var(--cyan-2);
+      font-size: 12px;
+    }
+
     input[type="date"] {
       background: var(--bg-soft);
       border: 1px solid var(--border);
@@ -1036,6 +1173,10 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 10h16M4 14h10M4 18h8"/><path d="M16 14l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           BAF Rates 2026
         </button>
+        <button class="nav-item" data-section="bafcalc" onclick="navigateTo('bafcalc', this)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>
+          BAF Calculator
+        </button>
         <button class="nav-item" data-section="models" onclick="navigateTo('models', this)">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19h16"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-4"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="12" cy="3.5" r="1.2" fill="currentColor"/><circle cx="17" cy="10" r="1.2" fill="currentColor"/></svg>
           Quant Models
@@ -1076,7 +1217,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.3.0 · BAF Rates 2026</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.4.0 · BAF Calculator</div>
       </div>
     </aside>
 
@@ -1623,9 +1764,189 @@
               Khi quote / invoice, ưu tiên circular / tariff chính thức của hãng hoặc contract đang hiệu lực.
             </p>
             <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.45rem;">
-              <button class="btn btn-primary" type="button" onclick="navigateTo('baf', document.querySelector('[data-section=baf]'))">Mở BAF Impact (model)</button>
+              <button class="btn btn-primary" type="button" onclick="navigateTo('bafcalc', document.querySelector('[data-section=bafcalc]'))">Mở BAF Calculator</button>
+              <button class="btn" type="button" onclick="navigateTo('baf', document.querySelector('[data-section=baf]'))">BAF Impact (model)</button>
               <button class="btn" type="button" onclick="navigateTo('guide', document.querySelector('[data-section=guide]'))">Giải thích dữ liệu</button>
             </div>
+          </div>
+        </section>
+
+        <!-- BAF CALCULATOR -->
+        <section id="section-bafcalc" class="section">
+          <div style="margin-bottom:0.9rem;">
+            <h2 style="margin:0;font-size:1.15rem;font-weight:800;">BAF Calculator</h2>
+            <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.6;max-width:900px;">
+              Tính BAF <strong style="color:var(--text);">siêu chi tiết</strong> theo 3 chế độ: bảng tariff 2026, mô hình differential G20 (S&amp;B),
+              và voyage engineering (burn × days / TEU). Kết quả kèm <strong style="color:var(--text);">báo cáo giải thích</strong> cập nhật theo dữ liệu live.
+            </p>
+          </div>
+
+          <div class="calc-mode-tabs" role="tablist">
+            <button type="button" class="active" data-calc-mode="tariff" onclick="setBafCalcMode('tariff', this)">1 · Tariff Rates 2026</button>
+            <button type="button" data-calc-mode="model" onclick="setBafCalcMode('model', this)">2 · Model G20 (ΔP×PT×CF)</button>
+            <button type="button" data-calc-mode="voyage" onclick="setBafCalcMode('voyage', this)">3 · Voyage engineering</button>
+          </div>
+
+          <div class="calc-grid">
+            <!-- LEFT: inputs -->
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="margin:0 0 0.75rem;font-size:0.9rem;font-weight:700;">Tham số đầu vào</h3>
+
+              <!-- Mode: Tariff -->
+              <div id="calc-panel-tariff" class="calc-mode-panel active">
+                <div class="calc-field">
+                  <label for="calc-region">Region / hub</label>
+                  <select id="calc-region" onchange="runBafCalculator()">
+                    <option value="C">C — via Rotterdam (châu Âu / ARA)</option>
+                    <option value="I">I — Via Singapore (châu Á)</option>
+                  </select>
+                  <span class="hint">Lấy từ bảng BAF Rates 2026</span>
+                </div>
+                <div class="calc-field">
+                  <label for="calc-period">Kỳ hiệu lực</label>
+                  <select id="calc-period" onchange="runBafCalculator()">
+                    <option value="feb_apr">BAF Feb'26 ~ Apr'26</option>
+                    <option value="may_jul" selected>BAF 103Ki 1Q May'26 ~ Jul'26</option>
+                    <option value="aug_oct">BAF 103Ki 1Q Aug'26 ~ Oct'26</option>
+                  </select>
+                </div>
+                <div class="calc-field">
+                  <label for="calc-equip">Equipment</label>
+                  <select id="calc-equip" onchange="runBafCalculator()">
+                    <option value="20DC">20DC (1 TEU)</option>
+                    <option value="40HC" selected>40HC (≈ 2 TEU)</option>
+                  </select>
+                </div>
+                <div class="calc-field">
+                  <label for="calc-qty">Số lượng container</label>
+                  <input id="calc-qty" type="number" min="1" step="1" value="1" oninput="runBafCalculator()" />
+                </div>
+              </div>
+
+              <!-- Mode: Model G20 -->
+              <div id="calc-panel-model" class="calc-mode-panel">
+                <div class="calc-field">
+                  <label for="calc-pt">VLSFO_t — giá hiện tại (USD/mt)</label>
+                  <input id="calc-pt" type="number" step="0.01" value="806.50" oninput="runBafCalculator()" />
+                  <span class="hint">Mặc định kéo từ S&amp;B G20 live · <button type="button" class="src-link" style="background:none;border:none;padding:0;cursor:pointer;font:inherit;" onclick="syncCalcFromMarket()">Sync từ market live</button></span>
+                </div>
+                <div class="calc-field">
+                  <label for="calc-pref">VLSFO_ref — mốc tham chiếu (USD/mt)</label>
+                  <input id="calc-pref" type="number" step="0.01" value="800" oninput="runBafCalculator()" />
+                  <span class="hint">Default $800 · hoặc Jun G20 avg cho so sánh MoM</span>
+                </div>
+                <div class="calc-field">
+                  <label for="calc-bafbase">BAF_base (USD / TEU)</label>
+                  <input id="calc-bafbase" type="number" step="0.01" value="0" oninput="runBafCalculator()" />
+                </div>
+                <div class="calc-field">
+                  <label for="calc-passthrough">PassThrough (0–1)</label>
+                  <input id="calc-passthrough" type="number" min="0" max="1" step="0.01" value="0.85" oninput="runBafCalculator()" />
+                  <span class="hint">% Δ fuel chuyển sang shipper · default 0.85</span>
+                </div>
+                <div class="calc-field">
+                  <label for="calc-cons">ConsumptionFactor / TEU (mt/TEU)</label>
+                  <input id="calc-cons" type="number" min="0" step="0.0001" value="0.012" oninput="runBafCalculator()" />
+                </div>
+                <div class="calc-field">
+                  <label for="calc-teu-model">Số TEU shipment</label>
+                  <input id="calc-teu-model" type="number" min="0.01" step="0.01" value="2" oninput="runBafCalculator()" />
+                  <span class="hint">40HC ≈ 2 TEU; 20DC = 1 TEU</span>
+                </div>
+              </div>
+
+              <!-- Mode: Voyage -->
+              <div id="calc-panel-voyage" class="calc-mode-panel">
+                <div class="calc-field">
+                  <label for="calc-burn">Burn rate (mt bunker / day)</label>
+                  <input id="calc-burn" type="number" min="0" step="0.1" value="100" oninput="runBafCalculator()" />
+                </div>
+                <div class="calc-field">
+                  <label for="calc-days">Sea days (ngày chạy)</label>
+                  <input id="calc-days" type="number" min="0" step="0.1" value="20" oninput="runBafCalculator()" />
+                </div>
+                <div class="calc-field">
+                  <label for="calc-capacity">Vessel capacity (TEU)</label>
+                  <input id="calc-capacity" type="number" min="1" step="1" value="16000" oninput="runBafCalculator()" />
+                </div>
+                <div class="calc-field">
+                  <label for="calc-util">Utilization (0–1)</label>
+                  <input id="calc-util" type="number" min="0.01" max="1" step="0.01" value="0.85" oninput="runBafCalculator()" />
+                  <span class="hint">Laden TEU ≈ capacity × utilization</span>
+                </div>
+                <div class="calc-field">
+                  <label for="calc-vpt">VLSFO_t (USD/mt)</label>
+                  <input id="calc-vpt" type="number" step="0.01" value="806.50" oninput="runBafCalculator()" />
+                </div>
+                <div class="calc-field">
+                  <label for="calc-vpref">VLSFO_ref (USD/mt)</label>
+                  <input id="calc-vpref" type="number" step="0.01" value="800" oninput="runBafCalculator()" />
+                </div>
+                <div class="calc-field">
+                  <label for="calc-vpass">PassThrough</label>
+                  <input id="calc-vpass" type="number" min="0" max="1" step="0.01" value="0.85" oninput="runBafCalculator()" />
+                </div>
+                <div class="calc-field">
+                  <label for="calc-vteu">TEU shipment (tính total)</label>
+                  <input id="calc-vteu" type="number" min="0.01" step="0.01" value="2" oninput="runBafCalculator()" />
+                </div>
+              </div>
+
+              <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0.5rem;">
+                <button type="button" class="btn btn-primary" onclick="runBafCalculator()">Tính BAF</button>
+                <button type="button" class="btn" onclick="syncCalcFromMarket()">Sync market S&amp;B</button>
+                <button type="button" class="btn" onclick="exportBafCalcReport()">Copy báo cáo</button>
+              </div>
+            </div>
+
+            <!-- RIGHT: results + explanation -->
+            <div>
+              <div class="card" style="padding:1.1rem;margin-bottom:0.85rem;">
+                <h3 style="margin:0 0 0.65rem;font-size:0.9rem;font-weight:700;">Kết quả</h3>
+                <div class="calc-kpi-row">
+                  <div class="calc-kpi">
+                    <div class="k">BAF / unit</div>
+                    <div class="v c-cyan" id="calc-out-unit">—</div>
+                    <div class="s" id="calc-out-unit-sub">USD</div>
+                  </div>
+                  <div class="calc-kpi">
+                    <div class="k">Total shipment</div>
+                    <div class="v c-emerald" id="calc-out-total">—</div>
+                    <div class="s" id="calc-out-total-sub">USD</div>
+                  </div>
+                  <div class="calc-kpi">
+                    <div class="k">Δ fuel / exposure</div>
+                    <div class="v" id="calc-out-delta">—</div>
+                    <div class="s" id="calc-out-delta-sub">chi tiết</div>
+                  </div>
+                  <div class="calc-kpi">
+                    <div class="k">Mode</div>
+                    <div class="v" style="font-size:0.95rem;" id="calc-out-mode">—</div>
+                    <div class="s" id="calc-out-stamp">—</div>
+                  </div>
+                </div>
+                <div class="calc-steps" id="calc-steps">
+                  <strong style="color:var(--text);">Bước tính</strong>
+                  <ol id="calc-steps-list"><li>Chọn chế độ và bấm Tính BAF…</li></ol>
+                </div>
+              </div>
+
+              <div class="report-box" id="calc-report">
+                <h4>Báo cáo giải thích (cập nhật theo kết quả)</h4>
+                <div class="report-meta" id="calc-report-meta">Chưa có lần tính — điền form bên trái.</div>
+                <div id="calc-report-body">
+                  <p>Kết quả và diễn giải sẽ hiện ở đây: công thức, số liệu đầu vào, ý nghĩa vận hành, so sánh tariff vs model (nếu có).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:1rem 1.1rem;margin-top:0.9rem;border-color:rgba(251,191,36,0.22);">
+            <p class="t3" style="margin:0;font-size:12px;line-height:1.6;">
+              <strong style="color:var(--amber);">Disclaimer:</strong> Calculator hỗ trợ phân tích / quote nội bộ.
+              Tariff 2026 = bảng trên dashboard; model G20 = S&amp;B + hệ số minh họa.
+              Quyết định commercial: đối chiếu circular hãng &amp; contract.
+            </p>
           </div>
         </section>
 
@@ -2142,7 +2463,19 @@
               Mục này giúp đọc dashboard như một <strong style="color:var(--text);">bảng điều khiển giá nhiên liệu tàu (bunker)</strong> phục vụ phân tích
               <strong style="color:var(--text);">BAF (Bunker Adjustment Factor)</strong> và biến động chi phí nhiên liệu tuyến.
               Đơn vị mặc định: <span class="mono c-cyan">USD/mt</span> (đô la Mỹ / metric ton).
+              <strong style="color:var(--text);">Báo cáo dưới đây tự cập nhật</strong> theo market live / last print S&amp;B và lần tính Calculator gần nhất.
             </p>
+          </div>
+
+          <!-- LIVE DATA REPORT — regenerated from state -->
+          <div class="report-box" style="margin-bottom:1rem;" id="guide-live-report">
+            <h4>Báo cáo dữ liệu cập nhật (live)</h4>
+            <div class="report-meta" id="guide-report-meta">Đang nạp…</div>
+            <div id="guide-report-body"><p class="t3">Báo cáo sẽ hiện sau khi boot market data.</p></div>
+            <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.4rem;">
+              <button type="button" class="btn btn-primary" onclick="refreshGuideReport()">Làm mới báo cáo</button>
+              <button type="button" class="btn" onclick="navigateTo('bafcalc', document.querySelector('[data-section=bafcalc]'))">Mở BAF Calculator</button>
+            </div>
           </div>
 
           <!-- Big picture -->
@@ -2275,6 +2608,8 @@
               <li><strong>Overview</strong> — xem ticker + %24h: thị trường đang up hay down?</li>
               <li><strong>Chart All</strong> — xác định trend May→nay; zoom Jun/Jul nếu review BAF tháng.</li>
               <li><strong>Monthly</strong> — so avg tháng (MoM %); ghi chú high/low để hiểu biên độ.</li>
+              <li><strong>BAF Rates 2026</strong> — xem tariff region/kỳ (C Rotterdam / I Singapore).</li>
+              <li><strong>BAF Calculator</strong> — tính chi tiết + đọc báo cáo giải thích theo số vừa tính.</li>
               <li><strong>BAF Impact</strong> — đọc Δ fuel và tín hiệu minh họa; so với policy hãng.</li>
               <li><strong>Data Table / CSV</strong> — xuất số vào memo / model nội bộ.</li>
               <li><strong>Data Sources</strong> — verify print trên Ship &amp; Bunker trước khi đưa vào quyết định formal.</li>
@@ -2322,6 +2657,7 @@
               <button class="btn" type="button" onclick="navigateTo('sources', document.querySelector('[data-section=sources]'))">Xem nguồn gốc số</button>
               <button class="btn" type="button" onclick="navigateTo('baf', document.querySelector('[data-section=baf]'))">Mở BAF Impact</button>
               <button class="btn" type="button" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]'))">BAF Rates 2026</button>
+              <button class="btn" type="button" onclick="navigateTo('bafcalc', document.querySelector('[data-section=bafcalc]'))">BAF Calculator</button>
             </div>
           </div>
         </section>
@@ -2336,7 +2672,8 @@
             <a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">S&amp;B G20</a> ·
             <a class="src-link" href="https://www.bunkerindex.com/" target="_blank" rel="noopener">Bunker Index</a> ·
             <a class="src-link" href="#" onclick="navigateTo('sources', document.querySelector('[data-section=sources]')); return false;">Sources</a> ·
-            <a class="src-link" href="#" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]')); return false;">BAF Rates 2026</a> ·
+            <a class="src-link" href="#" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]')); return false;">BAF Rates</a> ·
+            <a class="src-link" href="#" onclick="navigateTo('bafcalc', document.querySelector('[data-section=bafcalc]')); return false;">BAF Calc</a> ·
             <a class="src-link" href="#" onclick="navigateTo('guide', document.querySelector('[data-section=guide]')); return false;">Giải thích</a>
           </div>
           <div class="mono" style="flex-shrink:0;">VLSFO Monitor · BAF Tracker © 2026</div>
@@ -2578,6 +2915,468 @@
   /** Pass-through of fuel move in USD/mt space (before /TEU allocation) */
   function fuelPassThroughMt(deltaVlsfoUsdPerMt) {
     return deltaVlsfoUsdPerMt * BAF_PARAMS.PASS_THROUGH;
+  }
+
+  /* ========== BAF Rates 2026 (tariff schedule data) ========== */
+  const BAF_RATES_2026 = {
+    currency: 'USD',
+    unit: 'container',
+    periods: {
+      feb_apr: { id: 'feb_apr', label: "BAF Feb'26 ~ Apr'26", short: "Feb–Apr'26", code: null },
+      may_jul: { id: 'may_jul', label: "BAF 103Ki 1Q May'26 ~ Jul'26", short: "103Ki May–Jul'26", code: '103Ki 1Q' },
+      aug_oct: { id: 'aug_oct', label: "BAF 103Ki 1Q Aug'26 ~ Oct'26", short: "103Ki Aug–Oct'26", code: '103Ki 1Q' },
+    },
+    regions: {
+      C: { id: 'C', name: 'C (via Rotterdam)', hub: 'Rotterdam', note: 'Routing hub châu Âu / ARA' },
+      I: { id: 'I', name: 'I (Via Singapore)', hub: 'Singapore', note: 'Routing hub châu Á' },
+    },
+    // USD per container
+    rates: {
+      C: {
+        feb_apr: { '20DC': 240, '40HC': 480 },
+        may_jul: { '20DC': 345, '40HC': 690 },
+        aug_oct: { '20DC': 450, '40HC': 900 },
+      },
+      I: {
+        feb_apr: { '20DC': 30, '40HC': 60 },
+        may_jul: { '20DC': 66, '40HC': 132 },
+        aug_oct: { '20DC': 90, '40HC': 180 },
+      },
+    },
+    teuOf: { '20DC': 1, '40HC': 2 },
+  };
+
+  let bafCalcState = {
+    mode: 'tariff',
+    lastResult: null,
+    lastReportHtml: '',
+    lastStamp: null,
+  };
+
+  function numInput(id, fallback) {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    const v = parseFloat(el.value);
+    return isFinite(v) ? v : fallback;
+  }
+  function strInput(id, fallback) {
+    const el = document.getElementById(id);
+    return el && el.value != null ? el.value : fallback;
+  }
+  function setTextSafe(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+  function setHtmlSafe(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  function setBafCalcMode(mode, btn) {
+    bafCalcState.mode = mode || 'tariff';
+    document.querySelectorAll('.calc-mode-tabs button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-calc-mode') === bafCalcState.mode);
+    });
+    document.querySelectorAll('.calc-mode-panel').forEach(function (p) {
+      p.classList.remove('active');
+    });
+    const panel = document.getElementById('calc-panel-' + bafCalcState.mode);
+    if (panel) panel.classList.add('active');
+    if (btn) btn.classList.add('active');
+    runBafCalculator();
+  }
+
+  function syncCalcFromMarket() {
+    const live = (state.live && state.live.glb) || (state.marketAnchor && state.marketAnchor.glb) || latestOfficial().glb;
+    const off = state.marketAnchor || latestOfficial();
+    const keys = Object.keys(OFFICIAL_SPOTS).sort();
+    let ref = BAF_PARAMS.VLSFO_REF;
+    // Prefer previous official print as day-ref if available
+    if (keys.length > 1) {
+      const prev = OFFICIAL_SPOTS[keys[keys.length - 2]];
+      if (prev) ref = prev[2];
+    }
+    // Jun avg if available for MoM-style
+    try {
+      const stats = monthlyStats(state.history || []);
+      const jun = stats.find(function (s) { return s.month === '2026-06' && s.port === 'glb'; });
+      if (jun) ref = jun.avg;
+    } catch (e) {}
+
+    ['calc-pt', 'calc-vpt'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.value = (Math.round(live * 100) / 100).toFixed(2);
+    });
+    ['calc-pref', 'calc-vpref'].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.value = (Math.round(ref * 100) / 100).toFixed(2);
+    });
+    const ptEl = document.getElementById('calc-passthrough');
+    const consEl = document.getElementById('calc-cons');
+    if (ptEl) ptEl.value = String(BAF_PARAMS.PASS_THROUGH);
+    if (consEl) consEl.value = String(BAF_PARAMS.CONS_PER_TEU);
+    runBafCalculator();
+  }
+
+  function lookupTariffRate(region, period, equip) {
+    const r = BAF_RATES_2026.rates[region];
+    if (!r || !r[period]) return null;
+    const v = r[period][equip];
+    return isFinite(v) ? v : null;
+  }
+
+  function money(n, digits) {
+    const d = digits != null ? digits : 2;
+    if (!isFinite(n)) return '—';
+    const sign = n < 0 ? '−' : '';
+    return sign + '$' + Math.abs(n).toFixed(d);
+  }
+
+  function runBafCalculator() {
+    const mode = bafCalcState.mode || 'tariff';
+    const stamp = new Date();
+    let result = { mode: mode, stamp: stamp, steps: [], unitBaf: 0, totalBaf: 0, unitLabel: 'USD', meta: {} };
+
+    try {
+      if (mode === 'tariff') {
+        const region = strInput('calc-region', 'C');
+        const period = strInput('calc-period', 'may_jul');
+        const equip = strInput('calc-equip', '40HC');
+        const qty = Math.max(1, Math.round(numInput('calc-qty', 1)));
+        const unit = lookupTariffRate(region, period, equip);
+        if (unit == null) throw new Error('Không tìm thấy rate tariff');
+        const total = unit * qty;
+        const teu = (BAF_RATES_2026.teuOf[equip] || 1) * qty;
+        const perTeu = total / teu;
+        const reg = BAF_RATES_2026.regions[region];
+        const per = BAF_RATES_2026.periods[period];
+        result.unitBaf = unit;
+        result.totalBaf = total;
+        result.unitLabel = 'USD / ' + equip;
+        result.meta = {
+          region: region, regionName: reg ? reg.name : region, hub: reg ? reg.hub : '',
+          period: period, periodLabel: per ? per.label : period, periodCode: per ? per.code : null,
+          equip: equip, qty: qty, teu: teu, perTeu: perTeu, source: 'BAF Rates 2026 schedule',
+        };
+        result.steps = [
+          'Chế độ <strong>Tariff Rates 2026</strong> — lookup bảng published, không dùng ΔVLSFO.',
+          'Region = <code>' + (reg ? reg.name : region) + '</code> · hub <code>' + (reg ? reg.hub : '—') + '</code>.',
+          'Kỳ = <code>' + (per ? per.label : period) + '</code>' + (per && per.code ? ' (mã <code>' + per.code + '</code>)' : '') + '.',
+          'Equipment = <code>' + equip + '</code> · TEU quy đổi 1 unit = <code>' + (BAF_RATES_2026.teuOf[equip] || 1) + '</code>.',
+          'Rate unit = <code>' + money(unit, 0) + '</code> / container (từ bảng).',
+          'Số lượng = <code>' + qty + '</code> → Total = ' + qty + ' × ' + money(unit, 0) + ' = <code>' + money(total, 0) + '</code>.',
+          'Quy đổi ≈ <code>' + money(perTeu, 2) + '/TEU</code> (total / ' + teu + ' TEU) để so với model differential.',
+        ];
+        result.reportTitle = 'Giải thích kết quả Tariff BAF';
+        result.explain = buildTariffExplain(result);
+      } else if (mode === 'model') {
+        const pt = numInput('calc-pt', (state.live && state.live.glb) || 806.5);
+        const pref = numInput('calc-pref', BAF_PARAMS.VLSFO_REF);
+        const bafBase = numInput('calc-bafbase', BAF_PARAMS.BAF_BASE);
+        const pass = numInput('calc-passthrough', BAF_PARAMS.PASS_THROUGH);
+        const cons = numInput('calc-cons', BAF_PARAMS.CONS_PER_TEU);
+        const teu = Math.max(0.01, numInput('calc-teu-model', 2));
+        const dP = pt - pref;
+        const passMt = dP * pass;
+        const unit = bafBase + dP * pass * cons; // USD/TEU
+        const total = unit * teu;
+        result.unitBaf = unit;
+        result.totalBaf = total;
+        result.unitLabel = 'USD / TEU';
+        result.meta = {
+          pt: pt, pref: pref, bafBase: bafBase, pass: pass, cons: cons, teu: teu,
+          dP: dP, passMt: passMt, source: 'Model G20 differential',
+          liveG20: state.live && state.live.glb, printDate: (state.marketAnchor && state.marketAnchor.date) || latestOfficialKey(),
+        };
+        result.steps = [
+          'Công thức: <code>BAF_t = BAF_base + (VLSFO_t − VLSFO_ref) × PassThrough × (Cons/TEU)</code>.',
+          'VLSFO_t = <code>' + money(pt) + '/mt</code> · VLSFO_ref = <code>' + money(pref) + '/mt</code>.',
+          'ΔVLSFO = ' + money(pt) + ' − ' + money(pref) + ' = <code>' + money(dP) + '/mt</code>.',
+          'Pass-through fuel = ΔVLSFO × ' + pass + ' = <code>' + money(passMt) + '/mt</code> (chưa chia TEU).',
+          'Cons/TEU = <code>' + cons + ' mt/TEU</code> → ΔBAF = ' + money(dP) + ' × ' + pass + ' × ' + cons + ' = <code>' + money(dP * pass * cons, 4) + '/TEU</code>.',
+          'BAF_base = <code>' + money(bafBase, 2) + '/TEU</code> → <strong>BAF_t = ' + money(unit, 4) + '/TEU</strong>.',
+          'Shipment ' + teu + ' TEU → Total = ' + money(unit, 4) + ' × ' + teu + ' = <code>' + money(total, 2) + '</code>.',
+          'Nguồn giá: S&amp;B G20 (live/print ' + ((state.marketAnchor && state.marketAnchor.date) || latestOfficialKey()) + ') · hệ số model dashboard.',
+        ];
+        result.reportTitle = 'Giải thích kết quả Model G20';
+        result.explain = buildModelExplain(result);
+      } else {
+        // voyage engineering
+        const burn = numInput('calc-burn', 100);
+        const days = numInput('calc-days', 20);
+        const capacity = numInput('calc-capacity', 16000);
+        const util = numInput('calc-util', 0.85);
+        const pt = numInput('calc-vpt', (state.live && state.live.glb) || 806.5);
+        const pref = numInput('calc-vpref', BAF_PARAMS.VLSFO_REF);
+        const pass = numInput('calc-vpass', BAF_PARAMS.PASS_THROUGH);
+        const shipTeu = Math.max(0.01, numInput('calc-vteu', 2));
+        const fuelMt = burn * days;
+        const laden = Math.max(1, capacity * util);
+        const consPerTeu = fuelMt / laden;
+        const dP = pt - pref;
+        const unit = dP * pass * consPerTeu; // differential BAF $/TEU
+        const total = unit * shipTeu;
+        const absFuelCostPerTeu = pt * consPerTeu;
+        result.unitBaf = unit;
+        result.totalBaf = total;
+        result.unitLabel = 'USD / TEU (Δ)';
+        result.meta = {
+          burn: burn, days: days, capacity: capacity, util: util, laden: laden,
+          fuelMt: fuelMt, consPerTeu: consPerTeu, pt: pt, pref: pref, pass: pass,
+          dP: dP, shipTeu: shipTeu, absFuelCostPerTeu: absFuelCostPerTeu,
+          source: 'Voyage engineering',
+        };
+        result.steps = [
+          'Chế độ <strong>Voyage engineering</strong> — suy ra Cons/TEU từ burn &amp; capacity.',
+          'Fuel voyage = burn × days = ' + burn + ' × ' + days + ' = <code>' + fuelMt.toFixed(1) + ' mt</code>.',
+          'Laden TEU = capacity × util = ' + capacity + ' × ' + util + ' = <code>' + laden.toFixed(0) + ' TEU</code>.',
+          'Cons/TEU = fuel / laden = ' + fuelMt.toFixed(1) + ' / ' + laden.toFixed(0) + ' = <code>' + consPerTeu.toFixed(5) + ' mt/TEU</code>.',
+          'ΔVLSFO = ' + money(pt) + ' − ' + money(pref) + ' = <code>' + money(dP) + '/mt</code>.',
+          'ΔBAF/TEU = ΔVLSFO × PassThrough × Cons/TEU = ' + money(dP) + ' × ' + pass + ' × ' + consPerTeu.toFixed(5) +
+            ' = <code>' + money(unit, 4) + '/TEU</code>.',
+          'Shipment ' + shipTeu + ' TEU → Total ΔBAF = <code>' + money(total, 2) + '</code>.',
+          'Tham chiếu: fuel cost tuyệt đối ≈ P_t × Cons/TEU = <code>' + money(absFuelCostPerTeu, 2) + '/TEU</code> (chưa pass-through).',
+        ];
+        result.reportTitle = 'Giải thích kết quả Voyage engineering';
+        result.explain = buildVoyageExplain(result);
+      }
+    } catch (err) {
+      result.error = err && err.message ? err.message : String(err);
+      result.steps = ['Lỗi: ' + result.error];
+      result.explain = '<p class="c-down">Không tính được: ' + result.error + '</p>';
+    }
+
+    bafCalcState.lastResult = result;
+    bafCalcState.lastStamp = stamp;
+    renderBafCalcResult(result);
+    refreshGuideReport();
+    return result;
+  }
+
+  function renderBafCalcResult(result) {
+    if (!result) return;
+    const digits = result.mode === 'tariff' ? 0 : 3;
+    setTextSafe('calc-out-unit', result.error ? '—' : money(result.unitBaf, digits));
+    setTextSafe('calc-out-unit-sub', result.unitLabel || 'USD');
+    setTextSafe('calc-out-total', result.error ? '—' : money(result.totalBaf, result.mode === 'tariff' ? 0 : 2));
+    setTextSafe('calc-out-total-sub', 'USD shipment');
+    if (result.mode === 'tariff' && result.meta) {
+      setTextSafe('calc-out-delta', money(result.meta.perTeu, 2) + '/TEU');
+      setTextSafe('calc-out-delta-sub', 'quy đổi từ tariff');
+    } else if (result.meta && result.meta.dP != null) {
+      setTextSafe('calc-out-delta', money(result.meta.dP, 2) + '/mt');
+      setTextSafe('calc-out-delta-sub', 'ΔVLSFO (t − ref)');
+    } else {
+      setTextSafe('calc-out-delta', '—');
+      setTextSafe('calc-out-delta-sub', '—');
+    }
+    const modeNames = { tariff: 'Tariff 2026', model: 'Model G20', voyage: 'Voyage eng.' };
+    setTextSafe('calc-out-mode', modeNames[result.mode] || result.mode);
+    setTextSafe('calc-out-stamp', result.stamp ? result.stamp.toLocaleString('vi-VN') : '—');
+
+    const ol = document.getElementById('calc-steps-list');
+    if (ol) {
+      ol.innerHTML = (result.steps || []).map(function (s) { return '<li>' + s + '</li>'; }).join('');
+    }
+    setTextSafe('calc-report-meta',
+      (result.reportTitle || 'Báo cáo') + ' · ' + (result.stamp ? result.stamp.toLocaleString('vi-VN') : '') +
+      (result.meta && result.meta.source ? ' · ' + result.meta.source : ''));
+    setHtmlSafe('calc-report-body', result.explain || '');
+    bafCalcState.lastReportHtml = result.explain || '';
+  }
+
+  function buildTariffExplain(r) {
+    const m = r.meta;
+    return (
+      '<h5>1. Đây là gì?</h5>' +
+      '<p>BAF <span class="hl">theo bảng tariff cố định</span> theo region + kỳ + equipment — ' +
+      'không biến thiên từng giây theo VLSFO. Phù hợp quote theo schedule đã công bố (BAF Rates 2026).</p>' +
+      '<h5>2. Số liệu vừa tính</h5>' +
+      '<ul>' +
+      '<li>Region: <span class="hl">' + m.regionName + '</span> (hub ' + m.hub + ')</li>' +
+      '<li>Kỳ: <span class="hl">' + m.periodLabel + '</span>' + (m.periodCode ? ' · mã ' + m.periodCode : '') + '</li>' +
+      '<li>Equipment: <span class="mono-inline">' + m.equip + '</span> × <span class="mono-inline">' + m.qty + '</span></li>' +
+      '<li>BAF/unit: <span class="mono-inline">' + money(r.unitBaf, 0) + '</span></li>' +
+      '<li>Total shipment: <span class="mono-inline">' + money(r.totalBaf, 0) + '</span></li>' +
+      '<li>≈ <span class="mono-inline">' + money(m.perTeu, 2) + '/TEU</span> để so model G20</li>' +
+      '</ul>' +
+      '<h5>3. Ý nghĩa vận hành</h5>' +
+      '<p>Region <strong>C (Rotterdam)</strong> thường cao hơn <strong>I (Singapore)</strong> trên bảng này — ' +
+      'phản ánh chênh exposure / policy theo trade lane. 40HC = 2× 20DC (tỷ lệ 2:1) trên schedule hiện tại.</p>' +
+      '<h5>4. So với model live</h5>' +
+      '<p>Model G20 (ΔP×0.85×0.012) cho <em>độ nhạy</em> theo giá bunker; tariff cho <em>mức thu cố định kỳ</em>. ' +
+      'Hai số không bắt buộc bằng nhau — dùng tariff để quote, dùng model để stress-test khi VLSFO nhảy.</p>' +
+      '<p class="report-meta" style="margin-top:0.6rem;">Cập nhật theo lần tính · dữ liệu bảng BAF Rates 2026 trên dashboard.</p>'
+    );
+  }
+
+  function buildModelExplain(r) {
+    const m = r.meta;
+    const dir = m.dP > 0.5 ? 'tăng' : (m.dP < -0.5 ? 'giảm' : 'gần như đứng im');
+    const action = m.dP > 15 ? 'áp lực RAISE BAF' : (m.dP < -15 ? 'dư địa REDUCE BAF' : 'khu vực HOLD');
+    return (
+      '<h5>1. Công thức đang dùng</h5>' +
+      '<p><code class="mono-inline">BAF_t = ' + m.bafBase + ' + (' + m.pt.toFixed(2) + ' − ' + m.pref.toFixed(2) + ') × ' +
+      m.pass + ' × ' + m.cons + '</code></p>' +
+      '<p>= <span class="hl">' + money(r.unitBaf, 4) + '/TEU</span> · Total ' + m.teu + ' TEU = <span class="hl">' + money(r.totalBaf, 2) + '</span></p>' +
+      '<h5>2. Dữ liệu đầu vào (updated)</h5>' +
+      '<ul>' +
+      '<li>VLSFO_t: <span class="mono-inline">' + money(m.pt) + '/mt</span> (G20 · print/live ' + (m.printDate || '—') + ')</li>' +
+      '<li>VLSFO_ref: <span class="mono-inline">' + money(m.pref) + '/mt</span></li>' +
+      '<li>ΔVLSFO: <span class="mono-inline">' + money(m.dP) + '/mt</span> → giá đang <span class="hl">' + dir + '</span> so với ref</li>' +
+      '<li>PassThrough: <span class="mono-inline">' + m.pass + '</span> · Cons/TEU: <span class="mono-inline">' + m.cons + ' mt</span></li>' +
+      '</ul>' +
+      '<h5>3. Giải thích ý nghĩa</h5>' +
+      '<p>Mỗi +1 USD/mt trên G20 (sau pass-through) × ' + m.cons + ' mt/TEU ≈ ' +
+      '<span class="mono-inline">' + money(m.pass * m.cons, 4) + '/TEU</span> BAF nhạy cảm. ' +
+      'Với Δ hiện tại, tín hiệu model nghiêng <span class="hl">' + action + '</span> (minh họa, không phải circular hãng).</p>' +
+      '<h5>4. Nguồn &amp; giới hạn</h5>' +
+      '<p>Giá neo Ship &amp; Bunker G20. Hệ số 0.85 / 0.012 là default dashboard (có provenance trong tab BAF Impact). ' +
+      'Đổi PassThrough / Cons trong form để stress-test theo contract.</p>'
+    );
+  }
+
+  function buildVoyageExplain(r) {
+    const m = r.meta;
+    return (
+      '<h5>1. Logic voyage</h5>' +
+      '<p>Cons/TEU suy ra từ vật lý chuyến: <code class="mono-inline">(burn × days) / (capacity × util)</code> = ' +
+      '<span class="hl">' + m.consPerTeu.toFixed(5) + ' mt/TEU</span>.</p>' +
+      '<h5>2. Chuỗi tính</h5>' +
+      '<ul>' +
+      '<li>Fuel voyage: <span class="mono-inline">' + m.fuelMt.toFixed(1) + ' mt</span></li>' +
+      '<li>Laden TEU: <span class="mono-inline">' + m.laden.toFixed(0) + '</span></li>' +
+      '<li>ΔVLSFO: <span class="mono-inline">' + money(m.dP) + '/mt</span> · PT: <span class="mono-inline">' + m.pass + '</span></li>' +
+      '<li>ΔBAF/TEU: <span class="mono-inline">' + money(r.unitBaf, 4) + '</span></li>' +
+      '<li>Total (' + m.shipTeu + ' TEU): <span class="mono-inline">' + money(r.totalBaf, 2) + '</span></li>' +
+      '</ul>' +
+      '<h5>3. Ý nghĩa</h5>' +
+      '<p>Cons/TEU voyage (' + m.consPerTeu.toFixed(4) + ') ' +
+      (m.consPerTeu > BAF_PARAMS.CONS_PER_TEU * 1.2 ? '<span class="hl">cao hơn</span>' :
+        m.consPerTeu < BAF_PARAMS.CONS_PER_TEU * 0.8 ? '<span class="hl">thấp hơn</span>' : 'tương đương') +
+      ' default model 0.012 — phản ánh độ dài / burn / utilization tuyến. ' +
+      'Fuel cost tuyệt đối ~ <span class="mono-inline">' + money(m.absFuelCostPerTeu, 2) + '/TEU</span> tại P_t (trước pass-through).</p>' +
+      '<h5>4. Khi nào dùng?</h5>' +
+      '<p>Phân tích nội bộ BA/pricing khi có giả định vessel; không thay tariff schedule. Kết hợp tariff 2026 để quote + voyage để giải thích “vì sao BAF lane này đắt/rẻ”.</p>'
+    );
+  }
+
+  function exportBafCalcReport() {
+    const r = bafCalcState.lastResult;
+    if (!r) {
+      alert('Chưa có kết quả — bấm Tính BAF trước.');
+      return;
+    }
+    const plain = [
+      'BAF Calculator Report',
+      'Mode: ' + r.mode,
+      'Time: ' + (r.stamp ? r.stamp.toISOString() : ''),
+      'Unit BAF: ' + r.unitBaf,
+      'Total: ' + r.totalBaf,
+      '--- Steps ---',
+    ].concat((r.steps || []).map(function (s, i) {
+      return (i + 1) + '. ' + s.replace(/<[^>]+>/g, '');
+    })).join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(plain).then(function () {
+        alert('Đã copy báo cáo vào clipboard.');
+      }).catch(function () {
+        window.prompt('Copy báo cáo:', plain);
+      });
+    } else {
+      window.prompt('Copy báo cáo:', plain);
+    }
+  }
+
+  /** Live market + calc snapshot for Guide section — always reflects updated data */
+  function refreshGuideReport() {
+    const metaEl = document.getElementById('guide-report-meta');
+    const bodyEl = document.getElementById('guide-report-body');
+    if (!bodyEl) return;
+
+    const off = state.marketAnchor || latestOfficial();
+    const live = state.live || { sg: off.sg, rtm: off.rtm, glb: off.glb };
+    const now = new Date();
+    let junAvg = null;
+    try {
+      const stats = monthlyStats(state.history || []);
+      const jun = stats.find(function (s) { return s.month === '2026-06' && s.port === 'glb'; });
+      if (jun) junAvg = jun.avg;
+    } catch (e) {}
+    const ref = junAvg != null ? junAvg : BAF_PARAMS.VLSFO_REF;
+    const dP = live.glb - ref;
+    const dTeu = deltaBafPerTeu(dP);
+    const bafT = bafLevelPerTeu(live.glb, BAF_PARAMS.VLSFO_REF, BAF_PARAMS.BAF_BASE);
+    const web = state.lastWebOk ? 'Web scrape OK' : 'Hardcode / last print';
+    const dir = dP > 0.5 ? 'cao hơn' : (dP < -0.5 ? 'thấp hơn' : 'xấp xỉ');
+    const signal = dTeu > BAF_PARAMS.SIGNAL_RAISE_TEU ? 'RAISE (minh họa)'
+      : dTeu < BAF_PARAMS.SIGNAL_EASE_TEU ? 'REDUCE (minh họa)' : 'HOLD (minh họa)';
+
+    // Current tariff for "active" period heuristic by calendar month
+    const mon = now.getMonth() + 1; // 1-12
+    let periodKey = 'may_jul';
+    if (mon >= 2 && mon <= 4) periodKey = 'feb_apr';
+    else if (mon >= 8 && mon <= 10) periodKey = 'aug_oct';
+    else if (mon >= 5 && mon <= 7) periodKey = 'may_jul';
+    const per = BAF_RATES_2026.periods[periodKey];
+    const rateC40 = lookupTariffRate('C', periodKey, '40HC');
+    const rateI40 = lookupTariffRate('I', periodKey, '40HC');
+
+    if (metaEl) {
+      metaEl.textContent = 'Cập nhật ' + now.toLocaleString('vi-VN') +
+        ' · Print S&B ' + (off.date || '—') + ' · ' + web +
+        ' · Live tick 1s · re-fetch 60s';
+    }
+
+    let calcBlock = '';
+    if (bafCalcState.lastResult && !bafCalcState.lastResult.error) {
+      const lr = bafCalcState.lastResult;
+      calcBlock =
+        '<h5>4. Lần tính Calculator gần nhất</h5>' +
+        '<ul>' +
+        '<li>Mode: <span class="hl">' + lr.mode + '</span> · ' +
+        (lr.stamp ? lr.stamp.toLocaleString('vi-VN') : '') + '</li>' +
+        '<li>BAF/unit: <span class="mono-inline">' + money(lr.unitBaf, lr.mode === 'tariff' ? 0 : 3) + '</span> ' +
+        (lr.unitLabel || '') + '</li>' +
+        '<li>Total: <span class="mono-inline">' + money(lr.totalBaf, lr.mode === 'tariff' ? 0 : 2) + '</span></li>' +
+        '</ul>' +
+        '<p>Chi tiết bước tính: mở <strong>BAF Calculator</strong>.</p>';
+    } else {
+      calcBlock =
+        '<h5>4. Calculator</h5>' +
+        '<p>Chưa có lần tính — vào <strong>BAF Calculator</strong> để chạy tariff / model / voyage và xem giải thích chi tiết.</p>';
+    }
+
+    bodyEl.innerHTML =
+      '<h5>1. Market VLSFO đang nói gì? (updated)</h5>' +
+      '<ul>' +
+      '<li>Singapore: <span class="mono-inline">' + money(live.sg) + '/mt</span></li>' +
+      '<li>Rotterdam: <span class="mono-inline">' + money(live.rtm) + '/mt</span></li>' +
+      '<li>Global 20: <span class="mono-inline">' + money(live.glb) + '/mt</span> · neo print <span class="hl">' + (off.date || '—') + '</span></li>' +
+      '<li>Spread SG−RTM: <span class="mono-inline">' + money(live.sg - live.rtm) + '/mt</span></li>' +
+      '</ul>' +
+      '<h5>2. Model BAF differential (cùng dữ liệu live)</h5>' +
+      '<p>So G20 live với ref ' + (junAvg != null ? 'Jun avg ' : 'fixed ') +
+      '<span class="mono-inline">' + money(ref) + '</span>: ΔVLSFO = <span class="mono-inline">' + money(dP) + '/mt</span> ' +
+      '(G20 đang <span class="hl">' + dir + '</span> ref).</p>' +
+      '<p>ΔBAF ≈ ΔP × ' + BAF_PARAMS.PASS_THROUGH + ' × ' + BAF_PARAMS.CONS_PER_TEU +
+      ' = <span class="mono-inline">' + money(dTeu, 4) + '/TEU</span> · ' +
+      'BAF_t (vs $800) = <span class="mono-inline">' + money(bafT, 4) + '/TEU</span>.</p>' +
+      '<p>Tín hiệu model: <span class="hl">' + signal + '</span> — không thay circular hãng.</p>' +
+      '<h5>3. Tariff BAF Rates 2026 (kỳ gần lịch)</h5>' +
+      '<p>Theo tháng hiện tại, kỳ gợi ý: <span class="hl">' + (per ? per.label : periodKey) + '</span>.</p>' +
+      '<ul>' +
+      '<li>C via Rotterdam 40HC: <span class="mono-inline">' + money(rateC40, 0) + '</span></li>' +
+      '<li>I Via Singapore 40HC: <span class="mono-inline">' + money(rateI40, 0) + '</span></li>' +
+      '</ul>' +
+      '<p>Tariff = mức thu schedule; model = độ nhạy theo VLSFO. Dùng Calculator để quote &amp; giải thích.</p>' +
+      calcBlock +
+      '<h5>5. Cách đọc nhanh</h5>' +
+      '<ul>' +
+      '<li>Giá S&amp;B tăng → model ΔBAF/TEU dương → áp lực surcharge.</li>' +
+      '<li>Quote container: ưu tiên <strong>BAF Rates 2026</strong> đúng region/kỳ/equipment.</li>' +
+      '<li>Stress-test: đổi PassThrough / Cons / voyage burn trong Calculator.</li>' +
+      '</ul>';
   }
 
   // Multi CORS proxy chain — browser cannot hit S&B directly (CORS)
@@ -3650,6 +4449,11 @@
     updateLiveChart();
     if (state.tickCount % 5 === 0) updateBafMetrics();
     if (state.tickCount % 15 === 0) updateDataStatusUI();
+    // Guide / calc reports track updated market every ~30s
+    if (state.tickCount % 30 === 0) {
+      const g = document.getElementById('section-guide');
+      if (g && g.classList.contains('active')) refreshGuideReport();
+    }
   }
 
   /** Parse first VLSFO mid from Ship & Bunker public HTML/markdown */
@@ -3740,6 +4544,14 @@
         updateTrendSubtitle();
         updateLiveChart();
         updateBafMetrics();
+        try { refreshGuideReport(); } catch (e) {}
+        // Keep calculator inputs aligned when user is on that tab
+        try {
+          const calcSec = document.getElementById('section-bafcalc');
+          if (calcSec && calcSec.classList.contains('active')) {
+            syncCalcFromMarket();
+          }
+        } catch (e2) {}
         if (document.getElementById('section-sources') &&
             document.getElementById('section-sources').classList.contains('active')) {
           renderSourcesOfficialTable();
@@ -4460,6 +5272,12 @@
         }
         if (section === 'data') renderDailyTable();
         if (section === 'sources') renderSourcesOfficialTable();
+        if (section === 'bafcalc') {
+          syncCalcFromMarket();
+          runBafCalculator();
+        }
+        if (section === 'guide') refreshGuideReport();
+        if (section === 'bafrates') { /* static table */ }
       }, 30);
     });
   }
@@ -4673,6 +5491,11 @@
       safeRun('updateVolCards', updateVolCards);
       safeRun('updateTrendSubtitle', updateTrendSubtitle);
       safeRun('updateDataStatusUI', updateDataStatusUI);
+      safeRun('refreshGuideReport', refreshGuideReport);
+      safeRun('syncCalcFromMarket', function () {
+        // Pre-fill calculator without forcing panel switch
+        try { syncCalcFromMarket(); } catch (e) {}
+      });
 
       hideLoading();
 
@@ -4708,6 +5531,11 @@
   window.forceRefresh = forceRefresh;
   window.refreshModels = refreshModels;
   window.toggleTrendSeries = toggleTrendSeries;
+  window.setBafCalcMode = setBafCalcMode;
+  window.runBafCalculator = runBafCalculator;
+  window.syncCalcFromMarket = syncCalcFromMarket;
+  window.exportBafCalcReport = exportBafCalcReport;
+  window.refreshGuideReport = refreshGuideReport;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
