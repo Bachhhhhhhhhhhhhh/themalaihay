@@ -1231,7 +1231,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.6.0 · BAF Forecast</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.7.0 · BAF FC detailed</div>
       </div>
     </aside>
 
@@ -1988,54 +1988,75 @@
           </div>
         </section>
 
-        <!-- BAF FORECAST — next periods from schedule + VLSFO -->
+        <!-- BAF FORECAST — detailed multi-method / scenarios -->
         <section id="section-bafforecast" class="section">
           <div style="margin-bottom:0.9rem;">
-            <h2 style="margin:0;font-size:1.15rem;font-weight:800;">BAF Forecast — kỳ tiếp theo</h2>
-            <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.6;max-width:920px;">
-              Dự báo BAF các kỳ sau <strong style="color:var(--text);">Aug'26–Oct'26</strong> dựa trên
-              <strong style="color:var(--text);">BAF Rates 2026</strong> (3 kỳ đã biết) + xu hướng
-              <strong style="color:var(--text);">VLSFO S&amp;B</strong> (G20 / SG / RTM).
-              Kết quả dạng bảng giống Rates (Region × kỳ × 20DC/40HC) + dải thấp/cao.
+            <h2 style="margin:0;font-size:1.2rem;font-weight:800;">BAF Forecast — chi tiết đa kỳ</h2>
+            <p class="t3" style="margin:0.45rem 0 0;font-size:13px;line-height:1.65;max-width:960px;">
+              Engine dự báo BAF <strong style="color:var(--text);">kỳ tiếp theo</strong> từ
+              (1) schedule <strong style="color:var(--text);">BAF Rates 2026</strong> 3 kỳ actual,
+              (2) growth / OLS / ensemble,
+              (3) signal <strong style="color:var(--text);">VLSFO S&amp;B</strong> live (G20 / SG / RTM),
+              (4) kịch bản <strong style="color:var(--text);">Bear · Base · Bull</strong>,
+              (5) so sánh 4 method + dải Low–Point–High + báo cáo giải thích từng bước.
             </p>
           </div>
 
-          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
-            <h3 style="margin:0 0 0.75rem;font-size:0.9rem;font-weight:700;">Tham số forecast</h3>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem 1rem;">
+          <!-- Controls -->
+          <div class="card" style="padding:1.15rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.75rem;font-size:0.95rem;font-weight:700;">A. Tham số &amp; giả định</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:0.75rem 1rem;">
               <div class="calc-field" style="margin:0;">
-                <label for="fc-method">Phương pháp</label>
+                <label for="fc-method">Method chính (bảng FC)</label>
                 <select id="fc-method" onchange="runBafForecast()">
-                  <option value="ensemble" selected>Ensemble (growth + linear + VLSFO)</option>
-                  <option value="growth">Chain growth (QoQ)</option>
-                  <option value="linear">Linear trend (OLS)</option>
-                  <option value="vlsfo">VLSFO-linked scale</option>
+                  <option value="ensemble" selected>Ensemble (G+L+V)</option>
+                  <option value="growth">Chain growth QoQ</option>
+                  <option value="linear">Linear OLS</option>
+                  <option value="vlsfo">VLSFO-linked</option>
                 </select>
               </div>
               <div class="calc-field" style="margin:0;">
-                <label for="fc-horizons">Số kỳ forecast</label>
+                <label for="fc-horizons">Horizon (số kỳ)</label>
                 <select id="fc-horizons" onchange="runBafForecast()">
-                  <option value="1">1 kỳ (Nov'26–Jan'27)</option>
-                  <option value="2" selected>2 kỳ (+ Feb'27–Apr'27)</option>
-                  <option value="3">3 kỳ (+ May'27–Jul'27)</option>
-                  <option value="4">4 kỳ (+ Aug'27–Oct'27)</option>
+                  <option value="1">1 · Nov'26–Jan'27</option>
+                  <option value="2" selected>2 · + Feb'27–Apr'27</option>
+                  <option value="3">3 · + May'27–Jul'27</option>
+                  <option value="4">4 · + Aug'27–Oct'27</option>
                 </select>
               </div>
               <div class="calc-field" style="margin:0;">
-                <label for="fc-dampen">Damping growth (0.5–1)</label>
+                <label for="fc-dampen">Damping (0.5–1)</label>
                 <input id="fc-dampen" type="number" min="0.5" max="1" step="0.05" value="0.85" oninput="runBafForecast()" />
-                <span class="hint">Giảm tốc growth xa horizon (1 = không damp)</span>
+                <span class="hint">1 = full growth · 0.7 = kìm mạnh</span>
               </div>
               <div class="calc-field" style="margin:0;">
-                <label for="fc-vlsfo-w">Trọng số VLSFO (ensemble)</label>
+                <label for="fc-vlsfo-w">Weight VLSFO (ensemble)</label>
                 <input id="fc-vlsfo-w" type="number" min="0" max="1" step="0.05" value="0.30" oninput="runBafForecast()" />
               </div>
               <div class="calc-field" style="margin:0;">
-                <label for="fc-fuel-hub">Hub fuel cho scale</label>
+                <label for="fc-growth-w">Weight Growth (phần còn)</label>
+                <input id="fc-growth-w" type="number" min="0" max="1" step="0.05" value="0.55" oninput="runBafForecast()" />
+                <span class="hint">Linear = 1 − wG trong phần non-VLSFO</span>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-fuel-hub">Hub fuel</label>
                 <select id="fc-fuel-hub" onchange="runBafForecast()">
-                  <option value="glb" selected>G20 (global)</option>
-                  <option value="region">Theo region (C→RTM, I→SG)</option>
+                  <option value="glb" selected>G20 global</option>
+                  <option value="region">C→RTM · I→SG</option>
                 </select>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-band">Band multiplier (σ)</label>
+                <input id="fc-band" type="number" min="0.5" max="3" step="0.1" value="1.25" oninput="runBafForecast()" />
+                <span class="hint">Low/High = point ± σ√h × band</span>
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-bear">Bear shock (−%)</label>
+                <input id="fc-bear" type="number" min="0" max="50" step="1" value="12" oninput="runBafForecast()" />
+              </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-bull">Bull shock (+%)</label>
+                <input id="fc-bull" type="number" min="0" max="50" step="1" value="15" oninput="runBafForecast()" />
               </div>
               <div class="calc-field" style="margin:0;">
                 <label for="fc-round">Làm tròn</label>
@@ -2044,51 +2065,45 @@
                   <option value="2">2 chữ số</option>
                 </select>
               </div>
+              <div class="calc-field" style="margin:0;">
+                <label for="fc-focus-equip">Focus chart / detail</label>
+                <select id="fc-focus-equip" onchange="runBafForecast()">
+                  <option value="40HC" selected>40HC</option>
+                  <option value="20DC">20DC</option>
+                </select>
+              </div>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:1rem;">
-              <button type="button" class="btn btn-primary" onclick="runBafForecast()">Chạy forecast</button>
-              <button type="button" class="btn" onclick="exportBafForecastCSV()">Export CSV</button>
+              <button type="button" class="btn btn-primary" onclick="runBafForecast()">Chạy forecast chi tiết</button>
+              <button type="button" class="btn" onclick="exportBafForecastCSV()">Export CSV full</button>
               <button type="button" class="btn" onclick="exportBafForecastReport()">Copy báo cáo</button>
-              <button type="button" class="btn" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]'))">Xem Rates gốc</button>
+              <button type="button" class="btn" onclick="navigateTo('bafrates', document.querySelector('[data-section=bafrates]'))">Rates gốc</button>
+              <button type="button" class="btn" onclick="navigateTo('bafcalc', document.querySelector('[data-section=bafcalc]'))">Calculator</button>
             </div>
           </div>
 
-          <!-- KPI growth drivers -->
+          <!-- KPI row expanded -->
           <div class="calc-kpi-row" style="margin-bottom:0.9rem;">
-            <div class="calc-kpi">
-              <div class="k">C 40HC QoQ growth</div>
-              <div class="v c-cyan" id="fc-kpi-c-g">—</div>
-              <div class="s" id="fc-kpi-c-g-sub">May–Jul → Aug–Oct</div>
-            </div>
-            <div class="calc-kpi">
-              <div class="k">I 40HC QoQ growth</div>
-              <div class="v c-emerald" id="fc-kpi-i-g">—</div>
-              <div class="s" id="fc-kpi-i-g-sub">May–Jul → Aug–Oct</div>
-            </div>
-            <div class="calc-kpi">
-              <div class="k">VLSFO fuel signal</div>
-              <div class="v" id="fc-kpi-fuel">—</div>
-              <div class="s" id="fc-kpi-fuel-sub">vs ref</div>
-            </div>
-            <div class="calc-kpi">
-              <div class="k">Method</div>
-              <div class="v" style="font-size:0.95rem;" id="fc-kpi-method">—</div>
-              <div class="s" id="fc-kpi-stamp">—</div>
-            </div>
+            <div class="calc-kpi"><div class="k">C 40HC last QoQ</div><div class="v c-cyan" id="fc-kpi-c-g">—</div><div class="s" id="fc-kpi-c-g-sub">—</div></div>
+            <div class="calc-kpi"><div class="k">I 40HC last QoQ</div><div class="v c-emerald" id="fc-kpi-i-g">—</div><div class="s" id="fc-kpi-i-g-sub">—</div></div>
+            <div class="calc-kpi"><div class="k">C fuel signal</div><div class="v" id="fc-kpi-fuel">—</div><div class="s" id="fc-kpi-fuel-sub">—</div></div>
+            <div class="calc-kpi"><div class="k">I fuel signal</div><div class="v" id="fc-kpi-fuel-i">—</div><div class="s" id="fc-kpi-fuel-i-sub">—</div></div>
+            <div class="calc-kpi"><div class="k">Method</div><div class="v" style="font-size:0.9rem;" id="fc-kpi-method">—</div><div class="s" id="fc-kpi-stamp">—</div></div>
+            <div class="calc-kpi"><div class="k">C 40HC FC-1</div><div class="v c-amber" id="fc-kpi-c-fc1">—</div><div class="s" id="fc-kpi-c-fc1-sub">vs last actual</div></div>
           </div>
 
-          <!-- History table -->
-          <div class="card" style="padding:1rem;margin-bottom:0.9rem;">
-            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">1. Lịch sử (actual) — BAF Rates 2026</h3>
-            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Input forecast — không chỉnh sửa</p>
-            <div class="bafrates-wrap">
-              <table class="bafrates" id="fc-hist-table">
+          <!-- B. History + growth diagnostics -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">B. Actual schedule + diagnostics growth</h3>
+            <p class="t3" style="margin:0 0 0.7rem;font-size:12px;">Input bất biến từ BAF Rates 2026 · QoQ % tính tự động</p>
+            <div class="bafrates-wrap" style="margin-bottom:0.85rem;">
+              <table class="bafrates">
                 <thead>
                   <tr>
                     <th class="bafrates-corner" rowspan="2">Region</th>
-                    <th class="period-a" colspan="2">BAF Feb'26 ~ Apr'26</th>
-                    <th class="period-b" colspan="2">BAF 103Ki 1Q<br>May'26 ~ Jul'26</th>
-                    <th class="period-c" colspan="2">BAF 103Ki 1Q<br>Aug'26 ~ Oct'26</th>
+                    <th class="period-a" colspan="2">Feb'26 ~ Apr'26</th>
+                    <th class="period-b" colspan="2">103Ki May~Jul'26</th>
+                    <th class="period-c" colspan="2">103Ki Aug~Oct'26</th>
                   </tr>
                   <tr>
                     <th class="sub-a">20DC</th><th class="sub-a">40HC</th>
@@ -2112,57 +2127,137 @@
                 </tbody>
               </table>
             </div>
+            <h4 style="margin:0 0 0.45rem;font-size:0.85rem;font-weight:700;color:var(--cyan);">Bảng QoQ growth &amp; cumulative (từ actual)</h4>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:720px;" id="fc-growth-table">
+                <thead>
+                  <tr>
+                    <th>Series</th>
+                    <th>P0→P1 %</th>
+                    <th>P1→P2 %</th>
+                    <th>Geo-mean /kỳ</th>
+                    <th>CAGR (2 bước)</th>
+                    <th>Δ abs P0→P2</th>
+                    <th>σ residual OLS</th>
+                  </tr>
+                </thead>
+                <tbody id="fc-growth-tbody"></tbody>
+              </table>
+            </div>
           </div>
 
-          <!-- Forecast table -->
-          <div class="card" style="padding:1rem;margin-bottom:0.9rem;">
+          <!-- C. Forecast point table -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
             <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;margin-bottom:0.55rem;">
               <div>
-                <h3 style="margin:0;font-size:0.95rem;font-weight:700;" id="fc-table-title">2. Forecast — kỳ tiếp theo</h3>
-                <p class="t3" style="margin:0.3rem 0 0;font-size:12px;" id="fc-table-sub">Điểm dự báo (ensemble) · USD/container</p>
+                <h3 style="margin:0;font-size:0.95rem;font-weight:700;" id="fc-table-title">C. Forecast point (method chính)</h3>
+                <p class="t3" style="margin:0.3rem 0 0;font-size:12px;" id="fc-table-sub">USD/container · điểm dự báo</p>
               </div>
-              <span class="badge badge-sim" style="align-self:flex-start;">FORECAST · not tariff</span>
+              <span class="badge badge-sim">FORECAST · not official tariff</span>
             </div>
             <div class="bafrates-chips" id="fc-period-chips"></div>
-            <div class="bafrates-wrap" role="region" aria-label="BAF forecast table">
+            <div class="bafrates-wrap">
               <table class="bafrates" id="fc-forecast-table">
                 <thead id="fc-forecast-thead"></thead>
                 <tbody id="fc-forecast-tbody"></tbody>
               </table>
             </div>
-            <div class="bafrates-note" id="fc-table-note" style="margin-top:0.75rem;">
-              Ô forecast = model · dải Low–High = residual lịch sử ± band.
+            <div class="bafrates-note" id="fc-table-note" style="margin-top:0.75rem;"></div>
+          </div>
+
+          <!-- D. Low / Point / High detail -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">D. Chi tiết Low · Point · High (từng kỳ FC)</h3>
+            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Band từ residual OLS lịch sử × √horizon × band multiplier</p>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:780px;" id="fc-band-table">
+                <thead id="fc-band-thead"></thead>
+                <tbody id="fc-band-tbody"></tbody>
+              </table>
             </div>
           </div>
 
-          <!-- Combined full timeline optional wide table -->
-          <div class="card" style="padding:1rem;margin-bottom:0.9rem;">
-            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">3. Timeline full (actual + forecast)</h3>
-            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Cột actual nền chuẩn · cột forecast nền cyan nhạt</p>
+          <!-- E. Method comparison -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">E. So sánh 4 method — kỳ FC-1 (Nov'26–Jan'27)</h3>
+            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Growth · Linear · VLSFO · Ensemble trên cùng input</p>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:700px;">
+                <thead>
+                  <tr>
+                    <th>Series</th>
+                    <th>Last actual</th>
+                    <th>Growth</th>
+                    <th>Linear</th>
+                    <th>VLSFO</th>
+                    <th>Ensemble</th>
+                    <th>Spread max−min</th>
+                  </tr>
+                </thead>
+                <tbody id="fc-method-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- F. Scenarios -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">F. Kịch bản Bear · Base · Bull (mọi kỳ FC)</h3>
+            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;" id="fc-scenario-note">Bear/Bull = shock % quanh base point (method chính)</p>
             <div class="bafrates-wrap">
-              <table class="bafrates" id="fc-full-table" style="min-width:900px;">
+              <table class="bafrates" id="fc-scenario-table" style="min-width:820px;">
+                <thead id="fc-scenario-thead"></thead>
+                <tbody id="fc-scenario-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- G. Full timeline -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">G. Timeline full — actual + forecast</h3>
+            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Ô FC highlight cyan · actual giữ màu kỳ</p>
+            <div class="bafrates-wrap">
+              <table class="bafrates" id="fc-full-table" style="min-width:960px;">
                 <thead id="fc-full-thead"></thead>
                 <tbody id="fc-full-tbody"></tbody>
               </table>
             </div>
           </div>
 
+          <!-- H. Charts -->
+          <div style="display:grid;grid-template-columns:1fr;gap:0.9rem;margin-bottom:0.9rem;" class="models-2col">
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="margin:0 0 0.35rem;font-size:0.9rem;font-weight:700;" id="fc-chart-title">H1. Path C &amp; I (focus equip) + band C</h3>
+              <div class="chart-box" id="fc-chart" style="height:320px;"></div>
+            </div>
+            <div class="card" style="padding:1.1rem;">
+              <h3 style="margin:0 0 0.35rem;font-size:0.9rem;font-weight:700;">H2. Method fan — C focus FC path</h3>
+              <div class="chart-box" id="fc-chart-methods" style="height:320px;"></div>
+            </div>
+          </div>
+
+          <!-- I. Step walkthrough -->
           <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
-            <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:700;">4. Đường 40HC (C &amp; I) — actual → forecast</h3>
-            <div class="chart-box" id="fc-chart" style="height:300px;"></div>
+            <h3 style="margin:0 0 0.45rem;font-size:0.95rem;font-weight:700;">I. Walkthrough tính (C · focus equip · FC-1)</h3>
+            <div class="calc-steps" id="fc-walkthrough">
+              <ol id="fc-walkthrough-list"><li>Chạy forecast để xem từng bước số liệu…</li></ol>
+            </div>
           </div>
 
-          <div class="report-box" id="fc-report">
-            <h4>Báo cáo giải thích forecast (cập nhật theo số liệu)</h4>
-            <div class="report-meta" id="fc-report-meta">Bấm Chạy forecast…</div>
-            <div id="fc-report-body"><p>Báo cáo sẽ mô tả growth lịch sử, signal VLSFO, phương pháp và bảng kỳ tiếp theo.</p></div>
+          <!-- J. Report -->
+          <div class="report-box" id="fc-report" style="margin-bottom:0.9rem;">
+            <h4>J. Báo cáo giải thích đầy đủ (auto-update)</h4>
+            <div class="report-meta" id="fc-report-meta">Bấm Chạy forecast chi tiết…</div>
+            <div id="fc-report-body"><p>Báo cáo chi tiết sẽ gồm drivers, method, bảng FC, scenario, rủi ro và khuyến nghị dùng số.</p></div>
           </div>
 
-          <div class="card" style="padding:1rem 1.1rem;margin-top:0.9rem;border-color:rgba(251,191,36,0.25);">
-            <p class="t3" style="margin:0;font-size:12px;line-height:1.6;">
-              <strong style="color:var(--amber);">Disclaimer:</strong> Forecast minh họa từ schedule + VLSFO public — <strong>không</strong> phải circular BAF hãng cho kỳ tương lai.
-              Dùng cho planning / stress-test; quote formal chờ tariff chính thức.
-            </p>
+          <div class="card" style="padding:1rem 1.1rem;border-color:rgba(251,191,36,0.28);">
+            <h3 style="margin:0 0 0.4rem;font-size:0.85rem;font-weight:700;color:var(--amber);">Disclaimer / giới hạn model</h3>
+            <ul class="t3" style="margin:0;padding-left:1.15rem;font-size:12px;line-height:1.65;">
+              <li>Chỉ <strong>3 điểm actual</strong> → uncertainty cao; band là ước lượng thống kê đơn giản.</li>
+              <li>Forecast <strong>không</strong> phải circular BAF hãng / 103Ki chính thức cho kỳ tương lai.</li>
+              <li>VLSFO live thay đổi → bấm lại <em>Chạy forecast</em> (hoặc mở lại tab) để refresh.</li>
+              <li>Dùng cho planning, budget band, stress-test — không thay tariff đã công bố.</li>
+            </ul>
           </div>
         </section>
 
@@ -3433,57 +3528,77 @@
     };
   }
 
-  function forecastSeries(ys, horizons, method, dampen, vlsfoScale) {
-    const out = [];
+  function forecastSeriesDetailed(ys, horizons, opts) {
+    opts = opts || {};
+    const method = opts.method || 'ensemble';
+    const dampen = opts.dampen != null ? opts.dampen : 0.85;
+    const vlsfoScale = opts.vlsfoScale != null ? opts.vlsfoScale : 1;
+    const wV = opts.wV != null ? opts.wV : 0.3;
+    const wGshare = opts.wGshare != null ? opts.wGshare : 0.55; // share of non-VLSFO going to growth
+    const bandMul = opts.bandMul != null ? opts.bandMul : 1.25;
+    const bearPct = opts.bearPct != null ? opts.bearPct : 0.12;
+    const bullPct = opts.bullPct != null ? opts.bullPct : 0.15;
+
     const gLast = lastGrowth(ys);
     const gAvg = geoMeanGrowth(ys);
     const last = ys[ys.length - 1];
-    // residual for band: compare linear fit in-sample
+    const g01 = ys[0] > 0 ? ys[1] / ys[0] : 1;
+    const g12 = ys[1] > 0 ? ys[2] / ys[1] : 1;
     const residuals = [];
-    for (let i = 0; i < ys.length; i++) {
-      residuals.push(ys[i] - olsNext(ys, i));
-    }
+    for (let i = 0; i < ys.length; i++) residuals.push(ys[i] - olsNext(ys, i));
     const mse = residuals.reduce(function (s, r) { return s + r * r; }, 0) / Math.max(1, residuals.length);
-    const sigma = Math.sqrt(mse) || last * 0.05;
+    const sigma = Math.sqrt(mse) || Math.abs(last) * 0.05;
+    const cagr = ys[0] > 0 ? Math.pow(ys[ys.length - 1] / ys[0], 1 / (ys.length - 1)) - 1 : 0;
 
+    const out = [];
     for (let h = 1; h <= horizons; h++) {
       const tNew = ys.length - 1 + h;
-      const damp = Math.pow(dampen, h);
-      const gEff = 1 + (gLast - 1) * damp * 0.55 + (gAvg - 1) * damp * 0.45;
-      const growthPath = last * Math.pow(gEff, h);
-      // recompute path step by step for growth
       let gPoint = last;
       for (let k = 0; k < h; k++) {
         const dk = Math.pow(dampen, k + 1);
         const gk = 1 + (gLast - 1) * dk * 0.55 + (gAvg - 1) * dk * 0.45;
         gPoint = gPoint * gk;
       }
-      const linPoint = olsNext(ys, tNew);
-      const vlsfoPoint = last * Math.pow(vlsfoScale, h * 0.35) * Math.pow(gAvg, h * 0.25);
+      const linPoint = Math.max(0, olsNext(ys, tNew));
+      const vlsfoPoint = Math.max(0, last * Math.pow(vlsfoScale, h * 0.35) * Math.pow(Math.max(0.5, gAvg), h * 0.25));
+      const wVcl = Math.max(0, Math.min(1, wV));
+      const wG = (1 - wVcl) * Math.max(0, Math.min(1, wGshare));
+      const wL = Math.max(0, 1 - wVcl - wG);
+      const ensPoint = wG * gPoint + wL * linPoint + wVcl * vlsfoPoint;
 
       let point;
       if (method === 'growth') point = gPoint;
       else if (method === 'linear') point = linPoint;
       else if (method === 'vlsfo') point = vlsfoPoint;
-      else {
-        // ensemble weights
-        const wV = Math.max(0, Math.min(1, numInput('fc-vlsfo-w', 0.3)));
-        const wG = (1 - wV) * 0.55;
-        const wL = (1 - wV) * 0.45;
-        point = wG * gPoint + wL * linPoint + wV * vlsfoPoint;
-      }
+      else point = ensPoint;
       point = Math.max(0, point);
-      const band = sigma * Math.sqrt(h) * 1.25;
+
+      const band = sigma * Math.sqrt(h) * bandMul;
       out.push({
         point: point,
         low: Math.max(0, point - band),
         high: point + band,
-        growth: gPoint,
-        linear: linPoint,
-        vlsfo: vlsfoPoint,
+        growth: Math.max(0, gPoint),
+        linear: Math.max(0, linPoint),
+        vlsfo: Math.max(0, vlsfoPoint),
+        ensemble: Math.max(0, ensPoint),
+        bear: Math.max(0, point * (1 - bearPct)),
+        bull: point * (1 + bullPct),
+        band: band,
+        weights: { wG: wG, wL: wL, wV: wVcl },
       });
     }
-    return { points: out, sigma: sigma, gLast: gLast, gAvg: gAvg };
+    return {
+      points: out, sigma: sigma, gLast: gLast, gAvg: gAvg, g01: g01, g12: g12,
+      cagr: cagr, last: last, residuals: residuals,
+    };
+  }
+
+  function rndFc(x, dig) {
+    if (!isFinite(x)) return 0;
+    if (dig === 0) return Math.round(x);
+    const m = Math.pow(10, dig);
+    return Math.round(x * m) / m;
   }
 
   function runBafForecast() {
@@ -3492,47 +3607,77 @@
     const dampen = Math.max(0.5, Math.min(1, numInput('fc-dampen', 0.85)));
     const hubMode = strInput('fc-fuel-hub', 'glb');
     const dig = parseInt(strInput('fc-round', '0'), 10) || 0;
+    const wV = Math.max(0, Math.min(1, numInput('fc-vlsfo-w', 0.3)));
+    const wGshare = Math.max(0, Math.min(1, numInput('fc-growth-w', 0.55)));
+    const bandMul = Math.max(0.5, Math.min(3, numInput('fc-band', 1.25)));
+    const bearPct = Math.max(0, Math.min(0.5, numInput('fc-bear', 12) / 100));
+    const bullPct = Math.max(0, Math.min(0.5, numInput('fc-bull', 15) / 100));
+    const focusEquip = strInput('fc-focus-equip', '40HC');
     const future = BAF_FC_FUTURE.slice(0, horizons);
     const stamp = new Date();
 
+    const commonOpts = {
+      dampen: dampen, wV: wV, wGshare: wGshare, bandMul: bandMul,
+      bearPct: bearPct, bullPct: bullPct,
+    };
+
     const result = {
-      method: method,
-      horizons: horizons,
-      dampen: dampen,
-      hubMode: hubMode,
-      dig: dig,
-      future: future,
-      stamp: stamp,
-      cells: {}, // region -> periodId -> equip -> {point,low,high}
-      drivers: {},
+      method: method, horizons: horizons, dampen: dampen, hubMode: hubMode, dig: dig,
+      wV: wV, wGshare: wGshare, bandMul: bandMul, bearPct: bearPct, bullPct: bullPct,
+      focusEquip: focusEquip, future: future, stamp: stamp,
+      cells: {}, drivers: {}, methodCompare: {},
     };
 
     BAF_MATRIX_REGIONS.forEach(function (region) {
       result.cells[region] = {};
       result.drivers[region] = {};
+      result.methodCompare[region] = {};
       const fuel = vlsfoFuelFactor(region, hubMode);
       result.drivers[region].fuel = fuel;
+
       BAF_MATRIX_EQUIP.forEach(function (equip) {
         const ys = seriesFromSchedule(region, equip);
-        const fc = forecastSeries(ys, horizons, method, dampen, fuel.scale);
+        const fcMain = forecastSeriesDetailed(ys, horizons, Object.assign({ method: method, vlsfoScale: fuel.scale }, commonOpts));
+        // Also compute all methods for FC-1 comparison + charts
+        const byMethod = {};
+        ['growth', 'linear', 'vlsfo', 'ensemble'].forEach(function (m) {
+          byMethod[m] = forecastSeriesDetailed(ys, horizons, Object.assign({ method: m, vlsfoScale: fuel.scale }, commonOpts));
+        });
+
         result.drivers[region][equip] = {
           series: ys,
-          gLast: fc.gLast,
-          gAvg: fc.gAvg,
-          sigma: fc.sigma,
+          gLast: fcMain.gLast,
+          gAvg: fcMain.gAvg,
+          g01: fcMain.g01,
+          g12: fcMain.g12,
+          cagr: fcMain.cagr,
+          sigma: fcMain.sigma,
+          last: fcMain.last,
+          byMethod: byMethod,
+          main: fcMain,
         };
+        result.methodCompare[region][equip] = {
+          last: ys[ys.length - 1],
+          growth: byMethod.growth.points[0].point,
+          linear: byMethod.linear.points[0].point,
+          vlsfo: byMethod.vlsfo.points[0].point,
+          ensemble: byMethod.ensemble.points[0].point,
+        };
+
         future.forEach(function (fp, hi) {
           if (!result.cells[region][fp.id]) result.cells[region][fp.id] = {};
-          const p = fc.points[hi];
-          const rnd = function (x) {
-            if (dig === 0) return Math.round(x);
-            return Math.round(x * Math.pow(10, dig)) / Math.pow(10, dig);
-          };
+          const p = fcMain.points[hi];
           result.cells[region][fp.id][equip] = {
-            point: rnd(p.point),
-            low: rnd(p.low),
-            high: rnd(p.high),
-            raw: p.point,
+            point: rndFc(p.point, dig),
+            low: rndFc(p.low, dig),
+            high: rndFc(p.high, dig),
+            bear: rndFc(p.bear, dig),
+            bull: rndFc(p.bull, dig),
+            growth: rndFc(p.growth, dig),
+            linear: rndFc(p.linear, dig),
+            vlsfo: rndFc(p.vlsfo, dig),
+            ensemble: rndFc(p.ensemble, dig),
+            raw: p,
           };
         });
       });
@@ -3549,33 +3694,65 @@
     if (!result) return;
     const dig = result.dig;
     const future = result.future;
+    const focus = result.focusEquip || '40HC';
+    const methodLabels = {
+      ensemble: 'Ensemble', growth: 'Chain growth', linear: 'Linear OLS', vlsfo: 'VLSFO-linked',
+    };
 
-    // KPIs
-    const c40 = result.drivers.C && result.drivers.C['40HC'];
-    const i40 = result.drivers.I && result.drivers.I['40HC'];
+    // —— KPIs ——
+    const c40 = result.drivers.C['40HC'];
+    const i40 = result.drivers.I['40HC'];
+    const fuelC = result.drivers.C.fuel;
+    const fuelI = result.drivers.I.fuel;
     if (c40) {
       setTextSafe('fc-kpi-c-g', ((c40.gLast - 1) * 100).toFixed(1) + '%');
-      setTextSafe('fc-kpi-c-g-sub', 'geoAvg ' + ((c40.gAvg - 1) * 100).toFixed(1) + '%/kỳ');
+      setTextSafe('fc-kpi-c-g-sub', 'P0→P1 ' + ((c40.g01 - 1) * 100).toFixed(1) + '% · geo ' + ((c40.gAvg - 1) * 100).toFixed(1) + '% · CAGR ' + (c40.cagr * 100).toFixed(1) + '%');
     }
     if (i40) {
       setTextSafe('fc-kpi-i-g', ((i40.gLast - 1) * 100).toFixed(1) + '%');
-      setTextSafe('fc-kpi-i-g-sub', 'geoAvg ' + ((i40.gAvg - 1) * 100).toFixed(1) + '%/kỳ');
+      setTextSafe('fc-kpi-i-g-sub', 'P0→P1 ' + ((i40.g01 - 1) * 100).toFixed(1) + '% · geo ' + ((i40.gAvg - 1) * 100).toFixed(1) + '% · CAGR ' + (i40.cagr * 100).toFixed(1) + '%');
     }
-    const fuelG = result.drivers.C && result.drivers.C.fuel;
-    if (fuelG) {
-      setTextSafe('fc-kpi-fuel', (fuelG.dPct >= 0 ? '+' : '') + (fuelG.dPct * 100).toFixed(1) + '%');
-      setTextSafe('fc-kpi-fuel-sub', 'P=' + money(fuelG.px) + ' vs base ' + money(fuelG.base) + ' · scale×' + fuelG.scale.toFixed(3));
+    if (fuelC) {
+      setTextSafe('fc-kpi-fuel', (fuelC.dPct >= 0 ? '+' : '') + (fuelC.dPct * 100).toFixed(1) + '%');
+      setTextSafe('fc-kpi-fuel-sub', 'C hub P=' + money(fuelC.px) + ' base ' + money(fuelC.base) + ' · ×' + fuelC.scale.toFixed(3));
     }
-    const methodLabels = {
-      ensemble: 'Ensemble',
-      growth: 'Chain growth',
-      linear: 'Linear OLS',
-      vlsfo: 'VLSFO-linked',
-    };
+    if (fuelI) {
+      setTextSafe('fc-kpi-fuel-i', (fuelI.dPct >= 0 ? '+' : '') + (fuelI.dPct * 100).toFixed(1) + '%');
+      setTextSafe('fc-kpi-fuel-i-sub', 'I hub P=' + money(fuelI.px) + ' base ' + money(fuelI.base) + ' · ×' + fuelI.scale.toFixed(3));
+    }
     setTextSafe('fc-kpi-method', methodLabels[result.method] || result.method);
-    setTextSafe('fc-kpi-stamp', result.stamp ? result.stamp.toLocaleString('vi-VN') : '—');
+    setTextSafe('fc-kpi-stamp', (result.stamp ? result.stamp.toLocaleString('vi-VN') : '—') + ' · h=' + result.horizons);
+    const fc1C = result.cells.C[future[0].id]['40HC'];
+    const lastC = c40.last;
+    if (fc1C && lastC) {
+      const dlt = fc1C.point - lastC;
+      const pct = lastC ? (dlt / lastC) * 100 : 0;
+      setTextSafe('fc-kpi-c-fc1', formatMatrixCell(fc1C.point, dig));
+      setTextSafe('fc-kpi-c-fc1-sub', (dlt >= 0 ? '+' : '') + formatMatrixCell(dlt, dig) + ' (' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%) vs Aug–Oct');
+    }
 
-    // Chips
+    // —— Growth diagnostics table ——
+    const gtbody = document.getElementById('fc-growth-tbody');
+    if (gtbody) {
+      let rows = '';
+      BAF_MATRIX_REGIONS.forEach(function (region) {
+        BAF_MATRIX_EQUIP.forEach(function (equip) {
+          const d = result.drivers[region][equip];
+          const abs = d.series[2] - d.series[0];
+          rows += '<tr>' +
+            '<td class="cell-label">' + region + ' ' + equip + '</td>' +
+            '<td class="' + (d.g01 >= 1 ? 'c-up' : 'c-down') + '">' + ((d.g01 - 1) * 100).toFixed(1) + '%</td>' +
+            '<td class="' + (d.g12 >= 1 ? 'c-up' : 'c-down') + '">' + ((d.g12 - 1) * 100).toFixed(1) + '%</td>' +
+            '<td>' + ((d.gAvg - 1) * 100).toFixed(1) + '%</td>' +
+            '<td>' + (d.cagr * 100).toFixed(1) + '%</td>' +
+            '<td class="' + (abs >= 0 ? 'c-up' : 'c-down') + '">' + (abs >= 0 ? '+' : '') + abs + '</td>' +
+            '<td>' + d.sigma.toFixed(1) + '</td></tr>';
+        });
+      });
+      gtbody.innerHTML = rows;
+    }
+
+    // —— Chips + point forecast table ——
     const chips = document.getElementById('fc-period-chips');
     if (chips) {
       chips.innerHTML = future.map(function (f, i) {
@@ -3583,10 +3760,9 @@
         return '<span class="bafrates-chip"><i class="' + cls + '"></i> ' + f.label + ' · ' + f.code + '</span>';
       }).join('');
     }
-    setTextSafe('fc-table-title', '2. Forecast — ' + future.map(function (f) { return f.short; }).join(' · '));
-    setTextSafe('fc-table-sub', methodLabels[result.method] + ' · USD/container · dampen ' + result.dampen);
+    setTextSafe('fc-table-title', 'C. Forecast point — ' + future.map(function (f) { return f.short; }).join(' · '));
+    setTextSafe('fc-table-sub', methodLabels[result.method] + ' · dampen ' + result.dampen + ' · wV=' + result.wV + ' · band×' + result.bandMul);
 
-    // Forecast-only table header
     const thead = document.getElementById('fc-forecast-thead');
     const tbody = document.getElementById('fc-forecast-tbody');
     if (thead && tbody) {
@@ -3595,13 +3771,10 @@
       future.forEach(function (f, i) {
         const pc = i % 3 === 0 ? 'period-b' : (i % 3 === 1 ? 'period-c' : 'period-a');
         const sc = i % 3 === 0 ? 'sub-b' : (i % 3 === 1 ? 'sub-c' : 'sub-a');
-        h1 += '<th class="' + pc + '" colspan="2">' + f.label + '<br><span style="font-weight:500;opacity:0.85;">' + f.code + '</span></th>';
+        h1 += '<th class="' + pc + '" colspan="2">' + f.label + '<br><span style="font-weight:500;opacity:.85">' + f.code + '</span></th>';
         h2 += '<th class="' + sc + '">20DC</th><th class="' + sc + '">40HC</th>';
       });
-      h1 += '</tr>';
-      h2 += '</tr>';
-      thead.innerHTML = h1 + h2;
-
+      thead.innerHTML = h1 + '</tr>' + h2 + '</tr>';
       tbody.innerHTML = BAF_MATRIX_REGIONS.map(function (region) {
         const reg = BAF_RATES_2026.regions[region];
         let cells = '';
@@ -3609,16 +3782,99 @@
           const cc = i % 3 === 0 ? 'col-b' : (i % 3 === 1 ? 'col-c' : 'col-a');
           BAF_MATRIX_EQUIP.forEach(function (equip) {
             const cell = result.cells[region][f.id][equip];
-            cells += '<td class="' + cc + ' calc-hit" title="Low ' + formatMatrixCell(cell.low, dig) +
-              ' – High ' + formatMatrixCell(cell.high, dig) + '">' +
-              formatMatrixCell(cell.point, dig) + '</td>';
+            cells += '<td class="' + cc + ' calc-hit" title="L ' + cell.low + ' · H ' + cell.high +
+              ' · Bear ' + cell.bear + ' · Bull ' + cell.bull + '">' + formatMatrixCell(cell.point, dig) + '</td>';
           });
         });
         return '<tr><td class="region">' + (reg ? reg.name : region) + '</td>' + cells + '</tr>';
       }).join('');
     }
+    const note = document.getElementById('fc-table-note');
+    if (note) {
+      note.innerHTML = '<strong>Cách đọc</strong> — Ô = điểm forecast (USD/container). Hover: Low / High / Bear / Bull. ' +
+        'Xem bảng D cho đủ 3 cột band; bảng E so method; bảng F scenario.';
+    }
 
-    // Full timeline table: 3 actual + N forecast
+    // —— D. Band table ——
+    const bthead = document.getElementById('fc-band-thead');
+    const btbody = document.getElementById('fc-band-tbody');
+    if (bthead && btbody) {
+      let bh = '<tr><th>Series</th><th>Kỳ FC</th><th>Low</th><th>Point</th><th>High</th><th>Width</th><th>vs last actual</th><th>% vs last</th></tr>';
+      bthead.innerHTML = bh;
+      let brows = '';
+      BAF_MATRIX_REGIONS.forEach(function (region) {
+        BAF_MATRIX_EQUIP.forEach(function (equip) {
+          const last = result.drivers[region][equip].last;
+          future.forEach(function (f) {
+            const c = result.cells[region][f.id][equip];
+            const dlt = c.point - last;
+            const pct = last ? (dlt / last) * 100 : 0;
+            brows += '<tr>' +
+              '<td class="cell-label">' + region + ' ' + equip + '</td>' +
+              '<td class="cell-label">' + f.short + '</td>' +
+              '<td class="c-down">' + formatMatrixCell(c.low, dig) + '</td>' +
+              '<td class="c-cyan" style="font-weight:700;">' + formatMatrixCell(c.point, dig) + '</td>' +
+              '<td class="c-up">' + formatMatrixCell(c.high, dig) + '</td>' +
+              '<td>' + formatMatrixCell(c.high - c.low, dig) + '</td>' +
+              '<td class="' + (dlt >= 0 ? 'c-up' : 'c-down') + '">' + (dlt >= 0 ? '+' : '') + formatMatrixCell(dlt, dig) + '</td>' +
+              '<td class="' + (pct >= 0 ? 'c-up' : 'c-down') + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%</td></tr>';
+          });
+        });
+      });
+      btbody.innerHTML = brows;
+    }
+
+    // —— E. Method compare FC-1 ——
+    const mtbody = document.getElementById('fc-method-tbody');
+    if (mtbody) {
+      let mrows = '';
+      BAF_MATRIX_REGIONS.forEach(function (region) {
+        BAF_MATRIX_EQUIP.forEach(function (equip) {
+          const mc = result.methodCompare[region][equip];
+          const vals = [mc.growth, mc.linear, mc.vlsfo, mc.ensemble];
+          const spread = Math.max.apply(null, vals) - Math.min.apply(null, vals);
+          mrows += '<tr>' +
+            '<td class="cell-label">' + region + ' ' + equip + '</td>' +
+            '<td>' + formatMatrixCell(mc.last, dig) + '</td>' +
+            '<td>' + formatMatrixCell(mc.growth, dig) + '</td>' +
+            '<td>' + formatMatrixCell(mc.linear, dig) + '</td>' +
+            '<td>' + formatMatrixCell(mc.vlsfo, dig) + '</td>' +
+            '<td class="c-cyan" style="font-weight:700;">' + formatMatrixCell(mc.ensemble, dig) + '</td>' +
+            '<td>' + formatMatrixCell(spread, dig) + '</td></tr>';
+        });
+      });
+      mtbody.innerHTML = mrows;
+    }
+
+    // —— F. Scenarios ——
+    setTextSafe('fc-scenario-note',
+      'Bear = point × (1−' + (result.bearPct * 100).toFixed(0) + '%) · Base = point · Bull = point × (1+' + (result.bullPct * 100).toFixed(0) + '%) · equip focus rows expanded for all');
+    const sthead = document.getElementById('fc-scenario-thead');
+    const stbody = document.getElementById('fc-scenario-tbody');
+    if (sthead && stbody) {
+      let sh1 = '<tr><th class="bafrates-corner" rowspan="2">Series</th>';
+      let sh2 = '<tr>';
+      future.forEach(function (f, i) {
+        const pc = i % 3 === 0 ? 'period-b' : 'period-c';
+        sh1 += '<th class="' + pc + '" colspan="3">' + f.short + '</th>';
+        sh2 += '<th class="sub-a">Bear</th><th class="sub-b">Base</th><th class="sub-c">Bull</th>';
+      });
+      sthead.innerHTML = sh1 + '</tr>' + sh2 + '</tr>';
+      stbody.innerHTML = BAF_MATRIX_REGIONS.map(function (region) {
+        return BAF_MATRIX_EQUIP.map(function (equip) {
+          let cells = '';
+          future.forEach(function (f) {
+            const c = result.cells[region][f.id][equip];
+            cells += '<td class="col-a c-down">' + formatMatrixCell(c.bear, dig) + '</td>' +
+              '<td class="col-b calc-hit">' + formatMatrixCell(c.point, dig) + '</td>' +
+              '<td class="col-c c-up">' + formatMatrixCell(c.bull, dig) + '</td>';
+          });
+          return '<tr><td class="region">' + region + ' ' + equip + '</td>' + cells + '</tr>';
+        }).join('');
+      }).join('');
+    }
+
+    // —— G. Full timeline ——
     const fthead = document.getElementById('fc-full-thead');
     const ftbody = document.getElementById('fc-full-tbody');
     if (fthead && ftbody) {
@@ -3626,9 +3882,7 @@
         { id: 'feb_apr', label: "Feb'26~Apr'26", actual: true },
         { id: 'may_jul', label: "May'26~Jul'26", actual: true },
         { id: 'aug_oct', label: "Aug'26~Oct'26", actual: true },
-      ].concat(future.map(function (f) {
-        return { id: f.id, label: f.short, actual: false };
-      }));
+      ].concat(future.map(function (f) { return { id: f.id, label: f.short, actual: false }; }));
       let h1 = '<tr><th class="bafrates-corner" rowspan="2">Region</th>';
       let h2 = '<tr>';
       allPeriods.forEach(function (p, i) {
@@ -3637,75 +3891,96 @@
         h1 += '<th class="' + pc + '" colspan="2">' + p.label + (p.actual ? '' : ' · FC') + '</th>';
         h2 += '<th class="' + sc + '">20DC</th><th class="' + sc + '">40HC</th>';
       });
-      h1 += '</tr>';
-      h2 += '</tr>';
-      fthead.innerHTML = h1 + h2;
+      fthead.innerHTML = h1 + '</tr>' + h2 + '</tr>';
       ftbody.innerHTML = BAF_MATRIX_REGIONS.map(function (region) {
         const reg = BAF_RATES_2026.regions[region];
         let cells = '';
         allPeriods.forEach(function (p, i) {
           const cc = p.actual ? (i === 0 ? 'col-a' : i === 1 ? 'col-b' : 'col-c') : 'col-b';
           BAF_MATRIX_EQUIP.forEach(function (equip) {
-            let val;
-            if (p.actual) val = lookupTariffRate(region, p.id, equip);
-            else val = result.cells[region][p.id][equip].point;
-            const hit = p.actual ? '' : ' calc-hit';
-            cells += '<td class="' + cc + hit + '">' + formatMatrixCell(val, dig) + '</td>';
+            const val = p.actual ? lookupTariffRate(region, p.id, equip) : result.cells[region][p.id][equip].point;
+            cells += '<td class="' + cc + (p.actual ? '' : ' calc-hit') + '">' + formatMatrixCell(val, dig) + '</td>';
           });
         });
         return '<tr><td class="region">' + (reg ? reg.name : region) + '</td>' + cells + '</tr>';
       }).join('');
     }
 
-    const note = document.getElementById('fc-table-note');
-    if (note) {
-      note.innerHTML = '<strong>Cách đọc</strong> — Số trong bảng = <em>điểm forecast</em> (USD/container). ' +
-        'Hover ô để xem dải Low–High. Actual 3 kỳ trái (timeline full) là schedule; cột FC là model.';
+    // —— I. Walkthrough ——
+    const walk = document.getElementById('fc-walkthrough-list');
+    if (walk) {
+      const d = result.drivers.C[focus];
+      const f0 = future[0];
+      const cell = result.cells.C[f0.id][focus];
+      const p = cell.raw;
+      walk.innerHTML = [
+        'Series focus: <code>C ' + focus + '</code> · actual = <code>' + d.series.join(' → ') + '</code>.',
+        'g(P0→P1) = <code>' + ((d.g01 - 1) * 100).toFixed(2) + '%</code> · g(P1→P2) = <code>' + ((d.g12 - 1) * 100).toFixed(2) + '%</code> · geo-mean = <code>' + ((d.gAvg - 1) * 100).toFixed(2) + '%</code> · last = <code>' + ((d.gLast - 1) * 100).toFixed(2) + '%</code>.',
+        'Growth FC-1 (dampen ' + result.dampen + '): start ' + d.last + ' × g_eff → <code>' + formatMatrixCell(p.growth, dig) + '</code>.',
+        'Linear OLS t=3: <code>' + formatMatrixCell(p.linear, dig) + '</code> · residual σ = <code>' + d.sigma.toFixed(2) + '</code>.',
+        'VLSFO-linked: scale fuel C ×' + result.drivers.C.fuel.scale.toFixed(3) + ' → <code>' + formatMatrixCell(p.vlsfo, dig) + '</code>.',
+        'Ensemble weights wG=' + p.weights.wG.toFixed(2) + ' wL=' + p.weights.wL.toFixed(2) + ' wV=' + p.weights.wV.toFixed(2) +
+          ' → blend = <code>' + formatMatrixCell(p.ensemble, dig) + '</code>.',
+        'Method chính <strong>' + result.method + '</strong> → Point = <code>' + formatMatrixCell(cell.point, dig) + '</code>.',
+        'Band: ± σ√h × ' + result.bandMul + ' → Low <code>' + formatMatrixCell(cell.low, dig) + '</code> · High <code>' + formatMatrixCell(cell.high, dig) + '</code>.',
+        'Scenario: Bear <code>' + formatMatrixCell(cell.bear, dig) + '</code> · Bull <code>' + formatMatrixCell(cell.bull, dig) + '</code> (shock ' +
+          (result.bearPct * 100).toFixed(0) + '% / +' + (result.bullPct * 100).toFixed(0) + '%).',
+        'Δ vs last actual Aug–Oct: <code>' + (cell.point - d.last >= 0 ? '+' : '') + formatMatrixCell(cell.point - d.last, dig) + '</code> (' +
+          (((cell.point - d.last) / d.last) * 100).toFixed(1) + '%).',
+      ].map(function (s) { return '<li>' + s + '</li>'; }).join('');
     }
 
+    setTextSafe('fc-chart-title', 'H1. Path C & I · ' + focus + ' + band C');
     renderBafForecastChart(result);
+    renderBafForecastMethodsChart(result);
     renderBafForecastReport(result);
+  }
+
+  function destroyFcChart(key) {
+    try {
+      if (state.charts[key]) {
+        state.charts[key].destroy();
+        state.charts[key] = null;
+      }
+    } catch (e) {}
   }
 
   function renderBafForecastChart(result) {
     const el = document.getElementById('fc-chart');
     if (!el || typeof ApexCharts === 'undefined') return;
+    const focus = result.focusEquip || '40HC';
     const cats = BAF_MATRIX_PERIODS.map(function (p) {
       return BAF_RATES_2026.periods[p].short;
     }).concat(result.future.map(function (f) { return f.short; }));
 
     function path(region) {
-      const hist = seriesFromSchedule(region, '40HC');
-      const fut = result.future.map(function (f) {
-        return result.cells[region][f.id]['40HC'].point;
-      });
-      return hist.concat(fut);
+      return seriesFromSchedule(region, focus).concat(
+        result.future.map(function (f) { return result.cells[region][f.id][focus].point; })
+      );
     }
     function band(region, key) {
-      const hist = seriesFromSchedule(region, '40HC');
-      // null band on actual
-      const fut = result.future.map(function (f) {
-        return result.cells[region][f.id]['40HC'][key];
-      });
-      return hist.map(function () { return null; }).concat(fut);
+      return seriesFromSchedule(region, focus).map(function () { return null; }).concat(
+        result.future.map(function (f) { return result.cells[region][f.id][focus][key]; })
+      );
     }
 
     const opts = {
       series: [
-        { name: 'C 40HC', data: path('C') },
-        { name: 'I 40HC', data: path('I') },
+        { name: 'C ' + focus, data: path('C') },
+        { name: 'I ' + focus, data: path('I') },
         { name: 'C High', data: band('C', 'high') },
         { name: 'C Low', data: band('C', 'low') },
+        { name: 'C Bull', data: band('C', 'bull') },
+        { name: 'C Bear', data: band('C', 'bear') },
       ],
       chart: {
-        type: 'line', height: 300, width: '100%',
-        background: 'transparent', foreColor: chartFore(),
-        toolbar: { show: false }, fontFamily: 'Inter, sans-serif',
+        type: 'line', height: 320, width: '100%', background: 'transparent', foreColor: chartFore(),
+        toolbar: { show: true, tools: { download: true } }, fontFamily: 'Inter, sans-serif',
         animations: { enabled: true, speed: 400 },
       },
-      colors: ['#22d3ee', '#34d399', 'rgba(34,211,238,0.35)', 'rgba(34,211,238,0.35)'],
-      stroke: { width: [3, 3, 1.2, 1.2], curve: 'smooth', dashArray: [0, 0, 4, 4] },
-      markers: { size: [4, 4, 0, 0] },
+      colors: ['#22d3ee', '#34d399', 'rgba(34,211,238,0.4)', 'rgba(34,211,238,0.4)', 'rgba(52,211,153,0.45)', 'rgba(248,113,113,0.45)'],
+      stroke: { width: [3, 3, 1.2, 1.2, 1.2, 1.2], curve: 'smooth', dashArray: [0, 0, 4, 4, 6, 6] },
+      markers: { size: [5, 5, 0, 0, 0, 0] },
       xaxis: {
         categories: cats,
         labels: { style: { fontSize: '11px', colors: chartFore() } },
@@ -3718,11 +3993,8 @@
         },
       },
       grid: { borderColor: gridColor(), strokeDashArray: 3 },
-      legend: { position: 'top', horizontalAlign: 'right', labels: { colors: chartFore() } },
-      tooltip: {
-        theme: tooltipTheme(),
-        y: { formatter: function (v) { return v != null ? '$' + Math.round(v) : '—'; } },
-      },
+      legend: { position: 'top', horizontalAlign: 'right', labels: { colors: chartFore() }, fontSize: '11px' },
+      tooltip: { theme: tooltipTheme(), y: { formatter: function (v) { return v != null ? '$' + Math.round(v) : '—'; } } },
       annotations: {
         xaxis: [{
           x: BAF_RATES_2026.periods.aug_oct.short,
@@ -3731,16 +4003,62 @@
         }],
       },
     };
-
-    try {
-      if (state.charts.bafFc) {
-        state.charts.bafFc.destroy();
-        state.charts.bafFc = null;
-      }
-    } catch (e) {}
+    destroyFcChart('bafFc');
     el.innerHTML = '';
     state.charts.bafFc = new ApexCharts(el, opts);
     state.charts.bafFc.render();
+  }
+
+  function renderBafForecastMethodsChart(result) {
+    const el = document.getElementById('fc-chart-methods');
+    if (!el || typeof ApexCharts === 'undefined') return;
+    const focus = result.focusEquip || '40HC';
+    const d = result.drivers.C[focus];
+    const cats = BAF_MATRIX_PERIODS.map(function (p) {
+      return BAF_RATES_2026.periods[p].short;
+    }).concat(result.future.map(function (f) { return f.short; }));
+    const hist = d.series;
+
+    function methodPath(key) {
+      return hist.concat(result.future.map(function (f, hi) {
+        return rndFc(d.byMethod[key].points[hi][key === 'ensemble' ? 'ensemble' : key === 'growth' ? 'growth' : key === 'linear' ? 'linear' : 'vlsfo'], result.dig);
+      }));
+    }
+
+    const opts = {
+      series: [
+        { name: 'Actual (C ' + focus + ')', data: hist.concat(result.future.map(function () { return null; })) },
+        { name: 'Growth', data: methodPath('growth') },
+        { name: 'Linear', data: methodPath('linear') },
+        { name: 'VLSFO', data: methodPath('vlsfo') },
+        { name: 'Ensemble', data: methodPath('ensemble') },
+      ],
+      chart: {
+        type: 'line', height: 320, width: '100%', background: 'transparent', foreColor: chartFore(),
+        toolbar: { show: false }, fontFamily: 'Inter, sans-serif',
+      },
+      colors: ['#e2e8f0', '#fbbf24', '#a78bfa', '#f87171', '#22d3ee'],
+      stroke: { width: [3, 2, 2, 2, 3], curve: 'smooth', dashArray: [0, 3, 3, 3, 0] },
+      markers: { size: [4, 3, 3, 3, 4] },
+      xaxis: {
+        categories: cats,
+        labels: { style: { fontSize: '11px', colors: chartFore() } },
+        axisBorder: { show: false }, axisTicks: { show: false },
+      },
+      yaxis: {
+        labels: {
+          formatter: function (v) { return v != null ? Math.round(v) : ''; },
+          style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', colors: chartFore() },
+        },
+      },
+      grid: { borderColor: gridColor(), strokeDashArray: 3 },
+      legend: { position: 'top', horizontalAlign: 'right', labels: { colors: chartFore() }, fontSize: '11px' },
+      tooltip: { theme: tooltipTheme(), shared: true, y: { formatter: function (v) { return v != null ? '$' + Math.round(v) : '—'; } } },
+    };
+    destroyFcChart('bafFcMethods');
+    el.innerHTML = '';
+    state.charts.bafFcMethods = new ApexCharts(el, opts);
+    state.charts.bafFcMethods.render();
   }
 
   function renderBafForecastReport(result) {
@@ -3749,102 +4067,123 @@
     if (!body) return;
     if (meta) {
       meta.textContent = 'Cập nhật ' + (result.stamp ? result.stamp.toLocaleString('vi-VN') : '') +
-        ' · method ' + result.method + ' · ' + result.horizons + ' kỳ · based on BAF Rates 2026 + VLSFO live';
-    }
-
-    function line(region, equip) {
-      const d = result.drivers[region][equip];
-      const fut = result.future.map(function (f) {
-        return formatMatrixCell(result.cells[region][f.id][equip].point, result.dig);
-      }).join(' → ');
-      return '<li><span class="hl">' + region + ' ' + equip + '</span>: actual ' +
-        d.series.join(' → ') + ' → FC <span class="mono-inline">' + fut + '</span> ' +
-        '(gLast ' + ((d.gLast - 1) * 100).toFixed(1) + '%)</li>';
+        ' · ' + result.method + ' · ' + result.horizons + ' kỳ · dampen ' + result.dampen +
+        ' · wV=' + result.wV + ' · band×' + result.bandMul + ' · BAF Rates 2026 + VLSFO live';
     }
 
     const fuelC = result.drivers.C.fuel;
     const fuelI = result.drivers.I.fuel;
+    const focus = result.focusEquip || '40HC';
+    const f0 = result.future[0];
+
+    function pathLine(region, equip) {
+      const d = result.drivers[region][equip];
+      const fut = result.future.map(function (f) {
+        const c = result.cells[region][f.id][equip];
+        return formatMatrixCell(c.point, result.dig) + ' [' + c.low + '–' + c.high + ']';
+      }).join(' → ');
+      return '<li><span class="hl">' + region + ' ' + equip + '</span>: ' +
+        d.series.join(' → ') + ' → FC ' + fut +
+        ' · last QoQ ' + ((d.gLast - 1) * 100).toFixed(1) + '%</li>';
+    }
+
+    const cCell = result.cells.C[f0.id][focus];
+    const iCell = result.cells.I[f0.id][focus];
 
     body.innerHTML =
-      '<h5>1. Dữ liệu đầu vào (updated)</h5>' +
+      '<h5>1. Bối cảnh &amp; input (updated)</h5>' +
       '<ul>' +
-      '<li>Schedule actual: Feb–Apr / May–Jul / Aug–Oct 2026 (BAF Rates 2026).</li>' +
-      '<li>VLSFO C-side (RTM/G20): <span class="mono-inline">' + money(fuelC.px) + '</span> vs base ' +
-      '<span class="mono-inline">' + money(fuelC.base) + '</span> (Δ ' + (fuelC.dPct * 100).toFixed(1) + '% · scale×' + fuelC.scale.toFixed(3) + ').</li>' +
-      '<li>VLSFO I-side (SG/G20): <span class="mono-inline">' + money(fuelI.px) + '</span> vs base ' +
-      '<span class="mono-inline">' + money(fuelI.base) + '</span> (Δ ' + (fuelI.dPct * 100).toFixed(1) + '% · scale×' + fuelI.scale.toFixed(3) + ').</li>' +
+      '<li>Actual BAF Rates 2026: 3 kỳ (Feb–Apr · May–Jul · Aug–Oct) × Region C/I × 20DC/40HC.</li>' +
+      '<li>Fuel C: <span class="mono-inline">' + money(fuelC.px) + '</span> vs base <span class="mono-inline">' + money(fuelC.base) +
+      '</span> (Δ ' + (fuelC.dPct * 100).toFixed(2) + '% · scale×' + fuelC.scale.toFixed(3) + ').</li>' +
+      '<li>Fuel I: <span class="mono-inline">' + money(fuelI.px) + '</span> vs base <span class="mono-inline">' + money(fuelI.base) +
+      '</span> (Δ ' + (fuelI.dPct * 100).toFixed(2) + '% · scale×' + fuelI.scale.toFixed(3) + ').</li>' +
+      '<li>Hub mode: <span class="hl">' + result.hubMode + '</span> · Focus equip: <span class="hl">' + focus + '</span>.</li>' +
       '</ul>' +
-      '<h5>2. Phương pháp: ' + result.method + '</h5>' +
-      '<p><strong>Growth</strong> = chain QoQ dampened; <strong>Linear</strong> = OLS trên 3 kỳ actual; ' +
-      '<strong>VLSFO</strong> = scale last period theo fuel signal; <strong>Ensemble</strong> = blend 3 nhánh.</p>' +
-      '<p>Damping = <span class="mono-inline">' + result.dampen + '</span> (kìm growth ở horizon xa).</p>' +
-      '<h5>3. Kết quả kỳ tiếp theo</h5>' +
+      '<h5>2. Phương pháp chi tiết</h5>' +
       '<ul>' +
-      line('C', '20DC') + line('C', '40HC') + line('I', '20DC') + line('I', '40HC') +
+      '<li><strong>Growth</strong>: chain QoQ, g_eff = blend(last, geoMean) × dampen^k mỗi bước.</li>' +
+      '<li><strong>Linear</strong>: OLS trên t=0,1,2 actual → t=3+h.</li>' +
+      '<li><strong>VLSFO</strong>: last × scale_fuel^(0.35h) × geoMean^(0.25h).</li>' +
+      '<li><strong>Ensemble</strong>: wG=' + result.wGshare + ' của phần non-VLSFO + wV=' + result.wV + '.</li>' +
+      '<li>Band: point ± σ_OLS × √h × ' + result.bandMul + '.</li>' +
+      '<li>Scenario: Bear −' + (result.bearPct * 100).toFixed(0) + '% · Bull +' + (result.bullPct * 100).toFixed(0) + '% quanh point.</li>' +
       '</ul>' +
-      '<h5>4. Ý nghĩa vận hành</h5>' +
-      '<p>Nếu growth actual C 40HC ~ +' + ((result.drivers.C['40HC'].gLast - 1) * 100).toFixed(0) +
-      '%/kỳ tiếp tục (có damp), BAF hub Rotterdam kỳ tới có xu hướng ' +
-      (result.drivers.C['40HC'].gLast >= 1 ? '<span class="hl">tăng</span>' : '<span class="hl">giảm</span>') +
-      '. Singapore (I) scale nhỏ hơn tuyệt đối nhưng growth % tương tự.</p>' +
-      '<p>So với model ΔVLSFO×0.85×0.012: forecast kỳ là <em>tariff-level</em> (USD/container), không phải $/TEU differential thuần.</p>' +
-      '<h5>5. Giới hạn</h5>' +
-      '<p>Chỉ 3 điểm actual → uncertainty cao; band Low–High là residual OLS ±√h. ' +
-      'Không thay circular hãng. Cập nhật lại khi có print BAF kỳ mới hoặc VLSFO đổi mạnh (Sync market trên Calculator / Overview).</p>';
+      '<h5>3. Kết quả path (point [low–high])</h5>' +
+      '<ul>' + pathLine('C', '20DC') + pathLine('C', '40HC') + pathLine('I', '20DC') + pathLine('I', '40HC') + '</ul>' +
+      '<h5>4. Đọc nhanh FC-1 (' + f0.label + ')</h5>' +
+      '<p>C ' + focus + ': Base <span class="mono-inline">' + formatMatrixCell(cCell.point, result.dig) +
+      '</span> · Bear <span class="mono-inline">' + formatMatrixCell(cCell.bear, result.dig) +
+      '</span> · Bull <span class="mono-inline">' + formatMatrixCell(cCell.bull, result.dig) +
+      '</span> · vs last actual Δ <span class="mono-inline">' +
+      formatMatrixCell(cCell.point - result.drivers.C[focus].last, result.dig) + '</span>.</p>' +
+      '<p>I ' + focus + ': Base <span class="mono-inline">' + formatMatrixCell(iCell.point, result.dig) +
+      '</span> · band [' + iCell.low + '–' + iCell.high + '].</p>' +
+      '<h5>5. Ý nghĩa vận hành / BA</h5>' +
+      '<p>Schedule actual cho thấy C (Rotterdam) tăng mạnh tuyệt đối (40HC 480→900). ' +
+      'Forecast duy trì hướng ' + (result.drivers.C['40HC'].gLast >= 1 ? '<span class="hl">tăng</span>' : '<span class="hl">giảm</span>') +
+      ' có damping — phù hợp budget band, không lock quote.</p>' +
+      '<p>Dùng <strong>Bear</strong> cho cost ceiling conservative phía shipper; <strong>Bull</strong> cho stress carrier revenue. ' +
+      'So method (bảng E): nếu spread max−min lớn → uncertainty method-risk, ưu tiên ensemble + band.</p>' +
+      '<h5>6. Khuyến nghị dùng số</h5>' +
+      '<ul>' +
+      '<li>Planning nội bộ: lấy <span class="hl">Base point</span> + theo dõi band.</li>' +
+      '<li>Quote khách: ưu tiên circular / Rates published — FC chỉ reference.</li>' +
+      '<li>Khi VLSFO jump &gt;5%: chạy lại forecast (fuel scale đổi).</li>' +
+      '<li>Khi có BAF kỳ mới official: thay actual chain, giảm dependence model.</li>' +
+      '</ul>' +
+      '<h5>7. Giới hạn</h5>' +
+      '<p>n=3 actual points · không seasonality đủ · không carrier-specific formula. ' +
+      'Export CSV để audit Excel. Model differential $/TEU (BAF Impact) khác đơn vị với bảng USD/container này.</p>';
   }
 
   function exportBafForecastCSV() {
     const r = bafFcState.last;
     if (!r) { alert('Chạy forecast trước.'); return; }
-    const header = ['Region', 'Type'];
-    BAF_MATRIX_PERIODS.forEach(function (p) {
-      header.push(p + '_20DC', p + '_40HC');
-    });
-    r.future.forEach(function (f) {
-      header.push(f.id + '_20DC', f.id + '_40HC');
-    });
-    const lines = [header.join(',')];
+    const lines = [
+      'Region,Equip,Metric,' +
+      BAF_MATRIX_PERIODS.join(',') + ',' +
+      r.future.map(function (f) { return f.id; }).join(','),
+    ];
     BAF_MATRIX_REGIONS.forEach(function (region) {
-      const row = [region, 'point'];
-      BAF_MATRIX_PERIODS.forEach(function (p) {
-        row.push(lookupTariffRate(region, p, '20DC'), lookupTariffRate(region, p, '40HC'));
+      BAF_MATRIX_EQUIP.forEach(function (equip) {
+        const hist = seriesFromSchedule(region, equip);
+        ['point', 'low', 'high', 'bear', 'bull', 'growth', 'linear', 'vlsfo', 'ensemble'].forEach(function (metric) {
+          const row = [region, equip, metric];
+          hist.forEach(function (v) {
+            row.push(metric === 'point' ? v : '');
+          });
+          r.future.forEach(function (f) {
+            const c = r.cells[region][f.id][equip];
+            row.push(c[metric] != null ? c[metric] : '');
+          });
+          lines.push(row.join(','));
+        });
       });
-      r.future.forEach(function (f) {
-        row.push(r.cells[region][f.id]['20DC'].point, r.cells[region][f.id]['40HC'].point);
-      });
-      lines.push(row.join(','));
-      const rowL = [region, 'low'];
-      BAF_MATRIX_PERIODS.forEach(function () { rowL.push('', ''); });
-      r.future.forEach(function (f) {
-        rowL.push(r.cells[region][f.id]['20DC'].low, r.cells[region][f.id]['40HC'].low);
-      });
-      lines.push(rowL.join(','));
-      const rowH = [region, 'high'];
-      BAF_MATRIX_PERIODS.forEach(function () { rowH.push('', ''); });
-      r.future.forEach(function (f) {
-        rowH.push(r.cells[region][f.id]['20DC'].high, r.cells[region][f.id]['40HC'].high);
-      });
-      lines.push(rowH.join(','));
     });
     const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'BAF_Forecast_next_periods.csv';
+    a.download = 'BAF_Forecast_detailed.csv';
     a.click();
     URL.revokeObjectURL(url);
   }
 
   function exportBafForecastReport() {
     const el = document.getElementById('fc-report-body');
+    const walk = document.getElementById('fc-walkthrough');
     if (!el || !bafFcState.last) {
       alert('Chạy forecast trước.');
       return;
     }
-    const plain = el.innerText || el.textContent;
+    const plain = 'BAF FORECAST REPORT\n' +
+      (document.getElementById('fc-report-meta') ? document.getElementById('fc-report-meta').textContent + '\n\n' : '') +
+      (el.innerText || el.textContent) +
+      (walk ? '\n\nWALKTHROUGH\n' + (walk.innerText || walk.textContent) : '');
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(plain).then(function () {
-        alert('Đã copy báo cáo forecast.');
+        alert('Đã copy báo cáo forecast chi tiết.');
       }).catch(function () { window.prompt('Copy:', plain); });
     } else window.prompt('Copy:', plain);
   }
@@ -6232,7 +6571,10 @@
         if (section === 'bafforecast') {
           runBafForecast();
           setTimeout(function () {
-            try { state.charts.bafFc && state.charts.bafFc.resize && state.charts.bafFc.resize(); } catch (e) {}
+            try {
+              state.charts.bafFc && state.charts.bafFc.resize && state.charts.bafFc.resize();
+              state.charts.bafFcMethods && state.charts.bafFcMethods.resize && state.charts.bafFcMethods.resize();
+            } catch (e) {}
           }, 80);
         }
         if (section === 'guide') refreshGuideReport();
