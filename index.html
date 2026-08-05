@@ -7,17 +7,21 @@
   <meta name="description" content="Professional VLSFO price dashboard for Bunker Adjustment Factor analysis" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+    try {
+      if (typeof tailwind !== 'undefined') {
+        tailwind.config = {
+          darkMode: 'class',
+          theme: {
+            extend: {
+              fontFamily: {
+                sans: ['Inter', 'system-ui', 'sans-serif'],
+                mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+              }
+            }
           }
-        }
+        };
       }
-    }
+    } catch (e) { /* Tailwind CDN optional — custom CSS covers layout */ }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -978,7 +982,7 @@
                 <span class="badge">VLSFO</span>
               </div>
               <div style="display:flex;align-items:baseline;gap:0.35rem;margin-top:0.2rem;">
-                <span id="price-sg" class="price-val port-sg">—</span>
+                <span id="price-sg" class="price-val port-sg">869.00</span>
                 <span class="t3" style="font-size:10px;">USD/mt</span>
               </div>
             </div>
@@ -994,7 +998,7 @@
                 <span class="badge">VLSFO</span>
               </div>
               <div style="display:flex;align-items:baseline;gap:0.35rem;margin-top:0.2rem;">
-                <span id="price-rtm" class="price-val port-rtm">—</span>
+                <span id="price-rtm" class="price-val port-rtm">697.50</span>
                 <span class="t3" style="font-size:10px;">USD/mt</span>
               </div>
             </div>
@@ -1010,7 +1014,7 @@
                 <span class="badge">AVG</span>
               </div>
               <div style="display:flex;align-items:baseline;gap:0.35rem;margin-top:0.2rem;">
-                <span id="price-glb" class="price-val port-glb">—</span>
+                <span id="price-glb" class="price-val port-glb">835.50</span>
                 <span class="t3" style="font-size:10px;">USD/mt</span>
               </div>
             </div>
@@ -1040,18 +1044,18 @@
           <div class="kpi-grid">
             <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">SG Spot (Live)</div>
-              <div id="kpi-sg" class="mono c-cyan" style="font-weight:700;">—</div>
-              <div id="kpi-sg-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">—</div>
+              <div id="kpi-sg" class="mono c-cyan" style="font-weight:700;">$869.00</div>
+              <div id="kpi-sg-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">Ship &amp; Bunker close</div>
             </div>
             <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">RTM Spot (Live)</div>
-              <div id="kpi-rtm" class="mono c-emerald" style="font-weight:700;">—</div>
-              <div id="kpi-rtm-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">—</div>
+              <div id="kpi-rtm" class="mono c-emerald" style="font-weight:700;">$697.50</div>
+              <div id="kpi-rtm-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">Ship &amp; Bunker close</div>
             </div>
             <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">Global Avg</div>
-              <div id="kpi-glb" class="mono c-blue" style="font-weight:700;">—</div>
-              <div id="kpi-glb-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">—</div>
+              <div id="kpi-glb" class="mono c-blue" style="font-weight:700;">$835.50</div>
+              <div id="kpi-glb-sub" class="t3" style="font-size:0.75rem;margin-top:0.25rem;">Ship &amp; Bunker close</div>
             </div>
             <div class="card card-hover kpi-card" style="padding:1rem;">
               <div class="t3" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">Est. BAF Δ (MoM)</div>
@@ -2526,8 +2530,8 @@
   function initMonthlyBars() {
     const el1 = document.getElementById('monthly-bar-chart');
     const el2 = document.getElementById('monthly-bar-chart-full');
-    renderOrUpdate('monthlyBar', el1, monthlyBarOptions(el1.clientHeight || 300));
-    if (el2.offsetParent !== null || state.rendered.monthlyFull) {
+    if (el1) renderOrUpdate('monthlyBar', el1, monthlyBarOptions(el1.clientHeight || 300));
+    if (el2 && (el2.offsetParent !== null || state.rendered.monthlyFull)) {
       renderOrUpdate('monthlyBarFull', el2, monthlyBarOptions(el2.clientHeight || 360));
       state.rendered.monthlyFull = true;
     }
@@ -2539,10 +2543,13 @@
     const avg = (arr, k) => arr.reduce((s, r) => s + r[k], 0) / (arr.length || 1);
     const q2 = { sg: avg(mayJun, 'sg'), rtm: avg(mayJun, 'rtm'), glb: avg(mayJun, 'glb') };
     const q3 = { sg: avg(jul, 'sg'), rtm: avg(jul, 'rtm'), glb: avg(jul, 'glb') };
-    document.getElementById('q2-avg').textContent = '$' + fmtPrice(q2.glb);
-    document.getElementById('q3-avg').textContent = '$' + fmtPrice(q3.glb);
+    const q2El = document.getElementById('q2-avg');
+    const q3El = document.getElementById('q3-avg');
+    if (q2El) q2El.textContent = '$' + fmtPrice(q2.glb);
+    if (q3El) q3El.textContent = '$' + fmtPrice(q3.glb);
 
     const el = document.getElementById('quarter-chart');
+    if (!el) return;
     const opts = {
       series: [
         { name: 'Q2 (May–Jun)', data: [Math.round(q2.sg), Math.round(q2.rtm), Math.round(q2.glb)] },
@@ -2609,18 +2616,23 @@
     return '<span class="' + (pct >= 0 ? 'c-up' : 'c-down') + '">' + fmtPct(pct) + '</span>';
   }
   function renderMonthlyTables() {
-    const stats = monthlyStats(state.history);
-    document.getElementById('monthly-stats-body').innerHTML = stats.map(s =>
-      '<tr><td class="cell-label">' + s.monthLabel + '</td><td class="cell-label">' + s.portLabel + '</td><td>' +
-      fmtPrice(s.avg) + '</td><td>' + fmtPrice(s.high) + '</td><td>' + fmtPrice(s.low) + '</td><td>' + momHtml(s.momPct) + '</td></tr>'
-    ).join('');
-
-    document.getElementById('monthly-full-body').innerHTML = stats.map(s => {
-      const d = s.momDelta == null ? '—' : '<span class="' + (s.momDelta >= 0 ? 'c-up' : 'c-down') + '">' + (s.momDelta >= 0 ? '+' : '') + fmtPrice(s.momDelta) + '</span>';
-      return '<tr><td class="cell-label">' + s.monthLabel + '</td><td class="cell-label">' + s.portLabel + '</td><td>' +
-        fmtPrice(s.avg) + '</td><td>' + fmtPrice(s.high) + '</td><td>' + fmtPrice(s.low) + '</td><td>' +
-        fmtPrice(s.range) + '</td><td>' + d + '</td><td>' + momHtml(s.momPct) + '</td></tr>';
-    }).join('');
+    const stats = monthlyStats(state.history || []);
+    const body1 = document.getElementById('monthly-stats-body');
+    const body2 = document.getElementById('monthly-full-body');
+    if (body1) {
+      body1.innerHTML = stats.map(s =>
+        '<tr><td class="cell-label">' + s.monthLabel + '</td><td class="cell-label">' + s.portLabel + '</td><td>' +
+        fmtPrice(s.avg) + '</td><td>' + fmtPrice(s.high) + '</td><td>' + fmtPrice(s.low) + '</td><td>' + momHtml(s.momPct) + '</td></tr>'
+      ).join('');
+    }
+    if (body2) {
+      body2.innerHTML = stats.map(s => {
+        const d = s.momDelta == null ? '—' : '<span class="' + (s.momDelta >= 0 ? 'c-up' : 'c-down') + '">' + (s.momDelta >= 0 ? '+' : '') + fmtPrice(s.momDelta) + '</span>';
+        return '<tr><td class="cell-label">' + s.monthLabel + '</td><td class="cell-label">' + s.portLabel + '</td><td>' +
+          fmtPrice(s.avg) + '</td><td>' + fmtPrice(s.high) + '</td><td>' + fmtPrice(s.low) + '</td><td>' +
+          fmtPrice(s.range) + '</td><td>' + d + '</td><td>' + momHtml(s.momPct) + '</td></tr>';
+      }).join('');
+    }
   }
 
   function renderDailyTable() {
@@ -2736,31 +2748,45 @@
     return pct;
   }
 
+  function setElText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+  function setElHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
   function updateTickerUI(withFlash) {
-    const { live, prev, dayAgo } = state;
-    const dSg = setPrice('price-sg', live.sg, prev.sg, 'port-sg');
-    const dRtm = setPrice('price-rtm', live.rtm, prev.rtm, 'port-rtm');
-    const dGlb = setPrice('price-glb', live.glb, prev.glb, 'port-glb');
-    if (withFlash) {
-      if (dSg) flashTicker('ticker-sg', dSg);
-      if (dRtm) flashTicker('ticker-rtm', dRtm);
-      if (dGlb) flashTicker('ticker-glb', dGlb);
+    try {
+      const { live, prev, dayAgo } = state;
+      if (!live || !isFinite(live.sg)) return;
+      const dSg = setPrice('price-sg', live.sg, prev.sg, 'port-sg');
+      const dRtm = setPrice('price-rtm', live.rtm, prev.rtm, 'port-rtm');
+      const dGlb = setPrice('price-glb', live.glb, prev.glb, 'port-glb');
+      if (withFlash) {
+        if (dSg) flashTicker('ticker-sg', dSg);
+        if (dRtm) flashTicker('ticker-rtm', dRtm);
+        if (dGlb) flashTicker('ticker-glb', dGlb);
+      }
+
+      setElText('kpi-sg', '$' + fmtPrice(live.sg));
+      setElText('kpi-rtm', '$' + fmtPrice(live.rtm));
+      setElText('kpi-glb', '$' + fmtPrice(live.glb));
+
+      const pSg = setChg('chg-sg', live.sg, dayAgo.sg);
+      const pRtm = setChg('chg-rtm', live.rtm, dayAgo.rtm);
+      const pGlb = setChg('chg-glb', live.glb, dayAgo.glb);
+
+      if (pSg != null) setElHtml('kpi-sg-sub', '<span class="' + (pSg >= 0 ? 'c-up' : 'c-down') + '">' + fmtPct(pSg) + '</span> 24h');
+      if (pRtm != null) setElHtml('kpi-rtm-sub', '<span class="' + (pRtm >= 0 ? 'c-up' : 'c-down') + '">' + fmtPct(pRtm) + '</span> 24h');
+      if (pGlb != null) setElHtml('kpi-glb-sub', '<span class="' + (pGlb >= 0 ? 'c-up' : 'c-down') + '">' + fmtPct(pGlb) + '</span> 24h');
+
+      setElText('spread-sg-rtm', fmtPrice(live.sg - live.rtm));
+      state.lastUpdate = Date.now();
+    } catch (err) {
+      console.error('updateTickerUI', err);
     }
-
-    document.getElementById('kpi-sg').textContent = '$' + fmtPrice(live.sg);
-    document.getElementById('kpi-rtm').textContent = '$' + fmtPrice(live.rtm);
-    document.getElementById('kpi-glb').textContent = '$' + fmtPrice(live.glb);
-
-    const pSg = setChg('chg-sg', live.sg, dayAgo.sg);
-    const pRtm = setChg('chg-rtm', live.rtm, dayAgo.rtm);
-    const pGlb = setChg('chg-glb', live.glb, dayAgo.glb);
-
-    document.getElementById('kpi-sg-sub').innerHTML = '<span class="' + (pSg >= 0 ? 'c-up' : 'c-down') + '">' + fmtPct(pSg) + '</span> 24h';
-    document.getElementById('kpi-rtm-sub').innerHTML = '<span class="' + (pRtm >= 0 ? 'c-up' : 'c-down') + '">' + fmtPct(pRtm) + '</span> 24h';
-    document.getElementById('kpi-glb-sub').innerHTML = '<span class="' + (pGlb >= 0 ? 'c-up' : 'c-down') + '">' + fmtPct(pGlb) + '</span> 24h';
-
-    document.getElementById('spread-sg-rtm').textContent = fmtPrice(live.sg - live.rtm);
-    state.lastUpdate = Date.now();
   }
 
   function liveTick() {
@@ -3663,72 +3689,96 @@
   }
 
   /* ========== Boot ========== */
+  function hideLoading() {
+    try {
+      const ls = document.getElementById('loading-screen');
+      if (ls) ls.classList.add('hidden');
+      const bar = document.getElementById('load-bar');
+      if (bar) bar.style.width = '100%';
+    } catch (e) {}
+  }
+
+  function safeRun(label, fn) {
+    try { fn(); }
+    catch (err) { console.error(label, err); }
+  }
+
   function boot() {
+    // Safety: never leave the full-screen loader forever
+    setTimeout(hideLoading, 4000);
+
     const bar = document.getElementById('load-bar');
     let p = 0;
-    const li = setInterval(() => {
+    const li = setInterval(function () {
       p = Math.min(100, p + 14 + Math.random() * 16);
-      bar.style.width = p + '%';
+      if (bar) bar.style.width = p + '%';
       if (p >= 100) clearInterval(li);
     }, 70);
 
-    const t = todayISO();
-    state.dateTo = t;
-    state.history = generateHistory();
+    try {
+      const t = todayISO();
+      state.dateTo = t;
+      state.history = generateHistory();
 
-    const off = latestOfficial();
-    const offKeys = Object.keys(OFFICIAL_SPOTS).sort();
-    const prevKey = offKeys.length > 1 ? offKeys[offKeys.length - 2] : offKeys[0];
-    const prevOff = OFFICIAL_SPOTS[prevKey];
-    state.marketAnchor = { date: off.date, sg: off.sg, rtm: off.rtm, glb: off.glb };
-    state.live = { sg: off.sg, rtm: off.rtm, glb: off.glb };
-    state.prev = { ...state.live };
-    state.dayAgo = { sg: prevOff[0], rtm: prevOff[1], glb: prevOff[2] };
-    state.liveTrail = [];
-    // Seed first live point so chart already shows "now"
-    pushLiveTrailPoint();
+      const off = latestOfficial();
+      const offKeys = Object.keys(OFFICIAL_SPOTS).sort();
+      const prevKey = offKeys.length > 1 ? offKeys[offKeys.length - 2] : offKeys[0];
+      const prevOff = OFFICIAL_SPOTS[prevKey] || [off.sg, off.rtm, off.glb];
+      state.marketAnchor = { date: off.date, sg: off.sg, rtm: off.rtm, glb: off.glb };
+      state.live = { sg: off.sg, rtm: off.rtm, glb: off.glb };
+      state.prev = { sg: off.sg, rtm: off.rtm, glb: off.glb };
+      state.dayAgo = { sg: prevOff[0], rtm: prevOff[1], glb: prevOff[2] };
+      state.liveTrail = [];
+      pushLiveTrailPoint();
 
-    // Wire date inputs to today
-    const df = document.getElementById('date-from');
-    const dt = document.getElementById('date-to');
-    if (df) { df.max = t; }
-    if (dt) { dt.max = t; dt.value = t; }
+      // Show prices immediately (do not wait for charts)
+      updateTickerUI(false);
+      updateTrendSubtitle();
+
+      const df = document.getElementById('date-from');
+      const dt = document.getElementById('date-to');
+      if (df) { df.max = t; }
+      if (dt) { dt.max = t; dt.value = t; }
+    } catch (err) {
+      console.error('Boot data error', err);
+      // Fallback seed so UI is never blank
+      state.live = { sg: 869, rtm: 697.5, glb: 835.5 };
+      state.prev = { sg: 869, rtm: 697.5, glb: 835.5 };
+      state.dayAgo = { sg: 874.5, rtm: 713, glb: 831.5 };
+      state.marketAnchor = { date: '2026-07-24', sg: 869, rtm: 697.5, glb: 835.5 };
+      try { updateTickerUI(false); } catch (e2) {}
+    }
 
     setTimeout(function () {
-      try {
-        initMainChart();
-        initMonthlyBars();
-        initQuarterChart();
-        renderMonthlyTables();
-        updateTickerUI(false);
-        updateBafMetrics();
-        updateVolCards();
-        updateTrendSubtitle();
-      } catch (err) {
-        console.error('Boot render error', err);
-      }
+      safeRun('initMainChart', initMainChart);
+      safeRun('initMonthlyBars', initMonthlyBars);
+      safeRun('initQuarterChart', initQuarterChart);
+      safeRun('renderMonthlyTables', renderMonthlyTables);
+      safeRun('updateTickerUI', function () { updateTickerUI(false); });
+      safeRun('updateBafMetrics', updateBafMetrics);
+      safeRun('updateVolCards', updateVolCards);
+      safeRun('updateTrendSubtitle', updateTrendSubtitle);
 
-      const ls = document.getElementById('loading-screen');
-      if (ls) ls.classList.add('hidden');
+      hideLoading();
 
-      // Real-time: 1 second ticks drive ticker + chart figure
       setInterval(liveTick, 1000);
       setInterval(updateLastUpdatedLabel, 1000);
       setInterval(tickClock, 1000);
-      // Re-check S&B public page every 3 minutes (best-effort)
       setInterval(refreshOfficialFromWeb, 180000);
-      tickClock();
-      refreshOfficialFromWeb();
+      safeRun('tickClock', tickClock);
+      safeRun('refreshOfficialFromWeb', refreshOfficialFromWeb);
 
       setTimeout(function () {
         Object.keys(state.charts).forEach(function (k) {
           try { state.charts[k] && state.charts[k].resize && state.charts[k].resize(); } catch (e) {}
         });
       }, 250);
-    }, 750);
+    }, 400);
 
-    window.addEventListener('resize', () => {
-      Object.values(state.charts).forEach(c => { try { c && c.resize(); } catch (e) {} });
+    window.addEventListener('resize', function () {
+      Object.values(state.charts).forEach(function (c) {
+        try { c && c.resize && c.resize(); } catch (e) {}
+      });
     });
   }
 
@@ -3743,7 +3793,11 @@
   window.refreshModels = refreshModels;
   window.toggleTrendSeries = toggleTrendSeries;
 
-  document.addEventListener('DOMContentLoaded', boot);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
   </script>
 </body>
 </html>
