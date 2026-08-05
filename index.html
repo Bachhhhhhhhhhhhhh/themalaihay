@@ -1231,7 +1231,7 @@
           </div>
           <div class="t3" style="font-size:10px;line-height:1.45;">Ship &amp; Bunker daily · live 1s chart</div>
         </div>
-        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.7.0 · BAF FC detailed</div>
+        <div class="mono t3" style="font-size:10px;text-align:center;margin-top:0.65rem;">v3.8.0 · BAF FC audit fix</div>
       </div>
     </aside>
 
@@ -2009,10 +2009,11 @@
               <div class="calc-field" style="margin:0;">
                 <label for="fc-method">Method chính (bảng FC)</label>
                 <select id="fc-method" onchange="runBafForecast()">
-                  <option value="ensemble" selected>Ensemble (G+L+V)</option>
+                  <option value="ensemble" selected>Ensemble fuel-coherent (khuyến nghị)</option>
+                  <option value="ensemble_raw">Ensemble raw (cũ · momentum-heavy)</option>
                   <option value="growth">Chain growth QoQ</option>
                   <option value="linear">Linear OLS</option>
-                  <option value="vlsfo">VLSFO-linked</option>
+                  <option value="vlsfo">VLSFO-linked (pure fuel)</option>
                 </select>
               </div>
               <div class="calc-field" style="margin:0;">
@@ -2090,6 +2091,33 @@
             <div class="calc-kpi"><div class="k">I fuel signal</div><div class="v" id="fc-kpi-fuel-i">—</div><div class="s" id="fc-kpi-fuel-i-sub">—</div></div>
             <div class="calc-kpi"><div class="k">Method</div><div class="v" style="font-size:0.9rem;" id="fc-kpi-method">—</div><div class="s" id="fc-kpi-stamp">—</div></div>
             <div class="calc-kpi"><div class="k">C 40HC FC-1</div><div class="v c-amber" id="fc-kpi-c-fc1">—</div><div class="s" id="fc-kpi-c-fc1-sub">vs last actual</div></div>
+          </div>
+
+          <!-- AUDIT: contribution decomposition -->
+          <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;border-color:rgba(251,191,36,0.35);">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;color:var(--amber);">A0. Audit — phân rã vì sao BAF FC tăng/giảm</h3>
+            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;line-height:1.55;">
+              App <strong>không</strong> có công thức “giá vận chuyển cuối = ocean freight + BAF”.
+              Hai chuỗi độc lập: (1) VLSFO S&amp;B (USD/mt) · (2) BAF tariff/forecast (USD/container).
+              Bảng dưới = đóng góp từng nhánh vào Δ BAF FC-1 (focus equip, region C).
+            </p>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:760px;">
+                <thead>
+                  <tr>
+                    <th>Thành phần</th>
+                    <th>Current (last actual)</th>
+                    <th>Forecast arm</th>
+                    <th>Abs Δ</th>
+                    <th>% Δ</th>
+                    <th>Weight</th>
+                    <th>Contribution to ens Δ</th>
+                  </tr>
+                </thead>
+                <tbody id="fc-audit-tbody"></tbody>
+              </table>
+            </div>
+            <div class="bafrates-note" id="fc-audit-note" style="margin-top:0.75rem;"></div>
           </div>
 
           <!-- B. History + growth diagnostics -->
@@ -2179,19 +2207,20 @@
 
           <!-- E. Method comparison -->
           <div class="card" style="padding:1.1rem;margin-bottom:0.9rem;">
-            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">E. So sánh 4 method — kỳ FC-1 (Nov'26–Jan'27)</h3>
-            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Growth · Linear · VLSFO · Ensemble trên cùng input</p>
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:700;">E. So sánh method — kỳ FC-1 (Nov'26–Jan'27)</h3>
+            <p class="t3" style="margin:0 0 0.65rem;font-size:12px;">Growth · Linear · VLSFO pure · Ensemble fuel-coherent · Ensemble raw (cũ)</p>
             <div class="table-wrap">
-              <table class="data-table" style="min-width:700px;">
+              <table class="data-table" style="min-width:780px;">
                 <thead>
                   <tr>
                     <th>Series</th>
                     <th>Last actual</th>
                     <th>Growth</th>
                     <th>Linear</th>
-                    <th>VLSFO</th>
-                    <th>Ensemble</th>
-                    <th>Spread max−min</th>
+                    <th>VLSFO pure</th>
+                    <th>Ens. coherent</th>
+                    <th>Ens. raw (cũ)</th>
+                    <th>Spread</th>
                   </tr>
                 </thead>
                 <tbody id="fc-method-tbody"></tbody>
@@ -3550,6 +3579,16 @@
     const sigma = Math.sqrt(mse) || Math.abs(last) * 0.05;
     const cagr = ys[0] > 0 ? Math.pow(ys[ys.length - 1] / ys[0], 1 / (ys.length - 1)) - 1 : 0;
 
+    /*
+     * Pipeline BAF period forecast (USD/container) — NOT freight all-in:
+     *   Growth_h  = last × Π_k g_eff(k)     with g_eff from schedule QoQ (damped)
+     *   Linear_h  = OLS(t=0..2) → t=2+h
+     *   VLSFO_h   = last × scale_fuel^h      pure fuel arm (FIXED: no gAvg leak)
+     *   Ensemble_raw = wG·Growth + wL·Linear + wV·VLSFO
+     *   Ensemble (fuel-coherent) = last + Σ w_i · Δ_i · fuelDrag
+     *     where fuelDrag < 1 when oil/VLSFO below base → damps positive schedule momentum
+     * Sign of BAF in all-in freight (if used externally): +BAF (surcharge).
+     */
     const out = [];
     for (let h = 1; h <= horizons; h++) {
       const tNew = ys.length - 1 + h;
@@ -3560,17 +3599,32 @@
         gPoint = gPoint * gk;
       }
       const linPoint = Math.max(0, olsNext(ys, tNew));
-      const vlsfoPoint = Math.max(0, last * Math.pow(vlsfoScale, h * 0.35) * Math.pow(Math.max(0.5, gAvg), h * 0.25));
+      // FIXED: pure fuel-linked — was last * scale^(0.35h) * gAvg^(0.25h) which leaked schedule momentum
+      const vlsfoPoint = Math.max(0, last * Math.pow(vlsfoScale, h));
+
       const wVcl = Math.max(0, Math.min(1, wV));
       const wG = (1 - wVcl) * Math.max(0, Math.min(1, wGshare));
       const wL = Math.max(0, 1 - wVcl - wG);
-      const ensPoint = wG * gPoint + wL * linPoint + wVcl * vlsfoPoint;
+
+      // Raw ensemble (old behavior, momentum-heavy)
+      const ensRaw = wG * gPoint + wL * linPoint + wVcl * vlsfoPoint;
+
+      // Fuel-coherent: damp POSITIVE schedule deltas when fuel scale < 1
+      const fuelDrag = vlsfoScale < 1 ? Math.pow(vlsfoScale, 0.9) : 1;
+      const dG = gPoint - last;
+      const dL = linPoint - last;
+      const dV = vlsfoPoint - last;
+      const dGadj = dG > 0 ? dG * fuelDrag : dG;
+      const dLadj = dL > 0 ? dL * fuelDrag : dL;
+      // VLSFO arm always full (already pure fuel)
+      const ensCoherent = last + wG * dGadj + wL * dLadj + wVcl * dV;
 
       let point;
       if (method === 'growth') point = gPoint;
       else if (method === 'linear') point = linPoint;
       else if (method === 'vlsfo') point = vlsfoPoint;
-      else point = ensPoint;
+      else if (method === 'ensemble_raw') point = ensRaw;
+      else point = ensCoherent; // default ensemble = fuel-coherent
       point = Math.max(0, point);
 
       const band = sigma * Math.sqrt(h) * bandMul;
@@ -3581,16 +3635,28 @@
         growth: Math.max(0, gPoint),
         linear: Math.max(0, linPoint),
         vlsfo: Math.max(0, vlsfoPoint),
-        ensemble: Math.max(0, ensPoint),
+        ensemble: Math.max(0, ensCoherent),
+        ensemble_raw: Math.max(0, ensRaw),
         bear: Math.max(0, point * (1 - bearPct)),
         bull: point * (1 + bullPct),
         band: band,
+        fuelDrag: fuelDrag,
+        contrib: {
+          last: last,
+          dG: dG, dL: dL, dV: dV,
+          dGadj: dGadj, dLadj: dLadj,
+          wG: wG, wL: wL, wV: wVcl,
+          cG: wG * dGadj,
+          cL: wL * dLadj,
+          cV: wVcl * dV,
+          totalDelta: point - last,
+        },
         weights: { wG: wG, wL: wL, wV: wVcl },
       });
     }
     return {
       points: out, sigma: sigma, gLast: gLast, gAvg: gAvg, g01: g01, g12: g12,
-      cagr: cagr, last: last, residuals: residuals,
+      cagr: cagr, last: last, residuals: residuals, vlsfoScale: vlsfoScale,
     };
   }
 
@@ -3640,7 +3706,7 @@
         const fcMain = forecastSeriesDetailed(ys, horizons, Object.assign({ method: method, vlsfoScale: fuel.scale }, commonOpts));
         // Also compute all methods for FC-1 comparison + charts
         const byMethod = {};
-        ['growth', 'linear', 'vlsfo', 'ensemble'].forEach(function (m) {
+        ['growth', 'linear', 'vlsfo', 'ensemble', 'ensemble_raw'].forEach(function (m) {
           byMethod[m] = forecastSeriesDetailed(ys, horizons, Object.assign({ method: m, vlsfoScale: fuel.scale }, commonOpts));
         });
 
@@ -3653,6 +3719,7 @@
           cagr: fcMain.cagr,
           sigma: fcMain.sigma,
           last: fcMain.last,
+          vlsfoScale: fuel.scale,
           byMethod: byMethod,
           main: fcMain,
         };
@@ -3662,6 +3729,7 @@
           linear: byMethod.linear.points[0].point,
           vlsfo: byMethod.vlsfo.points[0].point,
           ensemble: byMethod.ensemble.points[0].point,
+          ensemble_raw: byMethod.ensemble_raw.points[0].point,
         };
 
         future.forEach(function (fp, hi) {
@@ -3696,7 +3764,11 @@
     const future = result.future;
     const focus = result.focusEquip || '40HC';
     const methodLabels = {
-      ensemble: 'Ensemble', growth: 'Chain growth', linear: 'Linear OLS', vlsfo: 'VLSFO-linked',
+      ensemble: 'Ensemble fuel-coherent',
+      ensemble_raw: 'Ensemble raw',
+      growth: 'Chain growth',
+      linear: 'Linear OLS',
+      vlsfo: 'VLSFO pure',
     };
 
     // —— KPIs ——
@@ -3704,6 +3776,58 @@
     const i40 = result.drivers.I['40HC'];
     const fuelC = result.drivers.C.fuel;
     const fuelI = result.drivers.I.fuel;
+
+    // —— A0 Audit contribution (C · focus equip · FC-1) ——
+    const auditBody = document.getElementById('fc-audit-tbody');
+    const auditNote = document.getElementById('fc-audit-note');
+    if (auditBody && result.future[0]) {
+      const f0 = result.future[0];
+      const focusEq = result.focusEquip || '40HC';
+      const d = result.drivers.C[focusEq];
+      const cell = result.cells.C[f0.id][focusEq];
+      const raw = cell.raw || {};
+      const c = raw.contrib || {};
+      const last = d.last;
+      const rows = [
+        { name: 'Last actual BAF (Aug–Oct)', cur: last, fc: last, w: '—', contrib: 0 },
+        { name: 'Growth arm (schedule QoQ)', cur: last, fc: raw.growth, w: c.wG, contrib: c.cG },
+        { name: 'Linear arm (OLS)', cur: last, fc: raw.linear, w: c.wL, contrib: c.cL },
+        { name: 'VLSFO pure arm (fuel scale)', cur: last, fc: raw.vlsfo, w: c.wV, contrib: c.cV },
+        { name: 'Ensemble point (method chính)', cur: last, fc: cell.point, w: 'sum', contrib: c.totalDelta != null ? c.totalDelta : (cell.point - last) },
+        { name: 'VLSFO fuel P_t (USD/mt)', cur: fuelC.base, fc: fuelC.px, w: 'scale×' + fuelC.scale.toFixed(3), contrib: null },
+      ];
+      auditBody.innerHTML = rows.map(function (r) {
+        const dAbs = (r.fc != null && r.cur != null) ? (r.fc - r.cur) : null;
+        const dPct = (dAbs != null && r.cur) ? (dAbs / r.cur) * 100 : null;
+        const contribStr = r.contrib == null ? '— (fuel input)' :
+          ((r.contrib >= 0 ? '+' : '') + (typeof r.contrib === 'number' ? r.contrib.toFixed(1) : r.contrib));
+        return '<tr>' +
+          '<td class="cell-label">' + r.name + '</td>' +
+          '<td>' + (typeof r.cur === 'number' ? formatMatrixCell(r.cur, dig) : r.cur) + '</td>' +
+          '<td>' + (typeof r.fc === 'number' ? formatMatrixCell(r.fc, dig) : r.fc) + '</td>' +
+          '<td class="' + (dAbs != null ? (dAbs >= 0 ? 'c-up' : 'c-down') : '') + '">' +
+            (dAbs != null ? ((dAbs >= 0 ? '+' : '') + formatMatrixCell(dAbs, dig)) : '—') + '</td>' +
+          '<td class="' + (dPct != null ? (dPct >= 0 ? 'c-up' : 'c-down') : '') + '">' +
+            (dPct != null ? ((dPct >= 0 ? '+' : '') + dPct.toFixed(1) + '%') : '—') + '</td>' +
+          '<td>' + (typeof r.w === 'number' ? r.w.toFixed(3) : r.w) + '</td>' +
+          '<td class="' + (r.contrib != null && r.contrib !== 0 ? (r.contrib >= 0 ? 'c-up' : 'c-down') : '') + '" style="font-weight:700;">' +
+            contribStr + '</td></tr>';
+      }).join('');
+      if (auditNote) {
+        const totalD = cell.point - last;
+        const fuelDown = fuelC.dPct < 0;
+        auditNote.innerHTML =
+          '<strong>Kết luận audit (C ' + focusEq + ' · ' + f0.short + '):</strong> ' +
+          'BAF last actual = <code>' + formatMatrixCell(last, dig) + '</code> → FC = <code>' + formatMatrixCell(cell.point, dig) +
+          '</code> (Δ ' + (totalD >= 0 ? '+' : '') + formatMatrixCell(totalD, dig) + '). ' +
+          (fuelDown
+            ? 'Fuel đang <span class="c-down">thấp hơn</span> base (Δ ' + (fuelC.dPct * 100).toFixed(1) + '%) — nhánh VLSFO pure kéo BAF xuống, ' +
+              'nhưng nhánh Growth+Linear (từ schedule 480→690→900) vẫn đóng góp dương lớn → ensemble có thể vẫn tăng. '
+            : 'Fuel đang cao hơn/xấp xỉ base — củng cố hướng tăng BAF. ') +
+          'Không có “giá vận chuyển cuối” trong app; nếu so VLSFO (mt) với BAF (container) là hai đơn vị khác nhau. ' +
+          'Method <code>ensemble_raw</code> = hành vi cũ (momentum nặng); <code>ensemble</code> = fuel-coherent (đã sửa).';
+      }
+    }
     if (c40) {
       setTextSafe('fc-kpi-c-g', ((c40.gLast - 1) * 100).toFixed(1) + '%');
       setTextSafe('fc-kpi-c-g-sub', 'P0→P1 ' + ((c40.g01 - 1) * 100).toFixed(1) + '% · geo ' + ((c40.gAvg - 1) * 100).toFixed(1) + '% · CAGR ' + (c40.cagr * 100).toFixed(1) + '%');
@@ -3831,7 +3955,7 @@
       BAF_MATRIX_REGIONS.forEach(function (region) {
         BAF_MATRIX_EQUIP.forEach(function (equip) {
           const mc = result.methodCompare[region][equip];
-          const vals = [mc.growth, mc.linear, mc.vlsfo, mc.ensemble];
+          const vals = [mc.growth, mc.linear, mc.vlsfo, mc.ensemble, mc.ensemble_raw];
           const spread = Math.max.apply(null, vals) - Math.min.apply(null, vals);
           mrows += '<tr>' +
             '<td class="cell-label">' + region + ' ' + equip + '</td>' +
@@ -3840,6 +3964,7 @@
             '<td>' + formatMatrixCell(mc.linear, dig) + '</td>' +
             '<td>' + formatMatrixCell(mc.vlsfo, dig) + '</td>' +
             '<td class="c-cyan" style="font-weight:700;">' + formatMatrixCell(mc.ensemble, dig) + '</td>' +
+            '<td class="t3">' + formatMatrixCell(mc.ensemble_raw, dig) + '</td>' +
             '<td>' + formatMatrixCell(spread, dig) + '</td></tr>';
         });
       });
@@ -4021,7 +4146,13 @@
 
     function methodPath(key) {
       return hist.concat(result.future.map(function (f, hi) {
-        return rndFc(d.byMethod[key].points[hi][key === 'ensemble' ? 'ensemble' : key === 'growth' ? 'growth' : key === 'linear' ? 'linear' : 'vlsfo'], result.dig);
+        const pt = d.byMethod[key].points[hi];
+        const val = key === 'ensemble_raw' ? pt.ensemble_raw
+          : key === 'ensemble' ? pt.ensemble
+          : key === 'growth' ? pt.growth
+          : key === 'linear' ? pt.linear
+          : pt.vlsfo;
+        return rndFc(val, result.dig);
       }));
     }
 
@@ -4030,16 +4161,17 @@
         { name: 'Actual (C ' + focus + ')', data: hist.concat(result.future.map(function () { return null; })) },
         { name: 'Growth', data: methodPath('growth') },
         { name: 'Linear', data: methodPath('linear') },
-        { name: 'VLSFO', data: methodPath('vlsfo') },
-        { name: 'Ensemble', data: methodPath('ensemble') },
+        { name: 'VLSFO pure', data: methodPath('vlsfo') },
+        { name: 'Ens. coherent', data: methodPath('ensemble') },
+        { name: 'Ens. raw (cũ)', data: methodPath('ensemble_raw') },
       ],
       chart: {
         type: 'line', height: 320, width: '100%', background: 'transparent', foreColor: chartFore(),
         toolbar: { show: false }, fontFamily: 'Inter, sans-serif',
       },
-      colors: ['#e2e8f0', '#fbbf24', '#a78bfa', '#f87171', '#22d3ee'],
-      stroke: { width: [3, 2, 2, 2, 3], curve: 'smooth', dashArray: [0, 3, 3, 3, 0] },
-      markers: { size: [4, 3, 3, 3, 4] },
+      colors: ['#e2e8f0', '#fbbf24', '#a78bfa', '#f87171', '#22d3ee', '#94a3b8'],
+      stroke: { width: [3, 2, 2, 2, 3, 1.5], curve: 'smooth', dashArray: [0, 3, 3, 3, 0, 6] },
+      markers: { size: [4, 3, 3, 3, 4, 2] },
       xaxis: {
         categories: cats,
         labels: { style: { fontSize: '11px', colors: chartFore() } },
