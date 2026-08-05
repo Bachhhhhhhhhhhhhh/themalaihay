@@ -904,6 +904,10 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
           Data Table
         </button>
+        <button class="nav-item" data-section="sources" onclick="navigateTo('sources', this)">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+          Data Sources
+        </button>
 
         <div class="nav-label" style="margin-top:0.75rem;">Tools</div>
         <button class="nav-item" onclick="exportCSV()">
@@ -1487,7 +1491,7 @@
             <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.75rem;margin-bottom:0.85rem;">
               <div>
                 <h2 style="margin:0;font-size:0.9rem;font-weight:600;">Daily Price Data</h2>
-                <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">Official S&amp;B spots Jul 10–24 · monthly avgs May–Jun · weekend carry</p>
+                <p class="t3" style="margin:0.2rem 0 0;font-size:11px;">Official S&amp;B spots Jul 10–24 · monthly avgs May–Jun · weekend carry + live tip</p>
               </div>
               <button class="btn btn-primary" onclick="exportCSV()">Download CSV</button>
             </div>
@@ -1501,11 +1505,220 @@
             </div>
           </div>
         </section>
+
+        <!-- SOURCES — full transparency -->
+        <section id="section-sources" class="section">
+          <div style="margin-bottom:1rem;">
+            <h2 style="margin:0;font-size:1.1rem;font-weight:700;">Nguồn dữ liệu (Data Sources)</h2>
+            <p class="t3" style="margin:0.4rem 0 0;font-size:13px;line-height:1.55;max-width:900px;">
+              Mọi số liệu trên dashboard đều truy vết được. Bấm link <strong style="color:var(--cyan);">mở website / database gốc</strong> (tab mới).
+              Live 1 giây = path quanh <em>daily close</em> chính thức — <strong>không</strong> phải feed tick trả phí Platts/S&amp;B Terminal.
+            </p>
+          </div>
+
+          <!-- Primary sources -->
+          <div class="source-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0.85rem;margin-bottom:1rem;">
+            <a class="source-card card card-hover" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">PRIMARY</div>
+              <h3>Ship &amp; Bunker — Singapore VLSFO</h3>
+              <p>Daily mid assessments VLSFO 0.5% Singapore (USD/mt). Nguồn chính cho series <strong>SG Spot</strong>.</p>
+              <div class="source-url">shipandbunker.com/prices/…/sg-sin-singapore ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">PRIMARY</div>
+              <h3>Ship &amp; Bunker — Rotterdam VLSFO</h3>
+              <p>Daily mid assessments VLSFO Rotterdam / ARA. Series <strong>RTM Spot</strong>.</p>
+              <div class="source-url">shipandbunker.com/prices/…/nl-rtm-rotterdam ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">PRIMARY</div>
+              <h3>Ship &amp; Bunker — Global 20 Ports</h3>
+              <p>G20-VLSFO Index: trung bình 20 cảng bunker hàng đầu. Series <strong>Global 20</strong> &amp; BAF proxy.</p>
+              <div class="source-url">shipandbunker.com/…/av-g20-global-20-ports-average ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://shipandbunker.com/prices/av/global/av-glb-global-average-bunker-price" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">PRIMARY</div>
+              <h3>Ship &amp; Bunker — Global Average</h3>
+              <p>Global Average Bunker Price VLSFO (bổ sung / cross-check với G20).</p>
+              <div class="source-url">shipandbunker.com/…/av-glb-global-average-bunker-price ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://shipandbunker.com/prices" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">HUB</div>
+              <h3>Ship &amp; Bunker — World Prices</h3>
+              <p>Hub giá bunker thế giới (SG, RTM, Houston, Fujairah, HK…).</p>
+              <div class="source-url">shipandbunker.com/prices ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://www.bunkerindex.com/" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">CROSS-CHECK</div>
+              <h3>Bunker Index</h3>
+              <p>Database giá bunker đa cảng (VLSFO / MGO). Dùng đối chiếu với S&amp;B.</p>
+              <div class="source-url">bunkerindex.com ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://www.bunkerindex.com/prices/port.php?p=682&amp;n=singapore-singapore" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">CROSS-CHECK</div>
+              <h3>Bunker Index — Singapore</h3>
+              <p>Port page Singapore: historical spot VLSFO / MGO.</p>
+              <div class="source-url">bunkerindex.com/prices/port.php?p=682 ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://www.bunkerindex.com/prices/port.php?p=637&amp;n=rotterdam-netherlands" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">CROSS-CHECK</div>
+              <h3>Bunker Index — Rotterdam</h3>
+              <p>Port page Rotterdam: historical spot series.</p>
+              <div class="source-url">bunkerindex.com/prices/port.php?p=637 ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://agtransport.usda.gov/" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">CONTEXT</div>
+              <h3>USDA AgTransport</h3>
+              <p>Bối cảnh logistics / transport fuel (tham chiếu ngành, không thay S&amp;B daily VLSFO).</p>
+              <div class="source-url">agtransport.usda.gov ↗</div>
+            </a>
+            <a class="source-card card card-hover" href="https://www.spglobal.com/energy/en/commodity/shipping/bunker-fuel" target="_blank" rel="noopener noreferrer">
+              <div class="source-badge">REFERENCE</div>
+              <h3>S&amp;P Global — Bunker Fuel</h3>
+              <p>Tham chiếu industry (Platts bunker). Feed full cần license — không hardcode trên demo.</p>
+              <div class="source-url">spglobal.com/…/bunker-fuel ↗</div>
+            </a>
+          </div>
+
+          <!-- Mapping table: field → source -->
+          <div class="card" style="padding:1.1rem;margin-bottom:1rem;overflow:hidden;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:600;">Ánh xạ field trên dashboard → nguồn gốc</h3>
+            <p class="t3" style="margin:0 0 0.85rem;font-size:12px;">Click URL trong cột Source để mở database.</p>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:720px;">
+                <thead>
+                  <tr>
+                    <th>Field / Series</th>
+                    <th>Loại</th>
+                    <th>Giá trị neo (ví dụ)</th>
+                    <th>Source (click)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="cell-label">Singapore VLSFO (SG Spot)</td>
+                    <td class="cell-label">Daily mid</td>
+                    <td>869.00 (2026-07-24)</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener">S&amp;B Singapore VLSFO ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Rotterdam VLSFO (RTM Spot)</td>
+                    <td class="cell-label">Daily mid</td>
+                    <td>697.50 (2026-07-24)</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam" target="_blank" rel="noopener">S&amp;B Rotterdam VLSFO ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Global 20 Ports Avg</td>
+                    <td class="cell-label">Index daily</td>
+                    <td>835.50 (2026-07-24)</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">S&amp;B G20-VLSFO ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">SG May 2026 monthly avg</td>
+                    <td class="cell-label">Monthly avg</td>
+                    <td>825 USD/mt</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/news/apac/492322-analysis-singapore-may-bunker-sales-drop-74-on-the-year" target="_blank" rel="noopener">S&amp;B May sales analysis ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">SG Jun 2026 monthly avg</td>
+                    <td class="cell-label">Monthly avg</td>
+                    <td>753 USD/mt</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/news/apac/241396-analysis-singapore-june-bunker-sales-up-17-on-year-as-hsfo-sales-jump" target="_blank" rel="noopener">S&amp;B June sales analysis ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">G20 May 2026 monthly avg</td>
+                    <td class="cell-label">Monthly index</td>
+                    <td>900 USD/mt</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/news/apac/492322-analysis-singapore-may-bunker-sales-drop-74-on-the-year" target="_blank" rel="noopener">S&amp;B (G20 in May article) ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">G20 Jun 2026 monthly avg</td>
+                    <td class="cell-label">Monthly index</td>
+                    <td>824.5 USD/mt</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/news/apac/241396-analysis-singapore-june-bunker-sales-up-17-on-year-as-hsfo-sales-jump" target="_blank" rel="noopener">S&amp;B (G20 in June article) ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Daily spots Jul 10–24 (SG/RTM/G20)</td>
+                    <td class="cell-label">Daily table</td>
+                    <td>11 working-day prints</td>
+                    <td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener">S&amp;B Latest Prices tables ↗</a></td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Live ticker / chart tip (1s)</td>
+                    <td class="cell-label">Intraday model</td>
+                    <td>±5–6 USD quanh close</td>
+                    <td class="cell-label">Nội bộ (mean-revert về S&amp;B close) — <em>không</em> phải Platts tick</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">BAF Impact / pass-through 0.85</td>
+                    <td class="cell-label">Illustrative model</td>
+                    <td>ΔBAF ≈ ΔVLSFO × 0.85</td>
+                    <td class="cell-label">Công thức demo liner — không công bố full bởi hãng tàu</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">Quant models (RSI, MACD, MC…)</td>
+                    <td class="cell-label">Derived</td>
+                    <td>Từ chuỗi VLSFO trên app</td>
+                    <td class="cell-label">Tính toán local · input = series S&amp;B-anchored</td>
+                  </tr>
+                  <tr>
+                    <td class="cell-label">May–early Jul path (non-print days)</td>
+                    <td class="cell-label">Reconstruction</td>
+                    <td>Ràng buộc monthly avg S&amp;B</td>
+                    <td class="cell-label">Internal · constrained to published monthly means</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Official daily prints table with link -->
+          <div class="card" style="padding:1.1rem;margin-bottom:1rem;overflow:hidden;">
+            <h3 style="margin:0 0 0.35rem;font-size:0.95rem;font-weight:600;">Daily prints đã hardcode (Ship &amp; Bunker public tables)</h3>
+            <p class="t3" style="margin:0 0 0.85rem;font-size:12px;">
+              Tra cứu / xác minh trên:
+              <a class="src-link" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener">SG</a> ·
+              <a class="src-link" href="https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam" target="_blank" rel="noopener">RTM</a> ·
+              <a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">G20</a>
+            </p>
+            <div class="table-wrap">
+              <table class="data-table" style="min-width:520px;">
+                <thead>
+                  <tr><th>Date</th><th>SG VLSFO</th><th>RTM VLSFO</th><th>G20 Avg</th><th>Verify</th></tr>
+                </thead>
+                <tbody id="sources-official-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Disclaimer -->
+          <div class="card" style="padding:1.1rem;border-color:rgba(251,191,36,0.25);">
+            <h3 style="margin:0 0 0.5rem;font-size:0.9rem;font-weight:600;color:var(--amber);">Disclaimer / Giới hạn</h3>
+            <ul class="t3" style="margin:0;padding-left:1.15rem;font-size:12px;line-height:1.65;">
+              <li>Ship &amp; Bunker và Bunker Index công bố một phần giá free trên web; <strong>full history / API / terminal</strong> cần subscription.</li>
+              <li>Live 1s trên app là <strong>intraday indication</strong> quanh daily close — không thay thế feed licensed (S&amp;B Intelligence, Platts, Argus…).</li>
+              <li>BAF formula là <strong>illustrative</strong> cho phân tích — công thức BAF thực tế từng carrier (Maersk, MSC, CMA CGM…) khác nhau.</li>
+              <li>Không dùng dashboard này để giao dịch / quyết định thương mại có ràng buộc pháp lý.</li>
+            </ul>
+            <div style="margin-top:0.85rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
+              <a class="btn btn-primary" href="https://shipandbunker.com/prices" target="_blank" rel="noopener">Mở Ship &amp; Bunker Prices ↗</a>
+              <a class="btn" href="https://www.bunkerindex.com/" target="_blank" rel="noopener">Mở Bunker Index ↗</a>
+              <a class="btn" href="https://shipandbunker.com/store/subscribe" target="_blank" rel="noopener">S&amp;B Subscribe / full DB ↗</a>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer style="border-top:1px solid var(--border);padding:0.9rem 1.25rem;margin-top:auto;width:100%;box-sizing:border-box;">
-        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;font-size:11px;color:var(--text-3);width:100%;">
-          <div style="min-width:0;flex:1;"><strong style="color:var(--text-2);font-weight:600;">Sources:</strong> Ship &amp; Bunker VLSFO (Singapore · Rotterdam · Global 20 Ports) daily assessments · live 1s path mean-reverts to last official close · best-effort re-fetch every 3 min · <span style="opacity:0.8;">not for trading / not a licensed market data feed.</span></div>
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;font-size:11px;color:var(--text-3);width:100%;align-items:center;">
+          <div style="min-width:0;flex:1;line-height:1.5;">
+            <strong style="color:var(--text-2);font-weight:600;">Sources:</strong>
+            <a class="src-link" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener">S&amp;B SG</a> ·
+            <a class="src-link" href="https://shipandbunker.com/prices/emea/nwe/nl-rtm-rotterdam" target="_blank" rel="noopener">S&amp;B RTM</a> ·
+            <a class="src-link" href="https://shipandbunker.com/prices/av/global/av-g20-global-20-ports-average" target="_blank" rel="noopener">S&amp;B G20</a> ·
+            <a class="src-link" href="https://www.bunkerindex.com/" target="_blank" rel="noopener">Bunker Index</a> ·
+            <a class="src-link" href="#" onclick="navigateTo('sources', document.querySelector('[data-section=sources]')); return false;">Full source list →</a>
+          </div>
           <div class="mono" style="flex-shrink:0;">VLSFO Monitor · BAF Tracker © 2026</div>
         </div>
       </footer>
@@ -1531,6 +1744,62 @@
     .ticker-row {
       padding-left: 1.25rem;
       padding-right: 1.25rem;
+    }
+    /* Data source cards */
+    a.source-card {
+      display: block;
+      padding: 1.1rem;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      min-width: 0;
+    }
+    a.source-card:hover {
+      border-color: rgba(34, 211, 238, 0.4);
+      transform: translateY(-2px);
+    }
+    a.source-card h3 {
+      margin: 0.45rem 0 0.4rem;
+      font-size: 0.92rem;
+      font-weight: 650;
+      color: var(--text);
+    }
+    a.source-card p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-3);
+    }
+    a.source-card .source-url {
+      margin-top: 0.65rem;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      color: var(--cyan);
+      word-break: break-all;
+    }
+    .source-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      background: rgba(34, 211, 238, 0.12);
+      color: var(--cyan);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+    }
+    a.src-link {
+      color: var(--cyan);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(34, 211, 238, 0.35);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    a.src-link:hover {
+      color: var(--cyan-2);
+      border-bottom-color: var(--cyan);
+    }
+    footer a.src-link {
+      font-size: 11px;
     }
   </style>
 
@@ -3251,8 +3520,25 @@
           });
         }
         if (section === 'data') renderDailyTable();
+        if (section === 'sources') renderSourcesOfficialTable();
       }, 30);
     });
+  }
+
+  function renderSourcesOfficialTable() {
+    const body = document.getElementById('sources-official-body');
+    if (!body) return;
+    const keys = Object.keys(OFFICIAL_SPOTS).sort().reverse();
+    body.innerHTML = keys.map(function (d) {
+      const a = OFFICIAL_SPOTS[d];
+      return '<tr>' +
+        '<td class="cell-label">' + d + '</td>' +
+        '<td class="c-cyan">' + fmtPrice(a[0]) + '</td>' +
+        '<td class="c-emerald">' + fmtPrice(a[1]) + '</td>' +
+        '<td class="c-blue">' + fmtPrice(a[2]) + '</td>' +
+        '<td class="cell-label"><a class="src-link" href="https://shipandbunker.com/prices/apac/sea/sg-sin-singapore" target="_blank" rel="noopener">Verify on S&amp;B ↗</a></td>' +
+        '</tr>';
+    }).join('');
   }
 
   function toggleSidebar(force) {
